@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Trepa – Precision Predictions</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Audiowide&display=swap" rel="stylesheet"/>
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/howler"></script>
+  <style>
+    :root { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: 'Audiowide', sans-serif;
+      background: radial-gradient(circle at 30% 20%, #ff538c22, transparent 60%),
+                  radial-gradient(circle at 80% 60%, #ff538c11, transparent 70%), #000;
+      color: #e7e9ea;
+      overflow-x: hidden;
+      position: relative; /* Needed for positioning video overlay and coins */
+    }
+    h1, h2, h3 {
+      font-family: 'Orbitron', sans-serif;
+      color: #ff538c;
+      text-shadow: 0 0 10px #ff538c88;
+    }
+    .cta-button {
+      background-color: #ff538c;
+      color: #000;
+      border: none;
+      padding: 14px 28px;
+      font-size: 1.2em;
+      border-radius: 10px;
+      cursor: pointer;
+      font-family: 'Orbitron', sans-serif;
+      box-shadow: 0 0 15px #ff538c;
+      transition: all 0.3s ease-in-out;
+    }
+    .cta-button:hover {
+        background-color: #ff7aa5;
+        box-shadow: 0 0 25px #ff7aa5;
+        transform: translateY(-2px);
+    }
+    section { padding: 60px 20px; max-width: 1000px; margin: auto; position: relative; z-index: 1; } /* Ensure sections are above video */
+    .chart-container, .slider-box {
+      background: rgba(255,255,255,0.03);
+      padding: 30px;
+      border-radius: 10px;
+      margin-top: 20px;
+      box-shadow: 0 0 20px rgba(255, 83, 140, 0.2); /* Soft glow */
+    }
+    input[type="range"] {
+      width: 100%;
+      margin-top: 20px;
+      -webkit-appearance: none; /* Remove default styling */
+      background: transparent; /* Hide default track */
+    }
+    input[type="range"]::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 8px;
+      background: linear-gradient(to right, #ff538c, #8c53ff); /* Gradient track */
+      border-radius: 5px;
+      cursor: pointer;
+      box-shadow: 0 0 5px rgba(255,83,140,0.5);
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      border: 2px solid #fff;
+      height: 20px;
+      width: 20px;
+      border-radius: 50%;
+      background: #ff538c;
+      cursor: grab;
+      margin-top: -6px; /* Center thumb vertically */
+      box-shadow: 0 0 10px #ff538c;
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+    input[type="range"]::-webkit-slider-thumb:active {
+        cursor: grabbing;
+        box-shadow: 0 0 15px #ff538c, 0 0 25px #ff7aa5;
+        background: #ff7aa5;
+    }
+    footer {
+      text-align: center;
+      padding: 40px 20px;
+      background: #000;
+      position: relative; z-index: 1; /* Ensure footer is above video */
+    }
+    .email-section {
+      background: rgba(255,83,140,0.05);
+      padding: 40px 20px;
+      text-align: center;
+      border-radius: 10px;
+      box-shadow: 0 0 20px rgba(255, 83, 140, 0.2);
+      position: relative; z-index: 1; /* Ensure section is above video */
+    }
+    .email-section input {
+      padding: 12px;
+      width: 80%;
+      max-width: 400px;
+      margin: 10px;
+      background: #000;
+      border: 1px solid #ff538c;
+      border-radius: 8px;
+      color: #fff;
+      outline: none;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    .email-section input:focus {
+        border-color: #ff7aa5;
+        box-shadow: 0 0 10px rgba(255,83,140,0.5);
+    }
+    .trepa-logo {
+      display: block;
+      margin: 30px auto;
+      width: 80px;
+      filter: drop-shadow(0 0 10px #ff538c);
+      z-index: 10; /* Ensure logo is above other content */
+      position: relative;
+    }
+    .coin {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: url('https://img.icons8.com/emoji/48/coin-emoji.png') no-repeat center/cover;
+      animation: fall 10s linear infinite;
+      opacity: 0.8;
+      z-index: -1; /* Ensure coins are behind content but above video */
+    }
+    @keyframes fall {
+      0% { top: -10%; transform: translateX(0) rotate(0deg); }
+      25% { transform: translateX(20px) rotate(90deg); }
+      50% { transform: translateX(-20px) rotate(180deg); }
+      75% { transform: translateX(10px) rotate(270deg); }
+      100% { top: 110%; transform: translateX(0) rotate(360deg); }
+    }
+
+    /* Video Background styles */
+    .video-background {
+        position: fixed; /* Use fixed to keep it in the background */
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        z-index: -2; /* Behind everything else */
+    }
+    .video-background video {
+        min-width: 100%;
+        min-height: 100%;
+        width: auto;
+        height: auto;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        object-fit: cover; /* Ensure it covers the entire area */
+        filter: brightness(0.5); /* Dim the video to make text more readable */
+    }
+
+    /* Navigation Bar */
+    .navbar {
+        position: sticky;
+        top: 0;
+        width: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        padding: 15px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 100;
+        box-shadow: 0 2px 10px rgba(255, 83, 140, 0.1);
+        backdrop-filter: blur(5px);
+    }
+    .nav-logo {
+        height: 40px;
+        filter: drop-shadow(0 0 5px #ff538c);
+    }
+    .hamburger {
+        display: none; /* Hidden by default for desktop */
+        flex-direction: column;
+        cursor: pointer;
+        padding: 10px;
+    }
+    .hamburger span {
+        height: 3px;
+        width: 25px;
+        background-color: #ff538c;
+        margin-bottom: 5px;
+        border-radius: 5px;
+        transition: all 0.3s ease;
+    }
+    .hamburger.open span:nth-child(1) {
+        transform: rotate(45deg) translate(5px, 5px);
+    }
+    .hamburger.open span:nth-child(2) {
+        opacity: 0;
+    }
+    .hamburger.open span:nth-child(3) {
+        transform: rotate(-45deg) translate(5px, -5px);
+    }
+    .nav-links {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+    }
+    .nav-links li {
+        margin-left: 30px;
+    }
+    .nav-links a {
+        color: #e7e9ea;
+        text-decoration: none;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.1em;
+        transition: color 0.3s, text-shadow 0.3s;
+    }
+    .nav-links a:hover {
+        color: #ff538c;
+        text-shadow: 0 0 8px #ff538c;
+    }
+
+    /* Slider info display */
+    .slider-info {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 10px;
+        font-family: 'Orbitron', sans-serif;
+        color: #e7e9ea;
+        font-size: 1.1em;
+        text-shadow: 0 0 5px rgba(255, 83, 140, 0.5);
+    }
+    .slider-info span {
+        background: rgba(255, 83, 140, 0.1);
+        padding: 5px 10px;
+        border-radius: 5px;
+    }
+
+    /* Mobile Navigation */
+    @media (max-width: 768px) {
+        .hamburger {
+            display: flex; /* Show hamburger on smaller screens */
+        }
+        .nav-links {
+            display: none; /* Hide navigation links by default */
+            flex-direction: column;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            position: absolute;
+            top: 70px; /* Below the navbar */
+            left: 0;
+            padding: 20px 0;
+            box-shadow: 0 5px 15px rgba(255, 83, 140, 0.3);
+            text-align: center;
+        }
+        .nav-links.open {
+            display: flex; /* Show navigation links when open */
+        }
+        .nav-links li {
+            margin: 15px 0;
+        }
+    }
+  </style>
+</head>
+<body>
+  <!-- Video Background Layer -->
+  <div class="video-background">
+    <video id="backgroundVideo" src="https://i.imgur.com/3Q673M4.mp4" autoplay loop muted playsinline>
+      Your browser does not support the video tag.
+    </video>
+  </div>
+
+  <script>
+    // Create falling coins effect
+    for (let i = 0; i < 20; i++) {
+      const coin = document.createElement('div');
+      coin.classList.add('coin');
+      coin.style.left = `${Math.random() * 100}%`;
+      coin.style.animationDuration = `${5 + Math.random() * 5}s`;
+      coin.style.animationDelay = `${Math.random() * 5}s`;
+      document.body.appendChild(coin);
+    }
+    // Initialize AOS (Animate On Scroll) library
+    AOS.init();
+  </script>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <a href="#hero-section" aria-label="Trepa Home">
+      <img src="https://i.imgur.com/MxEzMoW.png" alt="Trepa Logo" class="nav-logo"/>
+    </a>
+    <div class="hamburger" id="hamburger">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#what-is-trepa-section">About Trepa</a></li>
+      <li><a href="#email-capture-section">Join Beta</a></li>
+    </ul>
+  </nav>
+
+  <script>
+    // Hamburger menu functionality
+    const hamburger = document.getElementById('hamburger');
+    const navLinks = document.getElementById('navLinks');
+
+    hamburger.addEventListener('click', () => {
+      hamburger.classList.toggle('open');
+      navLinks.classList.toggle('open');
+    });
+
+    // Close mobile menu when a link is clicked
+    navLinks.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => {
+            if (navLinks.classList.contains('open')) {
+                hamburger.classList.remove('open');
+                navLinks.classList.remove('open');
+            }
+        });
+    });
+  </script>
+
+  <!-- Hero Section: Main Call to Action -->
+  <section data-aos="fade-up" id="hero-section">
+    <h1>𝗙𝗹𝗲𝘅 𝗬𝗼𝘂𝗿 𝗙𝗶𝗻𝗮𝗻𝗰𝗶𝗮𝗹 �𝗼𝗿𝗲𝘀𝗶𝗴𝗵𝘁.</h1>
+    <h2>𝗚𝗲𝘁 𝗣𝗮𝗶𝗱 𝗳𝗼𝗿 𝗔𝗰𝗰𝘂𝗿𝗮𝗰𝘆.</h2>
+    <p>Traditional predictions are binary. Trepa redefines the game, rewarding you for how close you are to the truth—not just if you're 'right'.</p>
+    <button class="cta-button">Join Beta Now</button>
+  </section>
+
+  <!-- What is Trepa Section: More detailed explanation -->
+  <section data-aos="fade-up" id="what-is-trepa-section">
+    <h2>What is Trepa?</h2>
+    <p>Trepa is a place to flex your financial foresight and get paid. Prediction markets today turn every question into a binary yes or no bet. For example: “Will job numbers be over 100,000 next month?” If the actual number was 100,001 but you guess 99,999, you lose—just like someone who guessed 50,000. We believe there should be an upside for being accurate.</p>
+    <p>Trepa is here to change that by building the world’s first <strong>precision predictions platform</strong>. With our platform, you don’t need to be right, you need to be accurate. If the correct answer for the inflation rate is 5% and you guess 4.9%, you get a big payout. If you guess 8%, you’re way off and get a smaller payout. Our mission is to make this experience extremely easy to use: simply <strong>slide, stake, and show off your IQ</strong>.</p>
+    <h3>Mission</h3>
+    <p>The mission is to design a new, compelling, mobile-friendly landing page for the Trepa platform. Build us a home that feels like the product: sleek, competitive, and a little dangerous. We’re preparing for public beta and need a homepage that clearly explains what Trepa does and matches the product’s energy.</p>
+  </section>
+
+  <!-- Binary vs Precision Section: Explaining the Core Concept -->
+  <section data-aos="fade-up">
+    <h2>Beyond Yes or No: The Power of Precision</h2>
+    <div>
+      <strong>Traditional:</strong> Guess 99,999, actual is 100,001? You lose. Just like someone who guessed 50,000.
+      <br>
+      <strong>Trepa:</strong> Guess 100,000? That’s a win. Get rewarded for accuracy.
+    </div>
+  </section>
+
+  <!-- Slider and Chart Section: Interactive Demonstration -->
+  <section data-aos="fade-up">
+    <h2>Slide, Stake, Show Off Your IQ.</h2>
+    <div class="slider-box">
+      <label for="predictionSlider" style="color: #ff538c; font-weight: bold;">Predict Inflation Rate:</label>
+      <input id="predictionSlider" type="range" min="0" max="10" step="0.1" value="5" />
+      <div class="slider-info">
+        <span id="predictedValueDisplay">Predicted: 5.0%</span>
+        <span id="maxPayoutDisplay">Potential Payout: $10,000.00</span>
+      </div>
+      <div class="chart-container">
+        <canvas id="payoutChart"></canvas>
+      </div>
+      <p style="text-align: center; font-size: 0.9em; opacity: 0.8; margin-top: 15px;">The chart illustrates your potential payout based on your precision. The closer the actual rate is to your prediction, the higher your reward!</p>
+    </div>
+  </section>
+
+  <!-- Why Precision Pays Section: Benefits List -->
+  <section data-aos="fade-up">
+    <h2>Why Precision Pays Off</h2>
+    <ul>
+      <li>🎯 <strong>Higher Payouts</strong>: The closer you are, the more you earn.</li>
+      <li>🧠 <strong>Reward True Insight</strong>: Trepa rewards smart predictions, not dumb luck.</li>
+      <li>⚖️ <strong>Fair & Engaging</strong>: Everyone plays on equal terms.</li>
+    </ul>
+  </section>
+
+  <!-- Email Capture Section: Beta Signup -->
+  <div class="email-section" data-aos="fade-up" id="email-capture-section">
+    <h3>Ready to Flex Your Foresight?</h3>
+    <p>Join the public beta and be among the first to experience the future of predictions.</p>
+    <input type="email" placeholder="Enter your email">
+    <button class="cta-button">Join Beta</button>
+    <p style="font-size: 0.9em; opacity: 0.7;">We respect your privacy. Your email will only be used for beta announcements.</p>
+  </div>
+
+  <!-- Footer Section -->
+  <footer>
+    <a href="https://x.com/trepa_io" target="_blank" aria-label="Follow Trepa on X (formerly Twitter)">
+      <img src="https://img.icons8.com/ios-filled/50/ff538c/twitterx.png" width="28" alt="X logo" style="filter: drop-shadow(0 0 5px #ff538c);"/>
+    </a>
+    <p>© 2025 Trepa. Built to reward brains, not luck.</p>
+    <a href="#" style="color: #ff538c; text-decoration: none; margin: 0 10px;">Privacy Policy</a> | <a href="#" style="color: #ff538c; text-decoration: none; margin: 0 10px;">Terms of Service</a>
+  </footer>
+
+  <!-- Trepa Logo at the Bottom -->
+  <img src="https://i.imgur.com/MxEzMoW.png" alt="Trepa Logo" class="trepa-logo"/>
+
+  <!-- Chart Script for interactivity -->
+  <script>
+    const ctx = document.getElementById('payoutChart').getContext('2d');
+    const predictedValueDisplay = document.getElementById('predictedValueDisplay');
+    const maxPayoutDisplay = document.getElementById('maxPayoutDisplay');
+
+    // Function to generate chart data based on the prediction center
+    const generateChartData = (centerValue) => {
+      return Array.from({length: 101}, (_, i) => {
+        const actualValue = (i / 10); // Convert index to a value between 0.0 and 10.0
+        const difference = Math.abs(actualValue - centerValue);
+        // Payout decreases by $2000 for every unit difference, max payout $10,000
+        return Math.max(0, 10000 - difference * 2000);
+      });
+    };
+
+    const initialPrediction = 5.0; // The initial center of the payout curve
+
+    // Custom plugin for Chart.js to add glowing effect to the line
+    const glowPlugin = {
+        id: 'lineGlow',
+        beforeDraw: (chart) => {
+            const ctx = chart.ctx;
+            ctx.save();
+            ctx.shadowColor = 'rgba(255, 83, 140, 0.7)'; // Glow color
+            ctx.shadowBlur = 15; // Amount of blur
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+            chart.data.datasets.forEach((dataset, i) => {
+                if (dataset.type === 'line') { // Apply glow only to the main line
+                    ctx.stroke(chart.getDatasetMeta(i).path);
+                }
+            });
+            ctx.restore();
+        }
+    };
+
+    // Custom plugin to draw a vertical line and a point at the predicted value
+    const predictionIndicatorPlugin = {
+        id: 'predictionIndicator',
+        afterDraw: (chart) => {
+            const ctx = chart.ctx;
+            const meta = chart.getDatasetMeta(0); // Assuming first dataset is the main line
+            const data = chart.data.datasets[0].data;
+            const predictionValue = parseFloat(document.getElementById('predictionSlider').value);
+            const index = Math.round(predictionValue * 10); // Get the index corresponding to the prediction
+
+            if (index >= 0 && index < data.length) {
+                const x = meta.data[index].x;
+                const y = meta.data[index].y;
+                const payout = data[index];
+
+                ctx.save();
+
+                // Draw vertical line
+                ctx.beginPath();
+                ctx.strokeStyle = '#8c53ff'; // A contrasting color for the line
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]); // Dashed line
+                ctx.moveTo(x, chart.chartArea.bottom);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+
+                // Draw glowing point
+                ctx.beginPath();
+                ctx.arc(x, y, 8, 0, 2 * Math.PI); // Circle radius
+                ctx.fillStyle = '#8c53ff'; // Point color
+                ctx.shadowColor = '#8c53ff'; // Glow for the point
+                ctx.shadowBlur = 10;
+                ctx.fill();
+
+                // Draw label for the point
+                ctx.fillStyle = '#e7e9ea';
+                ctx.font = 'bold 12px "Orbitron", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                ctx.fillText(`$${payout.toFixed(2)}`, x, y - 15); // Payout amount
+                ctx.setLineDash([]); // Reset line dash
+
+                ctx.restore();
+            }
+        }
+    };
+
+
+    // Register the custom plugins
+    Chart.register(glowPlugin, predictionIndicatorPlugin);
+
+    // Create the Chart.js instance
+    const payoutChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: Array.from({length: 101}, (_, i) => (i / 10).toFixed(1)),
+        datasets: [{
+          label: 'Potential Payout ($)',
+          data: generateChartData(initialPrediction),
+          borderColor: '#ff538c', // Line color
+          backgroundColor: (context) => { // Gradient background
+            const chart = context.chart;
+            const {ctx, chartArea} = chart;
+            if (!chartArea) {
+              // This case happens on initial load
+              return null;
+            }
+            const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+            gradient.addColorStop(0, 'rgba(0, 0, 0, 0)'); // Transparent at bottom
+            gradient.addColorStop(0.5, 'rgba(255, 83, 140, 0.2)'); // Semi-transparent pink in middle
+            gradient.addColorStop(1, 'rgba(255, 83, 140, 0.4)'); // More opaque pink at top
+            return gradient;
+          },
+          tension: 0.4,
+          fill: true,
+          pointRadius: 0,
+          pointHitRadius: 10,
+          borderWidth: 3, // Thicker line for better glow
+          cubicInterpolationMode: 'monotone', // Smoother curves
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { // Enhanced animation
+            duration: 800, // Longer animation duration
+            easing: 'easeInOutQuad', // Smoother easing function
+            onProgress: function(animation) {
+                // You can add more complex visual feedback here
+            }
+        },
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                mode: 'index',
+                intersect: false,
+                backgroundColor: 'rgba(255, 83, 140, 0.8)', // Glowing tooltip background
+                titleFont: {
+                    family: 'Orbitron',
+                    size: 14,
+                    weight: 'bold'
+                },
+                bodyFont: {
+                    family: 'Audiowide',
+                    size: 12
+                },
+                callbacks: {
+                    title: function(tooltipItems) {
+                        return `Actual: ${tooltipItems[0].label}%`;
+                    },
+                    label: function(tooltipItem) {
+                        return `${tooltipItem.dataset.label}: $${tooltipItem.parsed.y.toFixed(2)}`;
+                    }
+                }
+            }
+        },
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: 'Actual Inflation Rate (%)',
+              color: '#ff538c',
+              font: { family: 'Orbitron', size: 14, weight: 'bold' }
+            },
+            grid: {
+                color: 'rgba(255,255,255,0.1)',
+                drawBorder: false
+            },
+            ticks: {
+                color: '#e7e9ea',
+                font: { family: 'Audiowide' }
+            }
+          },
+          y: {
+            title: {
+              display: true,
+              text: 'Payout ($)',
+              color: '#ff538c',
+              font: { family: 'Orbitron', size: 14, weight: 'bold' }
+            },
+            beginAtZero: true,
+            grid: {
+                color: 'rgba(255,255,255,0.1)',
+                drawBorder: false
+            },
+            ticks: {
+                color: '#e7e9ea',
+                font: { family: 'Audiowide' },
+                callback: function(value) {
+                    return '$' + value; // Add dollar sign to y-axis ticks
+                }
+            }
+          }
+        }
+      }
+    });
+
+    // Function to update the slider info and chart
+    const updateSliderAndChart = (value) => {
+      const payoutAtPrediction = generateChartData(value)[Math.round(value * 10)];
+
+      predictedValueDisplay.textContent = `Predicted: ${value.toFixed(1)}%`;
+      maxPayoutDisplay.textContent = `Potential Payout: $${payoutAtPrediction.toFixed(2)}`;
+
+      payoutChart.data.datasets[0].data = generateChartData(value);
+      payoutChart.update(); // Redraw the chart with animation
+    };
+
+    // Event listener for the prediction slider
+    const predictionSlider = document.getElementById('predictionSlider');
+    predictionSlider.addEventListener('input', function(e) {
+      const value = parseFloat(e.target.value);
+      updateSliderAndChart(value);
+    });
+
+    // Initialize slider info display on page load
+    updateSliderAndChart(parseFloat(predictionSlider.value));
+  </script>
+</body>
+</html>
