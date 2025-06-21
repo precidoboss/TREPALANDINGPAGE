@@ -253,6 +253,7 @@
     .slider-info {
         display: flex;
         justify-content: space-between;
+        align-items: center; /* Align items vertically */
         margin-top: 10px;
         font-family: 'Orbitron', sans-serif;
         color: #e7e9ea;
@@ -263,6 +264,24 @@
         background: rgba(255, 83, 140, 0.1);
         padding: 5px 10px;
         border-radius: 5px;
+    }
+    .bet-button-main { /* Style for the new bet button */
+        background-color: #8c53ff; /* A different color for distinction */
+        color: #fff;
+        border: none;
+        padding: 8px 15px;
+        font-size: 0.9em;
+        border-radius: 8px;
+        cursor: pointer;
+        font-family: 'Orbitron', sans-serif;
+        box-shadow: 0 0 10px #8c53ff88;
+        transition: all 0.3s ease-in-out;
+        margin-left: 15px; /* Spacing from predicted value */
+    }
+    .bet-button-main:hover {
+        background-color: #a57aff;
+        box-shadow: 0 0 15px #a57aff;
+        transform: translateY(-1px);
     }
 
     /* Stats Section */
@@ -324,7 +343,120 @@
       text-align: right;
     }
 
-    /* Mobile Navigation */
+    /* Modal Styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .modal-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-content {
+      background: #0d0d0d;
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 0 30px rgba(255, 83, 140, 0.5);
+      text-align: center;
+      position: relative;
+      width: 90%;
+      max-width: 450px;
+      animation: modalPopIn 0.3s ease-out forwards;
+      border: 1px solid #ff538c;
+      color: #e7e9ea; /* Ensure modal text is readable */
+    }
+
+    @keyframes modalPopIn {
+        from {
+            transform: scale(0.9) translateY(20px);
+            opacity: 0;
+        }
+        to {
+            transform: scale(1) translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .modal-content h3 {
+      color: #ff538c;
+      margin-bottom: 25px;
+      font-size: 1.8em;
+      font-family: 'Orbitron', sans-serif;
+    }
+
+    .modal-content p {
+      font-size: 1.1em;
+      margin-bottom: 20px;
+      font-family: 'Audiowide', sans-serif;
+    }
+
+    .bet-options {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+
+    .bet-percent-button {
+      background-color: rgba(255, 83, 140, 0.15);
+      color: #ff538c;
+      border: 1px solid #ff538c;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.1em;
+      transition: all 0.2s ease;
+    }
+
+    .bet-percent-button:hover {
+      background-color: rgba(255, 83, 140, 0.3);
+      box-shadow: 0 0 10px rgba(255, 83, 140, 0.5);
+    }
+
+    .bet-percent-button.active {
+        background-color: #ff538c;
+        color: #000;
+        box-shadow: 0 0 15px #ff538c;
+        transform: translateY(-2px);
+    }
+
+    .modal-content .cta-button {
+      width: 80%;
+      margin-top: 20px;
+      padding: 12px 20px; /* Adjust button size in modal */
+    }
+
+    .close-button {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: none;
+      border: none;
+      color: #ff538c;
+      font-size: 1.5em;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .close-button:hover {
+      color: #ff7aa5;
+    }
+
+    /* Mobile Responsive Adjustments */
     @media (max-width: 768px) {
         .hamburger {
             display: flex; /* Show hamburger on smaller screens */
@@ -349,6 +481,13 @@
         }
         .testimonial-card {
           max-width: 100%; /* Full width on smaller screens */
+        }
+        .bet-options {
+            flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+        }
+        .bet-percent-button {
+            flex: 1 1 45%; /* Make buttons take about half width */
+            margin: 5px; /* Small margin for wrap */
         }
     }
   </style>
@@ -429,8 +568,8 @@
   <!-- About Trepa Section: Explaining the Platform and Pivot -->
   <section data-aos="fade-up" id="about-trepa-section">
     <h2>Welcome to Trepa: The Next-Gen Forecasting Platform</h2>
-    <p>Trepa is where you level up your financial foresight and get paid for being on point. Forget those old-school prediction markets that force every big question into a simple "yes" or "no" bet. Like, "Will job numbers hit over 100,000 next month?" If the actual count is 100,001 but you called it at 99,999, you'd usually lose – same as someone who guessed a wild 50,000. That's just not right when you're super close, is it?</p>
-    <p>That's why Trepa's here to flip the script. We're building the world’s first <strong>precision forecasting platform</strong>. With us, it's not about being "right" in a binary sense; it's about being <strong>accurate</strong>. Imagine the inflation rate drops at 5%. If you predicted 4.9%, you're getting a fat payout. But if you were way off at 8%, hey, you still get something, just less. We're making this whole thing super slick and easy: just <strong>slide, stake, and flex your IQ.</strong></p>
+    <p>Trepa is where you **level up your financial foresight** and get paid for being on point. Forget those old-school prediction markets that force every big question into a simple "yes" or "no" bet. If you're super close to the actual number but technically "wrong," you'd usually lose – just like someone way off. That's not fair!</p>
+    <p>That's why Trepa's here to flip the script. We're building the world’s first **precision forecasting platform**. With us, it's not about being "right" in a binary sense; it's about being **accurate**. Imagine the inflation rate drops at 5%. If you predicted 4.9%, you're getting a fat payout. But if you were way off at 8%, hey, you still get something, just less. We're making this whole thing super slick and easy: just **slide, stake, and flex your IQ.**</p>
 
     <h3>Our Mission: Beyond the Hype</h3>
     <p>Our mission? To create a sick, mobile-first platform that feels just like the product itself: sleek, competitive, and maybe a little bit dangerous. We're gearing up for our public beta, and this homepage is our shout-out to the world, showing exactly what Trepa does and what vibe we're on.</p>
@@ -459,7 +598,12 @@
         <div class="label">Avg. Votes</div>
       </div>
     </div>
-    <p style="margin-top: 30px;">These numbers ain't just stats; they helped us battle-test our tech from Solana programs to the backend and frontend, shipping hot fixes like pros. And guess what? People picked it up fast. <strong>Swipe to vote. Slide to predict.</strong> This format just *clicked*. Our mobile-first approach is definitely the move – the future is mobile, fam. We even heard people getting their predictions in while on the loo or squished in a crowded subway. It just works, anywhere.</p>
+    <p style="margin-top: 30px;">These numbers ain't just stats; they helped us battle-test our tech from Solana programs to the backend and frontend, shipping hot fixes like pros. And guess what? People picked it up fast:</p>
+    <ul>
+      <li><strong>Swipe to vote.</strong></li>
+      <li><strong>Slide to predict.</strong></li>
+    </ul>
+    <p>This format just *clicked*. Our mobile-first approach is definitely the move – the future is mobile, fam. We even heard people getting their predictions in while on the loo or squished in a crowded subway. It just works, anywhere.</p>
 
     <h3>Word from the Early Believers:</h3>
     <div class="testimonials-container">
@@ -479,8 +623,16 @@
 
     <h3 style="margin-top: 40px;">The Pivot: Why We Changed the Game</h3>
     <p>Yeah, we saw where things got a bit janky. Some screens were a head-scratcher, flows needed a smoother path, and a few tooltips (and bigger fonts!) were definitely on the wish list. We're on it, fixing all that before the next version drops.</p>
-    <p>But beyond the tweaks, the alpha gave us mad clarity. Trepa isn't just another prediction market. It's a straight-up **competitive game focused on actual verifiable outcomes.** We realized that public sentiment, as cool as it sounds, could be easily gamed. If a big shot with a massive following leaned one way, they could sway the whole vibe by directing votes, even with our sybil resistance. Collusion was a real headache.</p>
-    <p>So, we pivoted hard. Trepa is now all about **competitive forecasting for numeric outcomes** – questions with cold, hard, verifiable answers. Think: "How many jobs will the U.S. actually add in June?" or "What's the total liquidation volume on Solana gonna be tomorrow?"</p>
+    <p>But beyond the tweaks, the alpha gave us mad clarity. Trepa isn't just another prediction market. It's a straight-up **competitive game focused on actual verifiable outcomes.** We realized that public sentiment, as cool as it sounds, could be easily gamed. Here's why we shifted:</p>
+    <ul>
+      <li>If a big shot with a massive following leaned one way, they could sway the whole vibe by directing votes, even with our sybil resistance.</li>
+      <li>Collusion was a real headache.</li>
+    </ul>
+    <p>So, we pivoted hard. Trepa is now all about **competitive forecasting for numeric outcomes** – questions with cold, hard, verifiable answers. Think:</p>
+    <ul>
+      <li>"How many jobs will the U.S. actually add in June?"</li>
+      <li>"What's the total liquidation volume on Solana gonna be tomorrow?"</li>
+    </ul>
     <p>You throw down your best **point forecast** – the exact number you're betting on. Once the real number hits, your rewards scale based on how tight your forecast was to the actual value. The closer you are, the fatter your wallet gets. This makes Trepa way fairer and super grounded in reality. What hasn't changed? You're still getting rewarded for being accurate. Get ready to experience the new Trepa in our upcoming beta launch:</p>
     <p style="text-align: center; font-size: 1.5em; font-family: 'Orbitron', sans-serif; color: #8c53ff; text-shadow: 0 0 10px #8c53ff88;"><strong>Real Questions. Real Forecasting. Real Rewards.</strong></p>
   </section>
@@ -493,7 +645,9 @@
       <input id="predictionSlider" type="range" min="0" max="5" step="0.01" value="2.5" />
       <div class="slider-info">
         <span id="predictedValueDisplay">Predicted: 2.50%</span>
-        <span id="potentialPayoutDisplay">Potential Payout: $250.00</span>
+        <!-- New Bet Button -->
+        <button id="betButtonMain" class="bet-button-main">Bet SOL</button>
+        <span id="potentialPayoutDisplay">Potential Payout: $250.00 (per 1 SOL stake)</span>
       </div>
       <div class="chart-container">
         <canvas id="payoutChart"></canvas>
@@ -533,223 +687,337 @@
   <!-- Trepa Logo at the Bottom -->
   <img src="https://i.imgur.com/MxEzMoW.png" alt="Trepa Logo" class="trepa-logo"/>
 
+  <!-- Bet Modal HTML Structure -->
+  <div id="betModal" class="modal-overlay">
+    <div class="modal-content">
+      <h3>Place Your Bet!</h3>
+      <p>Your Wallet: <span id="userSolBalanceDisplay">1.00 SOL ($100.00)</span></p>
+      <div class="bet-options">
+        <button class="bet-percent-button" data-percent="0.25">25%</button>
+        <button class="bet-percent-button" data-percent="0.50">50%</button>
+        <button class="bet-percent-button" data-percent="1.00">MAX</button>
+      </div>
+      <p>Betting: <span id="currentBetAmountDisplay">0.00 SOL ($0.00)</span></p>
+      <button id="placeBetButton" class="cta-button">Place Bet</button>
+      <button id="closeModalButton" class="close-button">X</button>
+    </div>
+  </div>
+
   <!-- Chart Script for interactivity -->
   <script>
-    const ctx = document.getElementById('payoutChart').getContext('2d');
-    const predictedValueDisplay = document.getElementById('predictedValueDisplay');
-    const potentialPayoutDisplay = document.getElementById('potentialPayoutDisplay');
+    // Global variables for wallet and current bet
+    const SOL_USD_RATE = 100; // 1 SOL = $100
+    let userSolBalance = 1.00; // Starting with 1 SOL for demonstration
+    let currentBetAmount = 0; // The actual SOL amount the user is about to bet, initialized to 0
 
-    // Function to generate chart data based on the prediction center
-    const generateChartData = (centerValue) => {
-      // Small numbers for payout: max payout $250
-      const maxPayout = 250;
-      // Range is 0-5, so total range is 5 units.
-      // Payout drops by 50 for every 0.1 difference, or 500 for every 1 unit difference.
-      const payoutDropPerUnit = 500; // Payout drops by $500 for every 1 unit difference (e.g., 2.5 vs 3.5)
+    // DOM elements for chart and slider info
+    let payoutChart; // Declare chart globally to be accessible
 
-      return Array.from({length: 501}, (_, i) => { // 501 points for 0 to 5 with 0.01 step
-        const actualValue = i / 100; // Convert index to a value between 0.00 and 5.00
-        const difference = Math.abs(actualValue - centerValue);
-        return Math.max(0, maxPayout - difference * payoutDropPerUnit);
-      });
-    };
+    document.addEventListener('DOMContentLoaded', () => {
+      const ctx = document.getElementById('payoutChart').getContext('2d');
+      const predictedValueDisplay = document.getElementById('predictedValueDisplay');
+      const potentialPayoutDisplay = document.getElementById('potentialPayoutDisplay');
+      const predictionSlider = document.getElementById('predictionSlider');
 
-    const initialPrediction = 2.50; // Initial center of the payout curve for GDP growth
+      // Get DOM elements for modal
+      const betButtonMain = document.getElementById('betButtonMain');
+      const betModal = document.getElementById('betModal');
+      const closeModalButton = document.getElementById('closeModalButton');
+      const userSolBalanceDisplay = document.getElementById('userSolBalanceDisplay');
+      const currentBetAmountDisplay = document.getElementById('currentBetAmountDisplay');
+      const betPercentButtons = document.querySelectorAll('.bet-percent-button');
+      const placeBetButton = document.getElementById('placeBetButton');
 
-    // Custom plugin for Chart.js to add glowing effect to the line
-    const glowPlugin = {
-        id: 'lineGlow',
-        beforeDraw: (chart) => {
-            const ctx = chart.ctx;
-            ctx.save();
-            ctx.shadowColor = 'rgba(255, 83, 140, 0.7)'; // Glow color
-            ctx.shadowBlur = 15; // Amount of blur
-            ctx.shadowOffsetX = 0;
-            ctx.shadowOffsetY = 0;
-            chart.data.datasets.forEach((dataset, i) => {
-                if (dataset.type === 'line') {
-                    ctx.stroke(chart.getDatasetMeta(i).path);
-                }
-            });
-            ctx.restore();
-        }
-    };
+      // Function to generate chart data based on the prediction center
+      // This function calculates payout for a "unit stake" (e.g., 1 SOL equivalent)
+      const generateChartData = (centerValue) => {
+        const maxPayoutPerUnit = 250; // Max payout in USD if 1 SOL (worth $100) were staked
+        const payoutDropPerUnit = 500; // Payout drops by $500 for every 1 unit difference (e.g., 2.5 vs 3.5)
 
-    // Custom plugin to draw a vertical line and a point at the predicted value
-    const predictionIndicatorPlugin = {
-        id: 'predictionIndicator',
-        afterDraw: (chart) => {
-            const ctx = chart.ctx;
-            const meta = chart.getDatasetMeta(0);
-            const data = chart.data.datasets[0].data;
-            const predictionValue = parseFloat(document.getElementById('predictionSlider').value);
-            const index = Math.round(predictionValue * 100); // Get the index corresponding to the prediction (for 0.01 step)
+        return Array.from({length: 501}, (_, i) => { // 501 points for 0 to 5 with 0.01 step
+          const actualValue = i / 100; // Convert index to a value between 0.00 and 5.00
+          const difference = Math.abs(actualValue - centerValue);
+          return Math.max(0, maxPayoutPerUnit - difference * payoutDropPerUnit);
+        });
+      };
 
-            if (index >= 0 && index < data.length) {
-                const x = meta.data[index].x;
-                const y = meta.data[index].y;
-                const payout = data[index];
+      const initialPrediction = 2.50; // Initial center of the payout curve for GDP growth
 
-                ctx.save();
+      // Custom plugin for Chart.js to add glowing effect to the line
+      const glowPlugin = {
+          id: 'lineGlow',
+          beforeDraw: (chart) => {
+              const ctx = chart.ctx;
+              ctx.save();
+              ctx.shadowColor = 'rgba(255, 83, 140, 0.7)'; // Glow color
+              ctx.shadowBlur = 15; // Amount of blur
+              ctx.shadowOffsetX = 0;
+              ctx.shadowOffsetY = 0;
+              chart.data.datasets.forEach((dataset, i) => {
+                  if (dataset.type === 'line') {
+                      ctx.stroke(chart.getDatasetMeta(i).path);
+                  }
+              });
+              ctx.restore();
+          }
+      };
 
-                // Draw vertical line
-                ctx.beginPath();
-                ctx.strokeStyle = '#8c53ff'; /* Contrasting color for the line */
-                ctx.lineWidth = 2;
-                ctx.setLineDash([5, 5]); /* Dashed line */
-                ctx.moveTo(x, chart.chartArea.bottom);
-                ctx.lineTo(x, y);
-                ctx.stroke();
+      // Custom plugin to draw a vertical line and a point at the predicted value
+      const predictionIndicatorPlugin = {
+          id: 'predictionIndicator',
+          afterDraw: (chart) => {
+              const ctx = chart.ctx;
+              const meta = chart.getDatasetMeta(0);
+              const data = chart.data.datasets[0].data;
+              const predictionValue = parseFloat(document.getElementById('predictionSlider').value);
+              const index = Math.round(predictionValue * 100); // Get the index corresponding to the prediction (for 0.01 step)
 
-                // Draw glowing point
-                ctx.beginPath();
-                ctx.arc(x, y, 8, 0, 2 * Math.PI); /* Circle radius */
-                ctx.fillStyle = '#8c53ff'; /* Point color */
-                ctx.shadowColor = '#8c53ff'; /* Glow for the point */
-                ctx.shadowBlur = 10;
-                ctx.fill();
+              if (index >= 0 && index < data.length) {
+                  const x = meta.data[index].x;
+                  const y = meta.data[index].y;
+                  const payoutForUnit = data[index]; // Payout if 1 SOL were staked
 
-                // Draw label for the point
-                ctx.fillStyle = '#e7e9ea';
-                ctx.font = 'bold 12px "Orbitron", sans-serif';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'bottom';
-                ctx.fillText(`$${payout.toFixed(2)}`, x, y - 15); /* Payout amount */
-                ctx.setLineDash([]); /* Reset line dash */
+                  ctx.save();
 
-                ctx.restore();
-            }
-        }
-    };
+                  // Draw vertical line
+                  ctx.beginPath();
+                  ctx.strokeStyle = '#8c53ff'; /* Contrasting color for the line */
+                  ctx.lineWidth = 2;
+                  ctx.setLineDash([5, 5]); /* Dashed line */
+                  ctx.moveTo(x, chart.chartArea.bottom);
+                  ctx.lineTo(x, y);
+                  ctx.stroke();
+
+                  // Draw glowing point
+                  ctx.beginPath();
+                  ctx.arc(x, y, 8, 0, 2 * Math.PI); /* Circle radius */
+                  ctx.fillStyle = '#8c53ff'; /* Point color */
+                  ctx.shadowColor = '#8c53ff'; /* Glow for the point */
+                  ctx.shadowBlur = 10;
+                  ctx.fill();
+
+                  // Draw label for the point
+                  ctx.fillStyle = '#e7e9ea';
+                  ctx.font = 'bold 12px "Orbitron", sans-serif';
+                  ctx.textAlign = 'center';
+                  ctx.textBaseline = 'bottom';
+                  // Display payout based on currentBetAmount (if set) or for 1 SOL stake (default)
+                  const stakeForDisplay = currentBetAmount > 0 ? currentBetAmount : 1;
+                  const displayPayout = (payoutForUnit * stakeForDisplay).toFixed(2);
+                  ctx.fillText(`$${displayPayout}`, x, y - 15);
+                  ctx.setLineDash([]); /* Reset line dash */
+
+                  ctx.restore();
+              }
+          }
+      };
 
 
-    // Register the custom plugins
-    Chart.register(glowPlugin, predictionIndicatorPlugin);
+      // Register the custom plugins
+      Chart.register(glowPlugin, predictionIndicatorPlugin);
 
-    // Create the Chart.js instance
-    const payoutChart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: Array.from({length: 501}, (_, i) => (i / 100).toFixed(2)), /* Labels for 0.00 to 5.00 */
-        datasets: [{
-          label: 'Potential Payout ($)',
-          data: generateChartData(initialPrediction),
-          borderColor: '#ff538c', /* Line color */
-          backgroundColor: (context) => { /* Gradient background */
-            const chart = context.chart;
-            const {ctx, chartArea} = chart;
-            if (!chartArea) {
-              return null;
-            }
-            const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
-            gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
-            gradient.addColorStop(0.5, 'rgba(255, 83, 140, 0.2)');
-            gradient.addColorStop(1, 'rgba(255, 83, 140, 0.4)');
-            return gradient;
-          },
-          tension: 0.4,
-          fill: true,
-          pointRadius: 0,
-          pointHitRadius: 10,
-          borderWidth: 3,
-          cubicInterpolationMode: 'monotone',
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: {
-            duration: 500, /* Faster animation for snappier feel */
-            easing: 'easeOutQuad', /* Smoother easing function */
+      // Create the Chart.js instance
+      payoutChart = new Chart(ctx, { // Assign to globally declared payoutChart
+        type: 'line',
+        data: {
+          labels: Array.from({length: 501}, (_, i) => (i / 100).toFixed(2)), /* Labels for 0.00 to 5.00 */
+          datasets: [{
+            label: 'Potential Payout ($)',
+            data: generateChartData(initialPrediction),
+            borderColor: '#ff538c', /* Line color */
+            backgroundColor: (context) => { /* Gradient background */
+              const chart = context.chart;
+              const {ctx, chartArea} = chart;
+              if (!chartArea) {
+                return null;
+              }
+              const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+              gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+              gradient.addColorStop(0.5, 'rgba(255, 83, 140, 0.2)');
+              gradient.addColorStop(1, 'rgba(255, 83, 140, 0.4)');
+              return gradient;
+            },
+            tension: 0.4,
+            fill: true,
+            pointRadius: 0,
+            pointHitRadius: 10,
+            borderWidth: 3,
+            cubicInterpolationMode: 'monotone',
+          }]
         },
-        plugins: {
-            legend: {
-                display: false
-            },
-            tooltip: {
-                mode: 'index',
-                intersect: false,
-                backgroundColor: 'rgba(255, 83, 140, 0.8)',
-                titleFont: {
-                    family: 'Orbitron',
-                    size: 14,
-                    weight: 'bold'
-                },
-                bodyFont: {
-                    family: 'Audiowide',
-                    size: 12
-                },
-                callbacks: {
-                    title: function(tooltipItems) {
-                        return `Actual: ${tooltipItems[0].label}%`;
-                    },
-                    label: function(tooltipItem) {
-                        return `${tooltipItem.dataset.label}: $${tooltipItem.parsed.y.toFixed(2)}`;
-                    }
-                }
-            }
-        },
-        scales: {
-          x: {
-            title: {
-              display: true,
-              text: 'Actual GDP Growth Rate (%)', /* Updated title */
-              color: '#ff538c',
-              font: { family: 'Orbitron', size: 14, weight: 'bold' }
-            },
-            grid: {
-                color: 'rgba(255,255,255,0.1)',
-                drawBorder: false
-            },
-            ticks: {
-                color: '#e7e9ea',
-                font: { family: 'Audiowide' }
-            }
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: {
+              duration: 500, /* Faster animation for snappier feel */
+              easing: 'easeOutQuad', /* Smoother easing function */
           },
-          y: {
-            title: {
-              display: true,
-              text: 'Potential Payout ($)', /* Clarified title */
-              color: '#ff538c',
-              font: { family: 'Orbitron', size: 14, weight: 'bold' }
+          plugins: {
+              legend: {
+                  display: false
+              },
+              tooltip: {
+                  mode: 'index',
+                  intersect: false,
+                  backgroundColor: 'rgba(255, 83, 140, 0.8)',
+                  titleFont: {
+                      family: 'Orbitron',
+                      size: 14,
+                      weight: 'bold'
+                  },
+                  bodyFont: {
+                      family: 'Audiowide',
+                      size: 12
+                  },
+                  callbacks: {
+                      title: function(tooltipItems) {
+                          return `Actual: ${tooltipItems[0].label}%`;
+                      },
+                      label: function(tooltipItem) {
+                          // Tooltip should always show payout for 1 SOL for consistency
+                          return `${tooltipItem.dataset.label}: $${tooltipItem.parsed.y.toFixed(2)} (per 1 SOL stake)`;
+                      }
+                  }
+              }
+          },
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: 'Actual GDP Growth Rate (%)', /* Updated title */
+                color: '#ff538c',
+                font: { family: 'Orbitron', size: 14, weight: 'bold' }
+              },
+              grid: {
+                  color: 'rgba(255,255,255,0.1)',
+                  drawBorder: false
+              },
+              ticks: {
+                  color: '#e7e9ea',
+                  font: { family: 'Audiowide' }
+              }
             },
-            beginAtZero: true,
-            grid: {
-                color: 'rgba(255,255,255,0.1)',
-                drawBorder: false
-            },
-            ticks: {
-                color: '#e7e9ea',
-                font: { family: 'Audiowide' },
-                callback: function(value) {
-                    return '$' + value; /* Add dollar sign to y-axis ticks */
-                }
+            y: {
+              title: {
+                display: true,
+                text: 'Potential Payout ($)', /* Clarified title */
+                color: '#ff538c',
+                font: { family: 'Orbitron', size: 14, weight: 'bold' }
+              },
+              beginAtZero: true,
+              grid: {
+                  color: 'rgba(255,255,255,0.1)',
+                  drawBorder: false
+              },
+              ticks: {
+                  color: '#e7e9ea',
+                  font: { family: 'Audiowide' },
+                  callback: function(value) {
+                      return '$' + value; /* Add dollar sign to y-axis ticks */
+                  }
+              }
             }
           }
         }
-      }
+      });
+
+      // Function to update the SOL balance display (includes USD value)
+      const updateSolBalanceDisplay = () => {
+        userSolBalanceDisplay.textContent = `${userSolBalance.toFixed(2)} SOL ($${(userSolBalance * SOL_USD_RATE).toFixed(2)})`;
+      };
+
+      // Function to update the current bet amount display (includes USD value)
+      const updateCurrentBetAmountDisplay = () => {
+          currentBetAmountDisplay.textContent = `${currentBetAmount.toFixed(2)} SOL ($${(currentBetAmount * SOL_USD_RATE).toFixed(2)})`;
+      };
+
+
+      // Function to open the modal
+      betButtonMain.addEventListener('click', () => {
+        updateSolBalanceDisplay(); // Refresh balance when modal opens
+        currentBetAmount = 0; // Reset current bet when opening
+        updateCurrentBetAmountDisplay(); // Clear bet display
+        betPercentButtons.forEach(btn => btn.classList.remove('active')); // Deactivate all percent buttons
+        betModal.classList.add('show');
+      });
+
+      // Function to close the modal
+      closeModalButton.addEventListener('click', () => {
+        betModal.classList.remove('show');
+      });
+
+      // Close modal when clicking outside
+      betModal.addEventListener('click', (e) => {
+        if (e.target === betModal) {
+          betModal.classList.remove('show');
+        }
+      });
+
+      // Handle percentage button clicks
+      betPercentButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          // Deactivate previous active button
+          betPercentButtons.forEach(btn => btn.classList.remove('active'));
+          // Activate current button
+          button.classList.add('active');
+
+          const percent = parseFloat(button.dataset.percent);
+          currentBetAmount = userSolBalance * percent;
+          updateCurrentBetAmountDisplay();
+        });
+      });
+
+      // Handle "Place Bet" button click inside modal
+      placeBetButton.addEventListener('click', () => {
+        if (currentBetAmount <= 0) {
+          window.alert("Please select a bet amount.");
+          return;
+        }
+        if (currentBetAmount > userSolBalance) {
+          window.alert("Insufficient SOL balance.");
+          return;
+        }
+
+        // Deduct bet amount from user's balance
+        userSolBalance -= currentBetAmount;
+        updateSolBalanceDisplay();
+
+        // Calculate potential payout based on the *current slider prediction* and *staked amount*
+        const currentSliderValue = parseFloat(document.getElementById('predictionSlider').value);
+        const payoutPerUnitStake = generateChartData(currentSliderValue)[Math.round(currentSliderValue * 100)];
+        const finalPotentialPayout = payoutPerUnitStake * currentBetAmount;
+
+        potentialPayoutDisplay.textContent = `Potential Payout: $${finalPotentialPayout.toFixed(2)} (from ${currentBetAmount.toFixed(2)} SOL bet)`;
+        
+        betModal.classList.remove('show'); // Close modal after placing bet
+        window.alert(`Bet of ${currentBetAmount.toFixed(2)} SOL placed! Potential Payout: $${finalPotentialPayout.toFixed(2)}`); // Confirmation message
+        
+        // Update the chart and slider display to reflect the new bet amount immediately
+        updateSliderAndChart(currentSliderValue);
+      });
+
+      // Function to update the slider info and chart
+      const updateSliderAndChart = (value) => {
+          // The chart always shows payout for a unit stake (e.g., 1 SOL)
+          const payoutAtPredictionForUnit = generateChartData(value)[Math.round(value * 100)];
+
+          predictedValueDisplay.textContent = `Predicted: ${value.toFixed(2)}%`;
+          
+          // If a bet has been set, reflect that in the potential payout display, otherwise show default for 1 SOL
+          if (currentBetAmount > 0) {
+              potentialPayoutDisplay.textContent = `Potential Payout: $${(payoutAtPredictionForUnit * currentBetAmount).toFixed(2)} (from ${currentBetAmount.toFixed(2)} SOL bet)`;
+          } else {
+              // Default display when no bet is placed yet (show payout for 1 SOL stake)
+              potentialPayoutDisplay.textContent = `Potential Payout: $${payoutAtPredictionForUnit.toFixed(2)} (per 1 SOL stake)`;
+          }
+
+          payoutChart.data.datasets[0].data = generateChartData(value);
+          payoutChart.update();
+      };
+
+      // Initial update to ensure the chart and display reflect a default state
+      updateSliderAndChart(parseFloat(predictionSlider.value));
     });
-
-    // Function to update the slider info and chart
-    const updateSliderAndChart = (value) => {
-      const payoutAtPrediction = generateChartData(value)[Math.round(value * 100)];
-
-      predictedValueDisplay.textContent = `Predicted: ${value.toFixed(2)}%`; /* Display with two decimal places */
-      potentialPayoutDisplay.textContent = `Potential Payout: $${payoutAtPrediction.toFixed(2)}`;
-
-      payoutChart.data.datasets[0].data = generateChartData(value);
-      payoutChart.update();
-    };
-
-    // Event listener for the prediction slider
-    const predictionSlider = document.getElementById('predictionSlider');
-    predictionSlider.addEventListener('input', function(e) {
-      const value = parseFloat(e.target.value);
-      updateSliderAndChart(value);
-    });
-
-    // Initialize slider info display on page load
-    updateSliderAndChart(parseFloat(predictionSlider.value));
   </script>
 </body>
 </html>
