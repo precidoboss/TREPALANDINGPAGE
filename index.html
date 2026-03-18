@@ -1,1023 +1,1512 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Trepa – Precision Predictions</title>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Audiowide&display=swap" rel="stylesheet"/>
-  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/howler"></script>
-  <style>
-    /* Global Styles & Reset */
-    :root { scroll-behavior: smooth; }
-    body {
-      margin: 0;
-      font-family: 'Audiowide', sans-serif;
-      background: radial-gradient(circle at 30% 20%, #ff538c22, transparent 60%),
-                  radial-gradient(circle at 80% 60%, #ff538c11, transparent 70%), #000;
-      color: #e7e9ea;
-      overflow-x: hidden; /* Prevent horizontal scrolling on mobile */
-      position: relative; /* Needed for positioning video overlay and coins */
-    }
-    h1, h2, h3 {
-      font-family: 'Orbitron', sans-serif;
-      color: #ff538c;
-      text-shadow: 0 0 10px #ff538c88;
-    }
-    p {
-      line-height: 1.6;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>POLYBIUS — THE VOID</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=VT323&display=swap');
+:root{
+  --green:#00ff41;--green-dim:#00aa2a;--green-dark:#003310;
+  --green-glow:rgba(0,255,65,0.15);--amber:#ffaa00;--red:#ff2020;
+  --corrupt:#7700ff;--blue:#00aaff;--cyan:#00ffee;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#000;color:var(--green);font-family:'Share Tech Mono',monospace;overflow:hidden;width:100vw;height:100vh;cursor:none;}
 
-    /* Call to Action Button Styles */
-    .cta-button {
-      background-color: #ff538c;
-      color: #000;
-      border: none;
-      padding: 14px 28px;
-      font-size: 1.2em;
-      border-radius: 10px;
-      cursor: pointer;
-      font-family: 'Orbitron', sans-serif;
-      box-shadow: 0 0 15px #ff538c;
-      transition: all 0.3s ease-in-out;
-    }
-    .cta-button:hover {
-        background-color: #ff7aa5;
-        box-shadow: 0 0 25px #ff7aa5;
-        transform: translateY(-2px);
-    }
+/* CURSOR */
+#cursor{position:fixed;width:22px;height:22px;border:1px solid var(--green);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:width .1s,height .1s,border-color .1s;}
+#cursor::before,#cursor::after{content:'';position:absolute;background:var(--green);}
+#cursor::before{width:1px;height:8px;left:50%;top:50%;transform:translate(-50%,-50%);}
+#cursor::after{width:8px;height:1px;left:50%;top:50%;transform:translate(-50%,-50%);}
+#cursor.locked{border-color:var(--amber);box-shadow:0 0 14px var(--amber);width:38px;height:38px;}
+#cursor.locked::before,#cursor.locked::after{background:var(--amber);}
+#cursor.legendary{border-color:#ff00ff;box-shadow:0 0 20px #ff00ff,0 0 40px rgba(255,0,255,.4);width:44px;height:44px;animation:legendPulse .6s infinite;}
+@keyframes legendPulse{0%,100%{box-shadow:0 0 20px #ff00ff,0 0 40px rgba(255,0,255,.4)}50%{box-shadow:0 0 35px #ff00ff,0 0 70px rgba(255,0,255,.6)}}
 
-    /* Section Layout */
-    section {
-      padding: 60px 20px;
-      max-width: 1000px;
-      margin: auto;
-      position: relative;
-      z-index: 1; /* Ensure sections are above video background */
-    }
+/* CANVAS */
+#voidCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;}
 
-    /* Chart and Slider Container Styles */
-    .chart-container, .slider-box {
-      background: rgba(255,255,255,0.03);
-      padding: 30px;
-      border-radius: 10px;
-      margin-top: 20px;
-      box-shadow: 0 0 20px rgba(255, 83, 140, 0.2); /* Soft glow */
-      overflow: hidden; /* Prevent content overflow */
-    }
+/* SCANLINES */
+#scanlines{position:fixed;top:0;left:0;width:100%;height:100%;z-index:11;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.06) 2px,rgba(0,0,0,.06) 4px);
+  animation:scanScroll 10s linear infinite;opacity:0;transition:opacity .4s ease;}
+@keyframes scanScroll{from{background-position:0 0}to{background-position:0 100px}}
 
-    /* Range Input (Slider) Styles */
-    input[type="range"] {
-      width: 100%;
-      margin-top: 20px;
-      -webkit-appearance: none; /* Remove default styling */
-      background: transparent; /* Hide default track */
-      cursor: pointer;
-    }
-    input[type="range"]::-webkit-slider-runnable-track {
-      width: 100%;
-      height: 8px;
-      background: linear-gradient(to right, #ff538c, #8c53ff); /* Gradient track */
-      border-radius: 5px;
-      box-shadow: 0 0 5px rgba(255,83,140,0.5);
-    }
-    input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      border: 2px solid #fff;
-      height: 20px;
-      width: 20px;
-      border-radius: 50%;
-      background: #ff538c;
-      cursor: grab;
-      margin-top: -6px; /* Center thumb vertically */
-      box-shadow: 0 0 10px #ff538c;
-      transition: background 0.3s, box-shadow 0.3s;
-    }
-    input[type="range"]::-webkit-slider-thumb:active {
-        cursor: grabbing;
-        box-shadow: 0 0 15px #ff538c, 0 0 25px #ff7aa5;
-        background: #ff7aa5;
-    }
+/* GOGGLE FRAME */
+#goggleFrame{position:fixed;top:0;left:0;width:100%;height:100%;z-index:20;pointer-events:none;opacity:0;transition:opacity .4s ease;}
 
-    /* Footer Styles */
-    footer {
-      text-align: center;
-      padding: 40px 20px;
-      background: #000;
-      position: relative; z-index: 1; /* Ensure footer is above video */
-    }
+/* RADAR */
+#radarHud{position:fixed;bottom:70px;left:90px;width:170px;height:170px;z-index:30;border-radius:50%;
+  border:2px solid var(--green-dim);
+  background:radial-gradient(circle,rgba(0,30,10,.92) 0%,rgba(0,5,2,.98) 100%);
+  box-shadow:0 0 25px var(--green-glow),inset 0 0 25px rgba(0,0,0,.5);overflow:hidden;
+  opacity:0;transition:opacity .4s ease;}
+#radarCanvas{width:100%;height:100%;}
 
-    /* Email Capture Section Styles */
-    .email-section {
-      background: rgba(255,83,140,0.05);
-      padding: 40px 20px;
-      text-align: center;
-      border-radius: 10px;
-      box-shadow: 0 0 20px rgba(255, 83, 140, 0.2);
-      position: relative; z-index: 1; /* Ensure section is above video */
-    }
-    .email-section input[type="email"] {
-      padding: 12px;
-      width: 80%;
-      max-width: 400px;
-      margin: 10px auto; /* Centering for input */
-      display: block; /* Make it a block element for margin auto */
-      background: #000;
-      border: 1px solid #ff538c;
-      border-radius: 8px;
-      color: #fff;
-      outline: none;
-      transition: border-color 0.3s, box-shadow 0.3s;
-    }
-    .email-section input[type="email"]:focus {
-        border-color: #ff7aa5;
-        box-shadow: 0 0 10px rgba(255,83,140,0.5);
-    }
+/* SCAN HUD */
+#scanHud{position:fixed;bottom:70px;right:90px;width:210px;z-index:30;
+  border:1px solid var(--green-dim);background:rgba(0,8,2,.93);
+  box-shadow:0 0 25px var(--green-glow);padding:14px;font-family:'VT323',monospace;font-size:15px;line-height:1.7;
+  opacity:0;transition:opacity .4s ease;}
+#scanHud .hud-title{font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:3px;color:var(--green-dim);
+  border-bottom:1px solid var(--green-dark);padding-bottom:6px;margin-bottom:9px;}
+#scanHud .hud-row{display:flex;justify-content:space-between;margin:2px 0;}
+#scanHud .hud-label{color:var(--green-dim);font-size:13px;}
+#scanHud .hud-val{color:var(--green);font-size:15px;}
+#scanHud .hud-val.unknown{color:#2a2a2a;}
+#scanHud .hud-val.corrupt{color:var(--corrupt);animation:flicker .3s infinite;}
+#scanHud .hud-val.danger{color:var(--red);}
 
-    /* Trepa Logo Styles */
-    .trepa-logo {
-      display: block;
-      margin: 30px auto;
-      width: 80px;
-      filter: drop-shadow(0 0 10px #ff538c);
-      z-index: 10; /* Ensure logo is above other content */
-      position: relative;
-    }
+/* SCAN PROGRESS */
+#scanProgressWrap{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:40;display:none;flex-direction:column;align-items:center;gap:12px;}
+#scanTarget{font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:4px;color:var(--amber);text-transform:uppercase;animation:flicker 2s infinite;}
+#scanRingOuter{width:130px;height:130px;border-radius:50%;border:2px solid var(--amber);
+  box-shadow:0 0 25px var(--amber),inset 0 0 25px rgba(255,170,0,.1);
+  display:flex;align-items:center;justify-content:center;position:relative;animation:rotateSlow 2s linear infinite;}
+@keyframes rotateSlow{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+#scanRingInner{width:86px;height:86px;border-radius:50%;border:1px dashed var(--amber);
+  display:flex;align-items:center;justify-content:center;animation:rotateSlow 1s linear infinite reverse;position:relative;}
+#scanPct{font-family:'VT323',monospace;font-size:34px;color:var(--amber);position:absolute;animation:counterSpin 2s linear infinite;}
+@keyframes counterSpin{from{transform:rotate(0deg)}to{transform:rotate(-360deg)}}
+#scanBarWrap{width:210px;height:6px;background:var(--green-dark);border:1px solid var(--green-dim);overflow:hidden;}
+#scanBar{height:100%;width:0%;background:var(--amber);box-shadow:0 0 8px var(--amber);transition:width .08s linear;}
+#scanAction{font-family:'VT323',monospace;font-size:18px;color:var(--green-dim);letter-spacing:2px;}
 
-    /* Falling Coin Animation */
-    .coin {
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      background: url('https://img.icons8.com/emoji/48/coin-emoji.png') no-repeat center/cover;
-      animation: fall 10s linear infinite;
-      opacity: 0.8;
-      z-index: -1; /* Ensure coins are behind content but above video */
-    }
-    @keyframes fall {
-      0% { top: -10%; transform: translateX(0) rotate(0deg); }
-      25% { transform: translateX(20px) rotate(90deg); }
-      50% { transform: translateX(-20px) rotate(180deg); }
-      75% { transform: translateX(10px) rotate(270deg); }
-      100% { top: 110%; transform: translateX(0) rotate(360deg); }
-    }
+/* GRAB BTN */
+#grabBtn{display:none;position:fixed;bottom:270px;left:50%;transform:translateX(-50%);z-index:50;
+  font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:var(--red);
+  border:1px solid var(--red);background:rgba(255,20,20,.08);padding:9px 22px;cursor:pointer;
+  box-shadow:0 0 10px rgba(255,20,20,.3);animation:pulseRed 1.5s infinite;}
+#grabBtn:hover{background:rgba(255,20,20,.2);box-shadow:0 0 22px rgba(255,20,20,.6);}
+@keyframes pulseRed{0%,100%{box-shadow:0 0 10px rgba(255,20,20,.3)}50%{box-shadow:0 0 22px rgba(255,20,20,.7)}}
 
-    /* Video Background Styles */
-    .video-background {
-        position: fixed; /* Use fixed to keep it in the background */
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        overflow: hidden;
-        z-index: -2; /* Behind everything else */
-    }
-    .video-background video {
-        min-width: 100%;
-        min-height: 100%;
-        width: auto;
-        height: auto;
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        object-fit: cover; /* Ensure it covers the entire area */
-        filter: brightness(0.5); /* Dim the video to make text more readable */
-    }
+/* STREAK DISPLAY */
+#streakDisplay{position:fixed;top:70px;left:90px;z-index:30;font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;color:var(--green-dim);}
+#streakDisplay .streak-val{font-size:26px;color:var(--amber);display:block;font-weight:700;text-shadow:0 0 10px var(--amber);}
+#streakDisplay.hot .streak-val{animation:streakPulse .5s infinite;}
+@keyframes streakPulse{0%,100%{text-shadow:0 0 10px var(--amber),0 0 20px var(--amber)}50%{text-shadow:0 0 20px #ff6600,0 0 40px #ff6600}}
 
-    /* Navigation Bar Styles */
-    .navbar {
-        position: sticky;
-        top: 0;
-        width: 100%;
-        background: rgba(0, 0, 0, 0.8);
-        padding: 15px 20px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        z-index: 100;
-        box-shadow: 0 2px 10px rgba(255, 83, 140, 0.1);
-        backdrop-filter: blur(5px);
-    }
-    .nav-logo {
-        height: 40px;
-        filter: drop-shadow(0 0 5px #ff538c);
-    }
-    .hamburger {
-        display: none; /* Hidden by default for desktop */
-        flex-direction: column;
-        cursor: pointer;
-        padding: 10px;
-    }
-    .hamburger span {
-        height: 3px;
-        width: 25px;
-        background-color: #ff538c;
-        margin-bottom: 5px;
-        border-radius: 5px;
-        transition: all 0.3s ease;
-    }
-    .hamburger.open span:nth-child(1) {
-        transform: rotate(45deg) translate(5px, 5px);
-    }
-    .hamburger.open span:nth-child(2) {
-        opacity: 0;
-    }
-    .hamburger.open span:nth-child(3) {
-        transform: rotate(-45deg) translate(5px, -5px);
-    }
-    .nav-links {
-        list-style: none;
-        margin: 0;
-        padding: 0;
-        display: flex;
-    }
-    .nav-links li {
-        margin-left: 30px;
-    }
-    .nav-links a {
-        color: #e7e9ea;
-        text-decoration: none;
-        font-family: 'Orbitron', sans-serif;
-        font-size: 1.1em;
-        transition: color 0.3s, text-shadow 0.3s;
-    }
-    .nav-links a:hover {
-        color: #ff538c;
-        text-shadow: 0 0 8px #ff538c;
-    }
+/* SCORE */
+#scoreDisplay{position:fixed;top:70px;right:90px;z-index:30;font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;color:var(--green-dim);text-align:right;}
+#scoreDisplay .score-val{font-size:26px;color:var(--green);display:block;font-weight:700;}
 
-    /* Slider info display */
-    .slider-info {
-        display: flex;
-        justify-content: space-between;
-        align-items: center; /* Align items vertically */
-        margin-top: 10px;
-        font-family: 'Orbitron', sans-serif;
-        color: #e7e9ea;
-        font-size: 1.1em;
-        text-shadow: 0 0 5px rgba(255, 83, 140, 0.5);
-    }
-    .slider-info span {
-        background: rgba(255, 83, 140, 0.1);
-        padding: 5px 10px;
-        border-radius: 5px;
-    }
-    .bet-button-main { /* Style for the new bet button */
-        background-color: #8c53ff; /* A different color for distinction */
-        color: #fff;
-        border: none;
-        padding: 8px 15px;
-        font-size: 0.9em;
-        border-radius: 8px;
-        cursor: pointer;
-        font-family: 'Orbitron', sans-serif;
-        box-shadow: 0 0 10px #8c53ff88;
-        transition: all 0.3s ease-in-out;
-        margin-left: 15px; /* Spacing from predicted value */
-    }
-    .bet-button-main:hover {
-        background-color: #a57aff;
-        box-shadow: 0 0 15px #a57aff;
-        transform: translateY(-1px);
-    }
+/* TOP HUD */
+#topHud{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:30;display:flex;gap:30px;
+  font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:3px;color:var(--green-dim);
+  border:1px solid var(--green-dark);padding:8px 28px;background:rgba(0,8,2,.75);}
+#topHud span{color:var(--green);}
 
-    /* Stats Section */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 20px;
-      margin-top: 30px;
-      text-align: center;
-    }
-    .stat-item {
-      background: rgba(255,255,255,0.05);
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 15px rgba(255, 83, 140, 0.1);
-    }
-    .stat-item .number {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 2.5em;
-      color: #ff538c;
-      text-shadow: 0 0 10px #ff538c;
-      margin-bottom: 5px;
-    }
-    .stat-item .label {
-      font-size: 0.9em;
-      opacity: 0.8;
-    }
+/* MOVE INDICATOR */
+#moveHud{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);z-index:30;
+  font-family:'VT323',monospace;font-size:13px;color:rgba(0,255,65,.3);letter-spacing:2px;text-align:center;}
+#moveHud .key-row{display:flex;gap:4px;justify-content:center;margin:2px 0;}
+.key-btn{width:22px;height:22px;border:1px solid rgba(0,255,65,.25);display:flex;align-items:center;justify-content:center;font-size:11px;background:rgba(0,20,5,.5);}
+.key-btn.active{border-color:var(--green);color:var(--green);background:rgba(0,255,65,.1);box-shadow:0 0 6px var(--green);}
 
-    /* Testimonials Section */
-    .testimonials-container {
-      margin-top: 40px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-      justify-content: center;
-    }
-    .testimonial-card {
-      background: rgba(255,255,255,0.05);
-      padding: 25px;
-      border-radius: 10px;
-      box-shadow: 0 0 15px rgba(255, 83, 140, 0.1);
-      flex: 1;
-      min-width: 280px;
-      max-width: 32%; /* Approx for 3 columns */
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-    .testimonial-card p {
-      font-size: 0.95em;
-      line-height: 1.5;
-      margin-bottom: 15px;
-      font-style: italic;
-    }
-    .testimonial-card .author {
-      font-family: 'Orbitron', sans-serif;
-      color: #ff538c;
-      font-size: 1em;
-      text-align: right;
-    }
+/* VOID WHISPER */
+#voidWhisper{position:fixed;bottom:36px;left:50%;transform:translateX(-50%);z-index:30;
+  font-family:'VT323',monospace;font-size:15px;color:rgba(0,255,65,.25);letter-spacing:4px;
+  text-align:center;pointer-events:none;transition:opacity 1.2s;opacity:0;white-space:nowrap;}
 
-    /* Modal Styles */
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0, 0, 0, 0.7);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity 0.3s ease, visibility 0.3s ease;
-    }
+/* LEGENDARY ALERT */
+#legendaryAlert{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:60;
+  font-family:'Orbitron',sans-serif;font-size:13px;letter-spacing:5px;color:#ff00ff;
+  text-shadow:0 0 20px #ff00ff,0 0 40px rgba(255,0,255,.5);text-align:center;pointer-events:none;}
+#legendaryAlert.show{display:block;animation:legendFlash 2s forwards;}
+@keyframes legendFlash{0%{opacity:0;transform:translate(-50%,-50%) scale(.5)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(.9)}}
 
-    .modal-overlay.show {
-      opacity: 1;
-      visibility: visible;
-    }
+/* REVEAL MODAL */
+#revealModal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;z-index:100;
+  background:rgba(0,0,0,.9);align-items:center;justify-content:center;flex-direction:column;gap:16px;}
+#revealModal.show{display:flex;}
+#revealCard{width:340px;border:1px solid var(--green);background:rgba(0,8,2,.98);
+  box-shadow:0 0 50px var(--green-glow),0 0 100px rgba(0,255,65,.04);padding:28px;position:relative;overflow:hidden;}
+#revealCard.legendary-card{border-color:#ff00ff;box-shadow:0 0 50px rgba(255,0,255,.3),0 0 100px rgba(255,0,255,.1);}
+#revealCard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--green),transparent);animation:scanH 2s linear infinite;}
+#revealCard.legendary-card::before{background:linear-gradient(90deg,transparent,#ff00ff,transparent);}
+@keyframes scanH{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+.reveal-header{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:4px;color:var(--green-dim);margin-bottom:16px;text-align:center;}
+.reveal-dcu-name{font-family:'VT323',monospace;font-size:38px;color:var(--green);text-align:center;margin-bottom:5px;text-shadow:0 0 20px var(--green);}
+.reveal-dcu-name.corrupt{color:var(--corrupt);text-shadow:0 0 20px var(--corrupt);animation:glitch .5s infinite;}
+.reveal-dcu-name.negative{color:var(--red);text-shadow:0 0 20px var(--red);}
+.reveal-dcu-name.rare{color:var(--amber);text-shadow:0 0 20px var(--amber);}
+.reveal-dcu-name.legendary-glow{color:#ff00ff;text-shadow:0 0 30px #ff00ff,0 0 60px rgba(255,0,255,.4);animation:glitch .8s infinite;}
+.reveal-type{font-family:'Share Tech Mono',monospace;font-size:10px;text-align:center;color:var(--green-dim);margin-bottom:20px;letter-spacing:2px;}
+.reveal-attrs{display:flex;flex-direction:column;gap:7px;margin-bottom:20px;}
+.reveal-attr{display:flex;justify-content:space-between;border-bottom:1px solid var(--green-dark);padding-bottom:5px;}
+.reveal-attr-label{font-size:11px;color:#444;font-family:'Share Tech Mono',monospace;}
+.reveal-attr-val{font-size:15px;font-family:'VT323',monospace;}
+.reveal-attr-val.positive{color:var(--green);}
+.reveal-attr-val.negative{color:var(--red);}
+.reveal-attr-val.rare{color:var(--amber);text-shadow:0 0 6px var(--amber);}
+.reveal-attr-val.corrupt{color:var(--corrupt);animation:flicker .4s infinite;}
+.reveal-attr-val.legendary{color:#ff00ff;text-shadow:0 0 8px #ff00ff;}
+.reveal-desc{font-family:'VT323',monospace;font-size:16px;color:var(--green-dim);line-height:1.5;text-align:center;margin-bottom:18px;min-height:48px;}
+.streak-bonus-line{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;color:var(--amber);text-align:center;margin-bottom:10px;}
+#revealScore{font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:3px;text-align:center;padding:10px;border:1px solid var(--green-dim);margin-bottom:18px;}
+#revealScore.positive{color:var(--green);border-color:var(--green);}
+#revealScore.negative{color:var(--red);border-color:var(--red);}
+#continueBtn{width:100%;font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:3px;color:var(--green);border:1px solid var(--green);background:transparent;padding:12px;cursor:pointer;transition:all .2s;}
+#continueBtn:hover{background:var(--green-glow);box-shadow:0 0 20px var(--green-glow);}
 
-    .modal-content {
-      background: #0d0d0d;
-      padding: 40px;
-      border-radius: 15px;
-      box-shadow: 0 0 30px rgba(255, 83, 140, 0.5);
-      text-align: center;
-      position: relative;
-      width: 90%;
-      max-width: 450px;
-      animation: modalPopIn 0.3s ease-out forwards;
-      border: 1px solid #ff538c;
-      color: #e7e9ea; /* Ensure modal text is readable */
-    }
+/* CORRUPT OVERLAY */
+#corruptOverlay{position:fixed;top:0;left:0;width:100%;height:100%;z-index:90;pointer-events:none;opacity:0;
+  background:repeating-linear-gradient(90deg,rgba(119,0,255,.04) 0px,transparent 2px,transparent 20px,rgba(119,0,255,.04) 22px);
+  transition:opacity .15s;}
+#corruptOverlay.active{opacity:1;animation:corruptShake .15s infinite;}
+@keyframes corruptShake{0%{transform:translate(0)}25%{transform:translate(-3px,1px)}75%{transform:translate(3px,-1px)}100%{transform:translate(0)}}
 
-    @keyframes modalPopIn {
-        from {
-            transform: scale(0.9) translateY(20px);
-            opacity: 0;
-        }
-        to {
-            transform: scale(1) translateY(0);
-            opacity: 1;
-        }
-    }
+/* SESSION SUMMARY */
+#summaryModal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;z-index:110;
+  background:rgba(0,0,0,.95);align-items:center;justify-content:center;}
+#summaryModal.show{display:flex;}
+#summaryCard{width:400px;border:1px solid var(--green);background:rgba(0,8,2,.99);padding:36px;position:relative;overflow:hidden;
+  box-shadow:0 0 60px var(--green-glow);}
+#summaryCard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--green),transparent);animation:scanH 2s linear infinite;}
+.summary-title{font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:5px;color:var(--green-dim);text-align:center;margin-bottom:6px;}
+.summary-logo{font-family:'Orbitron',sans-serif;font-size:28px;font-weight:900;color:var(--green);text-align:center;letter-spacing:6px;text-shadow:0 0 20px var(--green);margin-bottom:24px;}
+.summary-stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;}
+.summary-stat{border:1px solid var(--green-dark);padding:12px;text-align:center;}
+.summary-stat-label{font-family:'Share Tech Mono',monospace;font-size:9px;color:#444;letter-spacing:2px;margin-bottom:4px;}
+.summary-stat-val{font-family:'VT323',monospace;font-size:28px;color:var(--green);}
+.summary-stat-val.amber{color:var(--amber);}
+.summary-stat-val.red{color:var(--red);}
+.summary-log{font-family:'VT323',monospace;font-size:14px;color:rgba(0,255,65,.4);line-height:1.8;margin-bottom:20px;max-height:120px;overflow-y:auto;}
+.summary-log::-webkit-scrollbar{width:3px;}
+.summary-log::-webkit-scrollbar-thumb{background:var(--green-dark);}
+#playAgainBtn{width:100%;font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:3px;color:#000;background:var(--green);border:none;padding:13px;cursor:pointer;box-shadow:0 0 20px var(--green);transition:all .2s;}
+#playAgainBtn:hover{box-shadow:0 0 40px var(--green);}
 
-    .modal-content h3 {
-      color: #ff538c;
-      margin-bottom: 25px;
-      font-size: 1.8em;
-      font-family: 'Orbitron', sans-serif;
-    }
+/* INTRO */
+#introScreen{position:fixed;top:0;left:0;width:100%;height:100%;z-index:200;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;}
+#introScreen.hidden{display:none;}
+.intro-logo{font-family:'Orbitron',sans-serif;font-size:clamp(38px,8vw,78px);font-weight:900;color:var(--green);text-shadow:0 0 40px var(--green),0 0 80px rgba(0,255,65,.3);letter-spacing:10px;animation:logoPulse 3s ease-in-out infinite;}
+@keyframes logoPulse{0%,100%{text-shadow:0 0 40px var(--green),0 0 80px rgba(0,255,65,.3)}50%{text-shadow:0 0 60px var(--green),0 0 120px rgba(0,255,65,.5),0 0 200px rgba(0,255,65,.1)}}
+.intro-sub{font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--green-dim);letter-spacing:6px;}
+.intro-lore{font-family:'VT323',monospace;font-size:17px;color:rgba(0,255,65,.5);max-width:420px;text-align:center;line-height:1.8;}
+.intro-controls{font-family:'VT323',monospace;font-size:15px;color:rgba(0,255,65,.35);text-align:center;line-height:2;}
+#startBtn{font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:4px;color:#000;background:var(--green);border:none;padding:14px 44px;cursor:pointer;box-shadow:0 0 30px var(--green);transition:all .2s;margin-top:6px;}
+#startBtn:hover{box-shadow:0 0 60px var(--green),0 0 100px rgba(0,255,65,.3);}
 
-    .modal-content p {
-      font-size: 1.1em;
-      margin-bottom: 20px;
-      font-family: 'Audiowide', sans-serif;
-    }
-
-    .bet-options {
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      margin-bottom: 30px;
-    }
-
-    .bet-percent-button {
-      background-color: rgba(255, 83, 140, 0.15);
-      color: #ff538c;
-      border: 1px solid #ff538c;
-      padding: 10px 20px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-family: 'Orbitron', sans-serif;
-      font-size: 1.1em;
-      transition: all 0.2s ease;
-    }
-
-    .bet-percent-button:hover {
-      background-color: rgba(255, 83, 140, 0.3);
-      box-shadow: 0 0 10px rgba(255, 83, 140, 0.5);
-    }
-
-    .bet-percent-button.active {
-        background-color: #ff538c;
-        color: #000;
-        box-shadow: 0 0 15px #ff538c;
-        transform: translateY(-2px);
-    }
-
-    .modal-content .cta-button {
-      width: 80%;
-      margin-top: 20px;
-      padding: 12px 20px; /* Adjust button size in modal */
-    }
-
-    .close-button {
-      position: absolute;
-      top: 15px;
-      right: 15px;
-      background: none;
-      border: none;
-      color: #ff538c;
-      font-size: 1.5em;
-      cursor: pointer;
-      transition: color 0.2s;
-    }
-
-    .close-button:hover {
-      color: #ff7aa5;
-    }
-
-    /* Mobile Responsive Adjustments */
-    @media (max-width: 768px) {
-        .hamburger {
-            display: flex; /* Show hamburger on smaller screens */
-        }
-        .nav-links {
-            display: none; /* Hide navigation links by default */
-            flex-direction: column;
-            width: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            position: absolute;
-            top: 70px; /* Below the navbar */
-            left: 0;
-            padding: 20px 0;
-            box-shadow: 0 5px 15px rgba(255, 83, 140, 0.3);
-            text-align: center;
-        }
-        .nav-links.open {
-            display: flex; /* Show navigation links when open */
-        }
-        .nav-links li {
-            margin: 15px 0;
-        }
-        .testimonial-card {
-          max-width: 100%; /* Full width on smaller screens */
-        }
-        .bet-options {
-            flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
-        }
-        .bet-percent-button {
-            flex: 1 1 45%; /* Make buttons take about half width */
-            margin: 5px; /* Small margin for wrap */
-        }
-    }
-  </style>
+/* ANIMS */
+@keyframes glitch{0%{transform:translate(0)}20%{transform:translate(-3px,1px)}40%{transform:translate(3px,-1px)}60%{transform:translate(-1px,2px)}80%{transform:translate(2px,-2px)}100%{transform:translate(0)}}
+@keyframes flicker{0%,100%{opacity:1}50%{opacity:.35}}
+</style>
 </head>
 <body>
-  <!-- Video Background Layer - Stays playing -->
-  <div class="video-background">
-    <video id="backgroundVideo" src="https://i.imgur.com/3Q673M4.mp4" autoplay loop muted playsinline>
-      Your browser does not support the video tag.
-    </video>
-  </div>
+<div id="cursor"></div>
 
-  <script>
-    // Create falling coins effect
-    for (let i = 0; i < 20; i++) {
-      const coin = document.createElement('div');
-      coin.classList.add('coin');
-      coin.style.left = `${Math.random() * 100}%`;
-      coin.style.animationDuration = `${5 + Math.random() * 5}s`;
-      coin.style.animationDelay = `${Math.random() * 5}s`;
-      document.body.appendChild(coin);
+<!-- INTRO -->
+<div id="introScreen">
+  <div class="intro-logo">POLYBIUS</div>
+  <div class="intro-sub">WHERE DCUs GO TO DIE</div>
+  <div class="intro-lore">Burned DCUs don't disappear.<br>They fracture. They drift into the void.<br><br>Navigate the galaxy. Hunt the fragments.<br>Some are power. Some are ruin.<br>You won't know which until it's too late.</div>
+  <div class="intro-controls">WASD / ARROW KEYS — MOVE<br>G — TOGGLE GOGGLES<br>MOUSE — AIM &amp; SCAN (goggles on)<br>CLICK — BEGIN SCAN<br><span style="color:rgba(255,170,0,.45)">GRAB EARLY = RISK</span><br>E — END SESSION</div>
+  <button id="startBtn" onclick="startGame()">DESCEND INTO THE VOID</button>
+</div>
+
+<!-- WORLD -->
+<canvas id="voidCanvas"></canvas>
+<div id="scanlines"></div>
+<div id="corruptOverlay"></div>
+
+<!-- GOGGLE FRAME -->
+<svg id="goggleFrame" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <radialGradient id="lvL" cx="50%" cy="50%"><stop offset="50%" stop-color="transparent"/><stop offset="100%" stop-color="rgba(0,18,5,0.88)"/></radialGradient>
+    <radialGradient id="lvR" cx="50%" cy="50%"><stop offset="50%" stop-color="transparent"/><stop offset="100%" stop-color="rgba(0,18,5,0.88)"/></radialGradient>
+    <radialGradient id="lensShineL" cx="35%" cy="30%"><stop offset="0%" stop-color="rgba(255,220,100,0.08)"/><stop offset="60%" stop-color="transparent"/></radialGradient>
+    <radialGradient id="lensShineR" cx="35%" cy="30%"><stop offset="0%" stop-color="rgba(255,220,100,0.08)"/><stop offset="60%" stop-color="transparent"/></radialGradient>
+    <!-- Green tint for goggle mode -->
+    <radialGradient id="greenTintL" cx="50%" cy="50%"><stop offset="0%" stop-color="rgba(0,255,65,0.03)"/><stop offset="100%" stop-color="rgba(0,80,20,0.12)"/></radialGradient>
+    <radialGradient id="greenTintR" cx="50%" cy="50%"><stop offset="0%" stop-color="rgba(0,255,65,0.03)"/><stop offset="100%" stop-color="rgba(0,80,20,0.12)"/></radialGradient>
+  </defs>
+
+  <!-- ===== BLACK MASK: covers everything outside lenses ===== -->
+  <path d="M0,0 H1000 V600 H0 Z
+           M36,300 A244,264 0 1,0 524,300 A244,264 0 1,0 36,300 Z
+           M476,300 A244,264 0 1,0 964,300 A244,264 0 1,0 476,300 Z"
+        fill="rgba(0,0,0,0.97)" fill-rule="evenodd"/>
+
+  <!-- ===== LENS VIGNETTE + TINT ===== -->
+  <ellipse cx="280" cy="300" rx="242" ry="262" fill="url(#lvL)" opacity="0.8"/>
+  <ellipse cx="720" cy="300" rx="242" ry="262" fill="url(#lvR)" opacity="0.8"/>
+  <ellipse cx="280" cy="300" rx="242" ry="262" fill="url(#greenTintL)"/>
+  <ellipse cx="720" cy="300" rx="242" ry="262" fill="url(#greenTintR)"/>
+  <!-- lens shine -->
+  <ellipse cx="280" cy="300" rx="242" ry="262" fill="url(#lensShineL)"/>
+  <ellipse cx="720" cy="300" rx="242" ry="262" fill="url(#lensShineR)"/>
+
+  <!-- ===== SCOPE RETICLES inside lenses ===== -->
+  <!-- Left lens: radar-style rings -->
+  <g opacity="0.18" stroke="rgba(0,255,65,1)" fill="none" stroke-width="0.8">
+    <circle cx="280" cy="300" r="200"/><circle cx="280" cy="300" r="140"/>
+    <circle cx="280" cy="300" r="80"/><circle cx="280" cy="300" r="30"/>
+    <!-- crosshair -->
+    <line x1="80" y1="300" x2="480" y2="300"/>
+    <line x1="280" y1="100" x2="280" y2="500"/>
+    <!-- degree marks -->
+    <line x1="280" y1="108" x2="280" y2="125"/><line x1="280" y1="475" x2="280" y2="492"/>
+    <line x1="88" y1="300" x2="105" y2="300"/><line x1="455" y1="300" x2="472" y2="300"/>
+    <!-- diagonal ticks -->
+    <line x1="138" y1="158" x2="150" y2="170"/><line x1="410" y1="430" x2="422" y2="442"/>
+    <line x1="410" y1="158" x2="422" y2="170"/><line x1="138" y1="430" x2="150" y2="442"/>
+  </g>
+  <!-- Left lens corner brackets -->
+  <g stroke="rgba(0,255,65,0.35)" stroke-width="1.5" fill="none">
+    <path d="M150,180 L150,165 L165,165"/><path d="M410,165 L425,165 L425,180"/>
+    <path d="M150,420 L150,435 L165,435"/><path d="M410,435 L425,435 L425,420"/>
+  </g>
+  <!-- Left lens scan line (animated via CSS) -->
+  <line id="scanLineL" x1="80" y1="140" x2="480" y2="140" stroke="rgba(0,255,65,0.12)" stroke-width="1.5">
+    <animate attributeName="y1" values="100;500;100" dur="4s" repeatCount="indefinite"/>
+    <animate attributeName="y2" values="100;500;100" dur="4s" repeatCount="indefinite"/>
+  </line>
+
+  <!-- Right lens: targeting scope -->
+  <g opacity="0.18" stroke="rgba(0,255,65,1)" fill="none" stroke-width="0.8">
+    <circle cx="720" cy="300" r="200"/><circle cx="720" cy="300" r="140"/>
+    <circle cx="720" cy="300" r="80"/><circle cx="720" cy="300" r="30"/>
+    <line x1="520" y1="300" x2="920" y2="300"/>
+    <line x1="720" y1="100" x2="720" y2="500"/>
+    <line x1="720" y1="108" x2="720" y2="125"/><line x1="720" y1="475" x2="720" y2="492"/>
+    <line x1="528" y1="300" x2="545" y2="300"/><line x1="895" y1="300" x2="912" y2="300"/>
+    <line x1="578" y1="158" x2="590" y2="170"/><line x1="850" y1="430" x2="862" y2="442"/>
+    <line x1="850" y1="158" x2="862" y2="170"/><line x1="578" y1="430" x2="590" y2="442"/>
+  </g>
+  <!-- Right lens corner brackets -->
+  <g stroke="rgba(0,255,65,0.35)" stroke-width="1.5" fill="none">
+    <path d="M590,180 L590,165 L605,165"/><path d="M850,165 L865,165 L865,180"/>
+    <path d="M590,420 L590,435 L605,435"/><path d="M850,435 L865,435 L865,420"/>
+  </g>
+  <!-- Right lens scan line -->
+  <line x1="520" y1="140" x2="920" y2="140" stroke="rgba(0,255,65,0.12)" stroke-width="1.5">
+    <animate attributeName="y1" values="100;500;100" dur="3.5s" repeatCount="indefinite" begin="1s"/>
+    <animate attributeName="y2" values="100;500;100" dur="3.5s" repeatCount="indefinite" begin="1s"/>
+  </line>
+
+  <!-- ===== OUTER FRAME BODY (thick brass rings) ===== -->
+  <!-- Left outer frame -->
+  <ellipse cx="280" cy="300" rx="265" ry="285" fill="none" stroke="#100900" stroke-width="28"/>
+  <ellipse cx="280" cy="300" rx="253" ry="273" fill="none" stroke="#6a4500" stroke-width="3"/>
+  <ellipse cx="280" cy="300" rx="257" ry="277" fill="none" stroke="#b07820" stroke-width="1.2"/>
+  <ellipse cx="280" cy="300" rx="249" ry="269" fill="none" stroke="#3a2500" stroke-width="1"/>
+  <!-- Right outer frame -->
+  <ellipse cx="720" cy="300" rx="265" ry="285" fill="none" stroke="#100900" stroke-width="28"/>
+  <ellipse cx="720" cy="300" rx="253" ry="273" fill="none" stroke="#6a4500" stroke-width="3"/>
+  <ellipse cx="720" cy="300" rx="257" ry="277" fill="none" stroke="#b07820" stroke-width="1.2"/>
+  <ellipse cx="720" cy="300" rx="249" ry="269" fill="none" stroke="#3a2500" stroke-width="1"/>
+
+  <!-- ===== BRASS DETAIL BANDS (knurling look) ===== -->
+  <g stroke="#7a5510" stroke-width="0.8" fill="none" opacity="0.5">
+    <ellipse cx="280" cy="300" rx="255" ry="275"/><ellipse cx="280" cy="300" rx="258" ry="278"/>
+    <ellipse cx="720" cy="300" rx="255" ry="275"/><ellipse cx="720" cy="300" rx="258" ry="278"/>
+  </g>
+
+  <!-- ===== NOSE BRIDGE (detailed) ===== -->
+  <rect x="500" y="258" width="40" height="84" rx="10" fill="#0c0c0c" stroke="#222" stroke-width="1.5"/>
+  <rect x="506" y="265" width="28" height="70" rx="7" fill="#111" stroke="#2e2e2e" stroke-width="1"/>
+  <!-- bridge screws -->
+  <circle cx="514" cy="278" r="3" fill="#1a1a1a" stroke="#3a3a3a" stroke-width="1"/>
+  <circle cx="526" cy="278" r="3" fill="#1a1a1a" stroke="#3a3a3a" stroke-width="1"/>
+  <circle cx="514" cy="322" r="3" fill="#1a1a1a" stroke="#3a3a3a" stroke-width="1"/>
+  <circle cx="526" cy="322" r="3" fill="#1a1a1a" stroke="#3a3a3a" stroke-width="1"/>
+
+  <!-- ===== SIDE STRAPS ===== -->
+  <rect x="0" y="245" width="18" height="110" rx="4" fill="#130b00" stroke="#4a2e00" stroke-width="1"/>
+  <rect x="982" y="245" width="18" height="110" rx="4" fill="#130b00" stroke="#4a2e00" stroke-width="1"/>
+  <!-- strap rivets -->
+  <circle cx="9" cy="265" r="4" fill="#2a1a00" stroke="#6a4200" stroke-width="1"/>
+  <circle cx="9" cy="300" r="4" fill="#2a1a00" stroke="#6a4200" stroke-width="1"/>
+  <circle cx="9" cy="335" r="4" fill="#2a1a00" stroke="#6a4200" stroke-width="1"/>
+  <circle cx="991" cy="265" r="4" fill="#2a1a00" stroke="#6a4200" stroke-width="1"/>
+  <circle cx="991" cy="300" r="4" fill="#2a1a00" stroke="#6a4200" stroke-width="1"/>
+  <circle cx="991" cy="335" r="4" fill="#2a1a00" stroke="#6a4200" stroke-width="1"/>
+
+  <!-- ===== RIVETS & BOLTS on rings ===== -->
+  <g fill="#5a3c00" stroke="#a07020" stroke-width="1">
+    <circle cx="280" cy="18" r="6"/><circle cx="280" cy="582" r="6"/>
+    <circle cx="18" cy="220" r="5"/><circle cx="18" cy="380" r="5"/>
+    <circle cx="720" cy="18" r="6"/><circle cx="720" cy="582" r="6"/>
+    <circle cx="982" cy="220" r="5"/><circle cx="982" cy="380" r="5"/>
+    <!-- top arc bolts -->
+    <circle cx="180" cy="48" r="4"/><circle cx="380" cy="48" r="4"/>
+    <circle cx="620" cy="48" r="4"/><circle cx="820" cy="48" r="4"/>
+    <circle cx="180" cy="552" r="4"/><circle cx="380" cy="552" r="4"/>
+    <circle cx="620" cy="552" r="4"/><circle cx="820" cy="552" r="4"/>
+  </g>
+  <!-- bolt center dots -->
+  <g fill="#c09030" opacity="0.6">
+    <circle cx="280" cy="18" r="2"/><circle cx="280" cy="582" r="2"/>
+    <circle cx="720" cy="18" r="2"/><circle cx="720" cy="582" r="2"/>
+  </g>
+
+  <!-- ===== TOP HEADER PLATE ===== -->
+  <rect x="370" y="0" width="260" height="32" fill="#0c0800" stroke="#3a2600" stroke-width="1"/>
+  <rect x="378" y="4" width="244" height="24" fill="#0f0b00" stroke="#2a1c00" stroke-width=".5"/>
+  <text x="500" y="19" font-family="Orbitron,sans-serif" font-size="7.5" fill="rgba(160,120,20,0.7)" letter-spacing="7" text-anchor="middle">POLYBIUS MK-VII</text>
+
+  <!-- ===== ADJUSTMENT DIALS (left lens top) ===== -->
+  <circle cx="155" cy="62" r="14" fill="#1c1200" stroke="#6a4800" stroke-width="2"/>
+  <circle cx="155" cy="62" r="9" fill="#111" stroke="#3a2a00" stroke-width="1"/>
+  <line x1="155" y1="54" x2="155" y2="58" stroke="#8a6020" stroke-width="1.5"/>
+  <!-- right lens dial -->
+  <circle cx="845" cy="62" r="14" fill="#1c1200" stroke="#6a4800" stroke-width="2"/>
+  <circle cx="845" cy="62" r="9" fill="#111" stroke="#3a2a00" stroke-width="1"/>
+  <line x1="845" y1="54" x2="845" y2="58" stroke="#8a6020" stroke-width="1.5"/>
+
+  <!-- ===== LENS LABELS ===== -->
+  <text x="194" y="76" font-family="Orbitron,sans-serif" font-size="7" fill="rgba(0,255,65,0.3)" letter-spacing="3.5">◉ RADAR</text>
+  <text x="628" y="76" font-family="Orbitron,sans-serif" font-size="7" fill="rgba(0,255,65,0.3)" letter-spacing="3.5">ANALYZE ◉</text>
+
+  <!-- ===== GLASS CRACKS ===== -->
+  <g stroke="rgba(0,255,65,0.05)" stroke-width="0.6" fill="none">
+    <path d="M185,135 L225,190 L208,252"/><path d="M330,415 L310,458 L348,485"/>
+    <path d="M682,128 L718,178 L755,158"/><path d="M700,428 L738,465"/>
+    <path d="M145,296 L162,278 L155,316"/><path d="M822,296 L838,278 L832,316"/>
+    <path d="M355,132 L365,155"/><path d="M200,440 L215,455 L205,470"/>
+  </g>
+
+  <!-- ===== COPPER WIRE DETAIL along frame ===== -->
+  <g stroke="rgba(180,100,20,0.25)" stroke-width="1" fill="none">
+    <path d="M30,248 Q60,240 80,260"/><path d="M970,248 Q940,240 920,260"/>
+    <path d="M30,352 Q60,360 80,340"/><path d="M970,352 Q940,360 920,340"/>
+  </g>
+</svg>
+
+<!-- HUD ELEMENTS -->
+<div id="topHud">
+  <div>SESSION <span id="sessionId">--</span></div>
+  <div>FRAGMENTS <span id="fragCount">0</span></div>
+  <div>DEPTH <span id="voidDepth">∞</span></div>
+  <div>TIME <span id="sessionTime">00:00</span></div>
+</div>
+<div id="scoreDisplay">VOID CREDITS<span class="score-val" id="scoreVal">0</span></div>
+<div id="streakDisplay">STREAK<span class="streak-val" id="streakVal">×0</span></div>
+<!-- Goggle toggle indicator -->
+<div id="goggleToggleBtn" style="position:fixed;bottom:36px;left:50%;transform:translateX(-50%);z-index:35;font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:rgba(0,255,65,0.35);pointer-events:none;">[G] GOGGLES: OFF</div>
+
+<!-- RADAR -->
+<div id="radarHud"><canvas id="radarCanvas" width="170" height="170"></canvas></div>
+
+<!-- SCAN HUD -->
+<div id="scanHud">
+  <div class="hud-title">FRAGMENT ANALYSIS</div>
+  <div class="hud-row"><span class="hud-label">TYPE</span><span class="hud-val unknown" id="hudType">???</span></div>
+  <div class="hud-row"><span class="hud-label">RARITY</span><span class="hud-val unknown" id="hudRarity">???</span></div>
+  <div class="hud-row"><span class="hud-label">STABLE</span><span class="hud-val unknown" id="hudStable">???</span></div>
+  <div class="hud-row"><span class="hud-label">VALUE</span><span class="hud-val unknown" id="hudValue">???</span></div>
+  <div class="hud-row"><span class="hud-label">CORRUPT</span><span class="hud-val unknown" id="hudCorrupt">???</span></div>
+</div>
+
+<!-- SCAN PROGRESS -->
+<div id="scanProgressWrap">
+  <div id="scanTarget">LOCKING ON TARGET</div>
+  <div id="scanRingOuter"><div id="scanRingInner"><span id="scanPct">0%</span></div></div>
+  <div id="scanBarWrap"><div id="scanBar"></div></div>
+  <div id="scanAction">SCANNING...</div>
+</div>
+<button id="grabBtn" onclick="grabEarly()">⚠ GRAB EARLY — RISK IT</button>
+
+<!-- LEGENDARY ALERT -->
+<div id="legendaryAlert">⚠ LEGENDARY FRAGMENT DETECTED ⚠<br><span style="font-size:10px;letter-spacing:3px">APPROACH WITH EXTREME CAUTION</span></div>
+
+<!-- VOID WHISPER -->
+<div id="voidWhisper">IT IS WATCHING</div>
+
+<!-- REVEAL MODAL -->
+<div id="revealModal">
+  <div id="revealCard">
+    <div class="reveal-header">FRAGMENT RECOVERED</div>
+    <div class="reveal-dcu-name" id="revealName">???</div>
+    <div class="reveal-type" id="revealType">UNKNOWN DCU FRAGMENT</div>
+    <div class="reveal-attrs" id="revealAttrs"></div>
+    <div class="reveal-desc" id="revealDesc"></div>
+    <div class="streak-bonus-line" id="streakBonusLine" style="display:none"></div>
+    <div id="revealScore">+0 VOID CREDITS</div>
+    <button id="continueBtn" onclick="continueGame()">CONTINUE DESCENT →</button>
+  </div>
+</div>
+
+<!-- SESSION SUMMARY -->
+<div id="summaryModal">
+  <div id="summaryCard">
+    <div class="summary-title">SESSION COMPLETE</div>
+    <div class="summary-logo">POLYBIUS</div>
+    <div class="summary-stats" id="summaryStats"></div>
+    <div class="summary-log" id="summaryLog"></div>
+    <button id="playAgainBtn" onclick="resetGame()">DESCEND AGAIN →</button>
+  </div>
+</div>
+
+<script>
+// ==================== AUDIO ====================
+const AC = new (window.AudioContext || window.webkitAudioContext)();
+function resumeAudio(){if(AC.state==='suspended') AC.resume();}
+
+function playTone(freq, type, dur, vol=0.15, detune=0){
+  resumeAudio();
+  const o=AC.createOscillator(), g=AC.createGain();
+  o.connect(g); g.connect(AC.destination);
+  o.type=type; o.frequency.value=freq; o.detune.value=detune;
+  g.gain.setValueAtTime(vol,AC.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+dur);
+  o.start(); o.stop(AC.currentTime+dur);
+}
+function playNoise(dur, vol=0.08){
+  resumeAudio();
+  const buf=AC.createBuffer(1,AC.sampleRate*dur,AC.sampleRate);
+  const d=buf.getChannelData(0);
+  for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1);
+  const src=AC.createBufferSource(), g=AC.createGain(), f=AC.createBiquadFilter();
+  src.buffer=buf; f.type='bandpass'; f.frequency.value=800; f.Q.value=0.5;
+  src.connect(f); f.connect(g); g.connect(AC.destination);
+  g.gain.setValueAtTime(vol,AC.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+dur);
+  src.start(); src.stop(AC.currentTime+dur);
+}
+function playHum(){playTone(60,'sawtooth',0.1,0.06); playTone(120,'sine',0.1,0.04);}
+function playScanBeep(pct){if(pct%20<2) playTone(400+pct*6,'sine',0.08,0.05);}
+function playScanComplete(){playTone(880,'sine',0.15,0.1); setTimeout(()=>playTone(1100,'sine',0.2,0.08),100); setTimeout(()=>playTone(1320,'sine',0.3,0.06),200);}
+function playScanFail(){playNoise(0.2,0.12); playTone(150,'sawtooth',0.3,0.08);}
+function playGrab(){playTone(660,'square',0.05,0.06); playNoise(0.1,0.05);}
+function playCorrupt(){playNoise(0.4,0.1); playTone(80,'sawtooth',0.4,0.06,-50);}
+function playLegendary(){
+  [220,330,440,660,880].forEach((f,i)=>setTimeout(()=>playTone(f,'sine',0.3,0.08),i*80));
+  setTimeout(()=>playNoise(0.1,0.05),400);
+}
+function playMove(){playTone(200+Math.random()*50,'sine',0.04,0.015);}
+function playStreak(n){playTone(440+n*110,'sine',0.15,0.07);}
+
+// ==================== DATA ====================
+const OUTCOMES=[
+  {name:'IGNITION SHARD',type:'COMBAT',rarity:'UNCOMMON',value:120,stable:82,corrupt:.1,color:'positive',effect:'+12 ATK',desc:'A fragment crackling with violent residual energy. Still dangerous.'},
+  {name:'HARVEST ECHO',type:'HARVEST',rarity:'RARE',value:300,stable:71,corrupt:.2,color:'positive',effect:'+30 YIELD',desc:'The ghost of a productive DCU. It remembers abundance.'},
+  {name:'PHANTOM CORE',type:'STEALTH',rarity:'RARE',value:250,stable:60,corrupt:.3,color:'positive',effect:'+CLOAK',desc:'Barely visible even here. Perfect camouflage born from death.'},
+  {name:'NULL TOKEN',type:'CURSED',rarity:'CORRUPTED',value:-80,stable:30,corrupt:.9,color:'negative',effect:'-8 ALL STATS',desc:'Burned for a reason. It remembers why.'},
+  {name:'VOID RESONATOR',type:'VOID',rarity:'LEGENDARY',value:600,stable:45,corrupt:.5,color:'rare',effect:'UNKNOWN',desc:'Not from any wallet. The void made this itself.',legendary:true},
+  {name:'GLITCH NODE',type:'UTILITY',rarity:'UNCOMMON',value:50,stable:20,corrupt:.8,color:'corrupt',effect:'RANDOM',desc:'Pure instability. Could do anything. Usually the wrong thing.'},
+  {name:'MEMORY FRAGMENT',type:'UNKNOWN',rarity:'UNCOMMON',value:90,stable:55,corrupt:.4,color:'positive',effect:'+RECALL',desc:'A piece of a DCU that once mattered to someone.'},
+  {name:'CORRUPTION SEED',type:'CURSED',rarity:'CORRUPTED',value:-200,stable:10,corrupt:1,color:'negative',effect:'-EVERYTHING',desc:'Do not touch. Do not look at it directly. You already have.'},
+  {name:'ECHO CRYSTAL',type:'HARVEST',rarity:'RARE',value:280,stable:66,corrupt:.25,color:'positive',effect:'+25 YIELD',desc:'Resonates with past abundance. Handle carefully.'},
+  {name:'APEX REMNANT',type:'COMBAT',rarity:'LEGENDARY',value:800,stable:55,corrupt:.45,color:'rare',effect:'+APEX MODE',desc:'Once the peak of combat. Still remembers how to fight.',legendary:true},
+  {name:'DARK MATTER NODE',type:'VOID',rarity:'NULL',value:0,stable:0,corrupt:1,color:'corrupt',effect:'??',desc:'The void does not know what this is either.'},
+  {name:'STEALTH REMNANT',type:'STEALTH',rarity:'COMMON',value:60,stable:75,corrupt:.15,color:'positive',effect:'+6 EVADE',desc:'Faint. Quiet. Easy to miss. That was the point.'},
+  {name:'VOID PHANTOM',type:'VOID',rarity:'LEGENDARY',value:1200,stable:20,corrupt:.7,color:'legendary-glow',effect:'+VOID SIGHT',desc:'It was never a DCU. It was something the void birthed from the dead.',legendary:true},
+  {name:'FRACTURED KEY',type:'UTILITY',rarity:'RARE',value:340,stable:50,corrupt:.3,color:'positive',effect:'+ACCESS LV2',desc:'A key to something. You do not know what yet.'},
+];
+const WHISPERS=['IT IS WATCHING','YOU WERE NOT SUPPOSED TO FIND THIS','SOME FRAGMENTS REMEMBER YOU','THE VOID LEARNS FROM EVERY SCAN','NOT ALL DCUs WANT TO BE FOUND','POLYBIUS HAS BEEN HERE LONGER THAN THE GALAXY','BURNED BUT NOT GONE','THE CORRUPTION SPREADS','YOU CARRY PIECES OF DEAD THINGS','HOW MANY TIMES HAVE YOU PLAYED','IT REMEMBERS YOUR FIRST SCAN','THE ARCADE MACHINE CHOSE YOU'];
+
+// ==================== STATE ====================
+let gameActive=false, score=0, fragCount=0, streak=0, maxStreak=0;
+let sessionLog=[], sessionStart=0;
+let fragments=[], stars=[], nebulae=[];
+let mouseX=window.innerWidth/2, mouseY=window.innerHeight/2;
+let targetFrag=null, scanning=false, scanProgress=0, scanInterval=null;
+let grabAllowed=false, currentOutcome=null, whisperTimeout=null;
+let goggleMode=false, goggleTransition=0; // 0=off, 1=on (animated)
+let playerDir=0, playerStep=0, playerStepTimer=0; // for walking animation
+let lockHold=0, LOCK_REQUIRED=60; // frames cursor must stay on frag before scan starts
+let lockedFragName=''; // name shown in goggle HUD when locked
+
+// Camera / world
+const WORLD_W=4000, WORLD_H=4000;
+let camX=WORLD_W/2, camY=WORLD_H/2;
+let velX=0, velY=0;
+const SPEED=2.8, FRICTION=0.88, MAX_FRAGS=20;
+
+// Keys
+const keys={w:false,a:false,s:false,d:false};
+document.addEventListener('keydown',e=>{
+  const k=e.key.toLowerCase();
+  if(k==='w'||k==='arrowup'){keys.w=true;}
+  if(k==='a'||k==='arrowleft'){keys.a=true;}
+  if(k==='s'||k==='arrowdown'){keys.s=true;}
+  if(k==='d'||k==='arrowright'){keys.d=true;}
+  if(k==='e'&&gameActive&&!scanning) endSession();
+  if(k==='g'&&gameActive) toggleGoggles();
+  e.preventDefault();
+},{passive:false});
+document.addEventListener('keyup',e=>{
+  const k=e.key.toLowerCase();
+  if(k==='w'||k==='arrowup'){keys.w=false;}
+  if(k==='a'||k==='arrowleft'){keys.a=false;}
+  if(k==='s'||k==='arrowdown'){keys.s=false;}
+  if(k==='d'||k==='arrowright'){keys.d=false;}
+});
+
+// Canvas
+const canvas=document.getElementById('voidCanvas');
+const ctx=canvas.getContext('2d');
+function resizeCanvas(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
+resizeCanvas();
+window.addEventListener('resize',resizeCanvas);
+const rcanvas=document.getElementById('radarCanvas');
+const rctx=rcanvas.getContext('2d');
+
+// ==================== WORLD GENERATION ====================
+// Ground-level steampunk city world
+let worldTiles=[]; // floor tiles
+let worldProps=[]; // static props: crates, lamps, pipes, debris
+let worldDecals=[]; // ground markings
+
+function generateWorld(){
+  worldTiles=[]; worldProps=[]; worldDecals=[];
+
+  // Tile the floor with cobblestone grid
+  const TILE=80;
+  for(let x=0;x<WORLD_W;x+=TILE){
+    for(let y=0;y<WORLD_H;y+=TILE){
+      const v=Math.random();
+      worldTiles.push({
+        x,y,w:TILE,h:TILE,
+        // slight tone variation for worn cobblestone look
+        light: 0.85+Math.random()*.3,
+        crack: Math.random()<.12,
+        crackAngle: Math.random()*Math.PI,
+        moss: Math.random()<.08
+      });
     }
-    // Initialize AOS (Animate On Scroll) library
-    AOS.init({
-      once: true, // Only animate once
-      duration: 1000, // Animation duration
-      easing: 'ease-out-quad', // Easing function
+  }
+
+  // Props scattered around the world
+  const propTypes=['lamp','crate','pipe','barrel','debris','vent'];
+  for(let i=0;i<220;i++){
+    const type=propTypes[Math.floor(Math.random()*propTypes.length)];
+    worldProps.push({
+      x: Math.random()*WORLD_W,
+      y: Math.random()*WORLD_H,
+      type,
+      size: 14+Math.random()*22,
+      rot: Math.random()*Math.PI*2,
+      variant: Math.floor(Math.random()*3)
     });
-  </script>
+  }
 
-  <!-- Navigation Bar -->
-  <nav class="navbar">
-    <a href="#hero-section" aria-label="Trepa Home">
-      <img src="https://i.imgur.com/MxEzMoW.png" alt="Trepa Logo" class="nav-logo"/>
-    </a>
-    <div class="hamburger" id="hamburger">
-      <span></span>
-      <span></span>
-      <span></span>
-    </div>
-    <ul class="nav-links" id="navLinks">
-      <li><a href="#about-trepa-section">About Trepa</a></li>
-      <li><a href="#alpha-insights-section">Alpha Insights</a></li>
-      <li><a href="#how-it-works-section">How It Works</a></li>
-      <li><a href="#email-capture-section">Join Beta</a></li>
-    </ul>
-  </nav>
-
-  <script>
-    // Hamburger menu functionality
-    const hamburger = document.getElementById('hamburger');
-    const navLinks = document.getElementById('navLinks');
-
-    hamburger.addEventListener('click', () => {
-      hamburger.classList.toggle('open');
-      navLinks.classList.toggle('open');
+  // Ground decals: painted lines, scorch marks, drain covers
+  const decalTypes=['line','circle','drain','scorch'];
+  for(let i=0;i<80;i++){
+    worldDecals.push({
+      x: Math.random()*WORLD_W,
+      y: Math.random()*WORLD_H,
+      type: decalTypes[Math.floor(Math.random()*decalTypes.length)],
+      size: 20+Math.random()*60,
+      rot: Math.random()*Math.PI,
+      alpha: 0.15+Math.random()*.25
     });
+  }
 
-    // Close mobile menu when a link is clicked
-    navLinks.querySelectorAll('a').forEach(link => {
-        link.addEventListener('click', () => {
-            if (navLinks.classList.contains('open')) {
-                hamburger.classList.remove('open');
-                navLinks.classList.remove('open');
-            }
-        });
+  // nebulae kept for goggle-mode void overlay
+  nebulae=[];
+  for(let i=0;i<8;i++){
+    nebulae.push({
+      x:Math.random()*WORLD_W, y:Math.random()*WORLD_H,
+      rx:300+Math.random()*500, ry:200+Math.random()*300,
+      hue:[120,200,270,40][Math.floor(Math.random()*4)],
+      alpha:Math.random()*.07+.025,
+      rotation:Math.random()*Math.PI*2
     });
-  </script>
+  }
+}
 
-  <!-- Hero Section: Main Call to Action -->
-  <section data-aos="fade-up" id="hero-section">
-    <h1><strong>Flex Your Financial Foresight.</strong></h1>
-    <h2><strong>Get Paid for Accuracy.</strong></h2>
-    <p>Traditional predictions are binary. Trepa redefines the game, rewarding you for how close you are to the truth—not just if you're 'right'.</p>
-    <button class="cta-button">Join Beta Now</button>
-  </section>
+// ==================== GOGGLE TOGGLE ====================
+function toggleGoggles(){
+  goggleMode=!goggleMode;
+  const gf=document.getElementById('goggleFrame');
+  const sl=document.getElementById('scanlines');
+  const rh=document.getElementById('radarHud');
+  const sh=document.getElementById('scanHud');
+  const tog=document.getElementById('goggleToggleBtn');
+  if(goggleMode){
+    gf.style.opacity='1'; sl.style.opacity='1';
+    rh.style.opacity='1'; sh.style.opacity='1';
+    tog.textContent='[G] GOGGLES: ON';
+    tog.style.color='var(--green)';
+    // Sound: power-on hum
+    playTone(200,'sine',.12,.06); setTimeout(()=>playTone(400,'sine',.08,.04),100);
+  } else {
+    gf.style.opacity='0'; sl.style.opacity='0';
+    rh.style.opacity='0'; sh.style.opacity='0';
+    targetFrag=null; lockHold=0; lockedFragName='';
+    document.getElementById('cursor').className='';
+    clearHud();
+    tog.textContent='[G] GOGGLES: OFF';
+    tog.style.color='rgba(0,255,65,0.35)';
+    playTone(200,'sine',.08,.04); setTimeout(()=>playTone(80,'sine',.1,.05),80);
+  }
+}
 
-  <!-- About Trepa Section: Explaining the Platform and Pivot -->
-  <section data-aos="fade-up" id="about-trepa-section">
-    <h2>Welcome to Trepa: The Next-Gen Forecasting Platform</h2>
-    <p>Trepa is where you **level up your financial foresight** and get paid for being on point. Forget those old-school prediction markets that force every big question into a simple "yes" or "no" bet. If you're super close to the actual number but technically "wrong," you'd usually lose – just like someone way off. That's not fair!</p>
-    <p>That's why Trepa's here to flip the script. We're building the world’s first **precision forecasting platform**. With us, it's not about being "right" in a binary sense; it's about being **accurate**. Imagine the inflation rate drops at 5%. If you predicted 4.9%, you're getting a fat payout. But if you were way off at 8%, hey, you still get something, just less. We're making this whole thing super slick and easy: just **slide, stake, and flex your IQ.**</p>
+// ==================== FRAGMENT CLASS ====================
+class Fragment{
+  constructor(){
+    this.worldX=Math.random()*WORLD_W;
+    this.worldY=Math.random()*WORLD_H;
+    this.vx=(Math.random()-.5)*.5;
+    this.vy=(Math.random()-.5)*.5;
+    this.size=16+Math.random()*24;
+    this.rotation=Math.random()*Math.PI*2;
+    this.rotSpeed=(Math.random()-.5)*.015;
+    this.pulse=Math.random()*Math.PI*2;
+    this.pulseSpeed=.018+Math.random()*.025;
+    this.glitch=Math.random()<.3;
+    this.glitchTimer=0;
+    this.alpha=.4+Math.random()*.5;
+    // Hue based on rarity
+    const r=Math.random();
+    if(r<.45){this.hue=120;this.isLegendary=false;}
+    else if(r<.65){this.hue=40;this.isLegendary=false;}
+    else if(r<.80){this.hue=0;this.isLegendary=false;}
+    else if(r<.93){this.hue=270;this.isLegendary=false;}
+    else{this.hue=300;this.isLegendary=true;}// magenta = legendary
+    this.highlighted=false; this.locked=false;
+    this.shape=[];
+    const pts=5+Math.floor(Math.random()*4);
+    for(let i=0;i<pts;i++){
+      this.shape.push({a:(i/pts)*Math.PI*2, r:.6+Math.random()*.4});
+    }
+    this.trail=[];
+  }
+  update(){
+    this.worldX+=this.vx; this.worldY+=this.vy;
+    if(this.worldX<0) this.worldX=WORLD_W;
+    if(this.worldX>WORLD_W) this.worldX=0;
+    if(this.worldY<0) this.worldY=WORLD_H;
+    if(this.worldY>WORLD_H) this.worldY=0;
+    this.rotation+=this.rotSpeed;
+    this.pulse+=this.pulseSpeed;
+    if(this.glitch) this.glitchTimer+=.1;
+    // Trail
+    this.trail.push({x:this.worldX,y:this.worldY});
+    if(this.trail.length>8) this.trail.shift();
+  }
+  screenX(){return this.worldX-camX+canvas.width/2;}
+  screenY(){return this.worldY-camY+canvas.height/2;}
+  draw(c){
+    const sx=this.screenX(), sy=this.screenY();
+    const pm=1+Math.sin(this.pulse)*.12, s=this.size*pm;
+    const hue=this.isLegendary?300:this.hue;
+    const glow=this.highlighted?.98:this.alpha;
 
-    <h3>Our Mission: Beyond the Hype</h3>
-    <p>Our mission? To create a sick, mobile-first platform that feels just like the product itself: sleek, competitive, and maybe a little bit dangerous. We're gearing up for our public beta, and this homepage is our shout-out to the world, showing exactly what Trepa does and what vibe we're on.</p>
-  </section>
+    c.save(); c.translate(sx,sy);
 
-  <!-- Alpha Insights Section: Sharing the journey -->
-  <section data-aos="fade-up" id="alpha-insights-section">
-    <h2>Alpha Insights: We Listened, We Learned</h2>
-    <p>Over the past month, we dropped a quiet closed alpha for Trepa. This wasn't about the hype train; it was all about chilling with real users, spotting what clicked, what confused, and what needed a serious glow-up. We're baking all that golden feedback into the upcoming beta!</p>
+    // ---- AMBIENT GROUND LIGHT POOL ----
+    const pool=c.createRadialGradient(0,6,0,0,6,s*3.5);
+    pool.addColorStop(0,`hsla(${hue},100%,50%,${glow*.18})`);
+    pool.addColorStop(.5,`hsla(${hue},80%,40%,${glow*.06})`);
+    pool.addColorStop(1,`hsla(${hue},60%,30%,0)`);
+    c.fillStyle=pool; c.beginPath(); c.ellipse(0,8,s*3.5,s*1.8,0,0,Math.PI*2); c.fill();
 
-    <div class="stats-grid">
-      <div class="stat-item">
-        <div class="number">50</div>
-        <div class="label">Active Testers</div>
-      </div>
-      <div class="stat-item">
-        <div class="number">56</div>
-        <div class="label">Feedback Reports</div>
-      </div>
-      <div class="stat-item">
-        <div class="number">53</div>
-        <div class="label">Avg. Predictions</div>
-      </div>
-      <div class="stat-item">
-        <div class="number">80</div>
-        <div class="label">Avg. Votes</div>
-      </div>
-    </div>
-    <p style="margin-top: 30px;">These numbers ain't just stats; they helped us battle-test our tech from Solana programs to the backend and frontend, shipping hot fixes like pros. And guess what? People picked it up fast:</p>
-    <ul>
-      <li><strong>Swipe to vote.</strong></li>
-      <li><strong>Slide to predict.</strong></li>
-    </ul>
-    <p>This format just *clicked*. Our mobile-first approach is definitely the move – the future is mobile, fam. We even heard people getting their predictions in while on the loo or squished in a crowded subway. It just works, anywhere.</p>
+    c.rotate(this.rotation);
 
-    <h3>Word from the Early Believers:</h3>
-    <div class="testimonials-container">
-      <div class="testimonial-card">
-        <p>"Trepa feels like cheating, but legal. My friends are blown away by my 'luck'."</p>
-        <div class="author">– Alpha Tester A</div>
-      </div>
-      <div class="testimonial-card">
-        <p>"Finally, a platform that gets it. My brain actually gets rewarded for once!"</p>
-        <div class="author">– Alpha Tester B</div>
-      </div>
-      <div class="testimonial-card">
-        <p>"Sleek, responsive, and genuinely fun. The future of predictions is here."</p>
-        <div class="author">– Alpha Tester C</div>
-      </div>
-    </div>
+    // Glitch shake
+    let ox=0,oy=0;
+    if(this.glitch&&Math.sin(this.glitchTimer*7)>.75){ox=(Math.random()-.5)*7;oy=(Math.random()-.5)*3;}
+    c.translate(ox,oy);
 
-    <h3 style="margin-top: 40px;">The Pivot: Why We Changed the Game</h3>
-    <p>Yeah, we saw where things got a bit janky. Some screens were a head-scratcher, flows needed a smoother path, and a few tooltips (and bigger fonts!) were definitely on the wish list. We're on it, fixing all that before the next version drops.</p>
-    <p>But beyond the tweaks, the alpha gave us mad clarity. Trepa isn't just another prediction market. It's a straight-up **competitive game focused on actual verifiable outcomes.** We realized that public sentiment, as cool as it sounds, could be easily gamed. Here's why we shifted:</p>
-    <ul>
-      <li>If a big shot with a massive following leaned one way, they could sway the whole vibe by directing votes, even with our sybil resistance.</li>
-      <li>Collusion was a real headache.</li>
-    </ul>
-    <p>So, we pivoted hard. Trepa is now all about **competitive forecasting for numeric outcomes** – questions with cold, hard, verifiable answers. Think:</p>
-    <ul>
-      <li>"How many jobs will the U.S. actually add in June?"</li>
-      <li>"What's the total liquidation volume on Solana gonna be tomorrow?"</li>
-    </ul>
-    <p>You throw down your best **point forecast** – the exact number you're betting on. Once the real number hits, your rewards scale based on how tight your forecast was to the actual value. The closer you are, the fatter your wallet gets. This makes Trepa way fairer and super grounded in reality. What hasn't changed? You're still getting rewarded for being accurate. Get ready to experience the new Trepa in our upcoming beta launch:</p>
-    <p style="text-align: center; font-size: 1.5em; font-family: 'Orbitron', sans-serif; color: #8c53ff; text-shadow: 0 0 10px #8c53ff88;"><strong>Real Questions. Real Forecasting. Real Rewards.</strong></p>
-  </section>
+    // ---- CUBE FACES (isometric-ish top-down crystal) ----
+    const h=s*.7; // half-size
+    // Shadow base
+    c.fillStyle=`rgba(0,0,0,0.35)`;
+    c.beginPath(); c.ellipse(2,4,h*.9,h*.5,0,0,Math.PI*2); c.fill();
 
-  <!-- How It Works Section: Slider and Chart -->
-  <section data-aos="fade-up" id="how-it-works-section">
-    <h2>Slide, Stake, Show Off Your IQ.</h2>
-    <div class="slider-box">
-      <label for="predictionSlider" style="color: #ff538c; font-weight: bold;">Predict Next Quarter's GDP Growth:</label>
-      <input id="predictionSlider" type="range" min="0" max="5" step="0.01" value="2.5" />
-      <div class="slider-info">
-        <span id="predictedValueDisplay">Predicted: 2.50%</span>
-        <!-- New Bet Button -->
-        <button id="betButtonMain" class="bet-button-main">Bet SOL</button>
-        <span id="potentialPayoutDisplay">Potential Payout: $250.00 (per 1 SOL stake)</span>
-      </div>
-      <div class="chart-container">
-        <canvas id="payoutChart"></canvas>
-      </div>
-      <p style="text-align: center; font-size: 0.9em; opacity: 0.8; margin-top: 15px;">This chart flexes your potential payout. The closer you are to the actual number, the bigger your bag!</p>
-    </div>
-  </section>
+    // Back face (darker)
+    c.fillStyle=`hsla(${hue},70%,10%,${glow*.9})`;
+    c.beginPath();
+    c.moveTo(0,-h); c.lineTo(h,0); c.lineTo(0,h*.6); c.lineTo(-h,0); c.closePath(); c.fill();
 
-  <!-- Why Precision Pays Section: Benefits List -->
-  <section data-aos="fade-up">
-    <h2>Why Precision Pays Off</h2>
-    <ul>
-      <li>🎯 <strong>Higher Payouts</strong>: The closer you are, the more you stack.</li>
-      <li>🧠 <strong>Reward True Insight</strong>: Trepa pays for big brains, not dumb luck.</li>
-      <li>⚖️ <strong>Fair & Engaging</strong>: Everyone's playing on an even field.</li>
-    </ul>
-  </section>
+    // Left face
+    const lgF=c.createLinearGradient(-h,0,0,h*.6);
+    lgF.addColorStop(0,`hsla(${hue},90%,28%,${glow})`);
+    lgF.addColorStop(1,`hsla(${hue},80%,18%,${glow})`);
+    c.fillStyle=lgF;
+    c.beginPath(); c.moveTo(-h,0); c.lineTo(0,h*.6); c.lineTo(0,h*.6-h*.5); c.lineTo(-h,-h*.4); c.closePath(); c.fill();
 
-  <!-- Email Capture Section: Beta Signup -->
-  <div class="email-section" data-aos="fade-up" id="email-capture-section">
-    <h3>Ready to Flex Your Foresight?</h3>
-    <p>Join the public beta and be among the first to experience the future of predictions.</p>
-    <input type="email" placeholder="Enter your email">
-    <button class="cta-button">Join Beta</button>
-    <p style="font-size: 0.9em; opacity: 0.7;">We respect your privacy. Your email will only be used for beta announcements.</p>
-  </div>
+    // Right face
+    const rgF=c.createLinearGradient(0,0,h,0);
+    rgF.addColorStop(0,`hsla(${hue},100%,40%,${glow})`);
+    rgF.addColorStop(1,`hsla(${hue},90%,25%,${glow})`);
+    c.fillStyle=rgF;
+    c.beginPath(); c.moveTo(h,0); c.lineTo(0,h*.6); c.lineTo(0,h*.6-h*.5); c.lineTo(h,-h*.4); c.closePath(); c.fill();
 
-  <!-- Footer Section -->
-  <footer>
-    <a href="https://x.com/trepa_io" target="_blank" aria-label="Follow Trepa on X (formerly Twitter)">
-      <img src="https://img.icons8.com/ios-filled/50/ff538c/twitterx.png" width="28" alt="X logo" style="filter: drop-shadow(0 0 5px #ff538c);"/>
-    </a>
-    <p>© 2025 Trepa. Built to reward brains, not luck.</p>
-    <a href="#" style="color: #ff538c; text-decoration: none; margin: 0 10px;">Privacy Policy</a> | <a href="#" style="color: #ff538c; text-decoration: none; margin: 0 10px;">Terms of Service</a>
-  </footer>
+    // Top face (brightest)
+    const tgF=c.createLinearGradient(0,-h,0,0);
+    tgF.addColorStop(0,`hsla(${hue},100%,75%,${glow})`);
+    tgF.addColorStop(.5,`hsla(${hue},100%,55%,${glow})`);
+    tgF.addColorStop(1,`hsla(${hue},90%,40%,${glow})`);
+    c.fillStyle=tgF;
+    c.beginPath(); c.moveTo(0,-h); c.lineTo(h,-h*.4); c.lineTo(0,h*.2); c.lineTo(-h,-h*.4); c.closePath(); c.fill();
 
-  <!-- Trepa Logo at the Bottom -->
-  <img src="https://i.imgur.com/MxEzMoW.png" alt="Trepa Logo" class="trepa-logo"/>
+    // Edge lines
+    c.strokeStyle=`hsla(${hue},100%,80%,${glow*.7})`; c.lineWidth=1;
+    c.beginPath();
+    c.moveTo(0,-h); c.lineTo(h,-h*.4); c.lineTo(0,h*.2); c.lineTo(-h,-h*.4); c.closePath(); c.stroke();
+    c.beginPath(); c.moveTo(0,h*.2); c.lineTo(0,h*.6); c.stroke();
+    c.beginPath(); c.moveTo(h,-h*.4); c.lineTo(h,0); c.stroke();
+    c.beginPath(); c.moveTo(-h,-h*.4); c.lineTo(-h,0); c.stroke();
 
-  <!-- Bet Modal HTML Structure -->
-  <div id="betModal" class="modal-overlay">
-    <div class="modal-content">
-      <h3>Place Your Bet!</h3>
-      <p>Your Wallet: <span id="userSolBalanceDisplay">1.00 SOL ($100.00)</span></p>
-      <div class="bet-options">
-        <button class="bet-percent-button" data-percent="0.25">25%</button>
-        <button class="bet-percent-button" data-percent="0.50">50%</button>
-        <button class="bet-percent-button" data-percent="1.00">MAX</button>
-      </div>
-      <p>Betting: <span id="currentBetAmountDisplay">0.00 SOL ($0.00)</span></p>
-      <button id="placeBetButton" class="cta-button">Place Bet</button>
-      <button id="closeModalButton" class="close-button">X</button>
-    </div>
-  </div>
-
-  <!-- Chart Script for interactivity -->
-  <script>
-    // Global variables for wallet and current bet
-    const SOL_USD_RATE = 100; // 1 SOL = $100
-    let userSolBalance = 1.00; // Starting with 1 SOL for demonstration
-    let currentBetAmount = 0; // The actual SOL amount the user is about to bet, initialized to 0
-
-    // DOM elements for chart and slider info
-    let payoutChart; // Declare chart globally to be accessible
-
-    document.addEventListener('DOMContentLoaded', () => {
-      const ctx = document.getElementById('payoutChart').getContext('2d');
-      const predictedValueDisplay = document.getElementById('predictedValueDisplay');
-      const potentialPayoutDisplay = document.getElementById('potentialPayoutDisplay');
-      const predictionSlider = document.getElementById('predictionSlider');
-
-      // Get DOM elements for modal
-      const betButtonMain = document.getElementById('betButtonMain');
-      const betModal = document.getElementById('betModal');
-      const closeModalButton = document.getElementById('closeModalButton');
-      const userSolBalanceDisplay = document.getElementById('userSolBalanceDisplay');
-      const currentBetAmountDisplay = document.getElementById('currentBetAmountDisplay');
-      const betPercentButtons = document.querySelectorAll('.bet-percent-button');
-      const placeBetButton = document.getElementById('placeBetButton');
-
-      // Function to generate chart data based on the prediction center
-      // This function calculates payout for a "unit stake" (e.g., 1 SOL equivalent)
-      const generateChartData = (centerValue) => {
-        const maxPayoutPerUnit = 250; // Max payout in USD if 1 SOL (worth $100) were staked
-        const payoutDropPerUnit = 500; // Payout drops by $500 for every 1 unit difference (e.g., 2.5 vs 3.5)
-
-        return Array.from({length: 501}, (_, i) => { // 501 points for 0 to 5 with 0.01 step
-          const actualValue = i / 100; // Convert index to a value between 0.00 and 5.00
-          const difference = Math.abs(actualValue - centerValue);
-          return Math.max(0, maxPayoutPerUnit - difference * payoutDropPerUnit);
-        });
-      };
-
-      const initialPrediction = 2.50; // Initial center of the payout curve for GDP growth
-
-      // Custom plugin for Chart.js to add glowing effect to the line
-      const glowPlugin = {
-          id: 'lineGlow',
-          beforeDraw: (chart) => {
-              const ctx = chart.ctx;
-              ctx.save();
-              ctx.shadowColor = 'rgba(255, 83, 140, 0.7)'; // Glow color
-              ctx.shadowBlur = 15; // Amount of blur
-              ctx.shadowOffsetX = 0;
-              ctx.shadowOffsetY = 0;
-              chart.data.datasets.forEach((dataset, i) => {
-                  if (dataset.type === 'line') {
-                      ctx.stroke(chart.getDatasetMeta(i).path);
-                  }
-              });
-              ctx.restore();
-          }
-      };
-
-      // Custom plugin to draw a vertical line and a point at the predicted value
-      const predictionIndicatorPlugin = {
-          id: 'predictionIndicator',
-          afterDraw: (chart) => {
-              const ctx = chart.ctx;
-              const meta = chart.getDatasetMeta(0);
-              const data = chart.data.datasets[0].data;
-              const predictionValue = parseFloat(document.getElementById('predictionSlider').value);
-              const index = Math.round(predictionValue * 100); // Get the index corresponding to the prediction (for 0.01 step)
-
-              if (index >= 0 && index < data.length) {
-                  const x = meta.data[index].x;
-                  const y = meta.data[index].y;
-                  const payoutForUnit = data[index]; // Payout if 1 SOL were staked
-
-                  ctx.save();
-
-                  // Draw vertical line
-                  ctx.beginPath();
-                  ctx.strokeStyle = '#8c53ff'; /* Contrasting color for the line */
-                  ctx.lineWidth = 2;
-                  ctx.setLineDash([5, 5]); /* Dashed line */
-                  ctx.moveTo(x, chart.chartArea.bottom);
-                  ctx.lineTo(x, y);
-                  ctx.stroke();
-
-                  // Draw glowing point
-                  ctx.beginPath();
-                  ctx.arc(x, y, 8, 0, 2 * Math.PI); /* Circle radius */
-                  ctx.fillStyle = '#8c53ff'; /* Point color */
-                  ctx.shadowColor = '#8c53ff'; /* Glow for the point */
-                  ctx.shadowBlur = 10;
-                  ctx.fill();
-
-                  // Draw label for the point
-                  ctx.fillStyle = '#e7e9ea';
-                  ctx.font = 'bold 12px "Orbitron", sans-serif';
-                  ctx.textAlign = 'center';
-                  ctx.textBaseline = 'bottom';
-                  // Display payout based on currentBetAmount (if set) or for 1 SOL stake (default)
-                  const stakeForDisplay = currentBetAmount > 0 ? currentBetAmount : 1;
-                  const displayPayout = (payoutForUnit * stakeForDisplay).toFixed(2);
-                  ctx.fillText(`$${displayPayout}`, x, y - 15);
-                  ctx.setLineDash([]); /* Reset line dash */
-
-                  ctx.restore();
-              }
-          }
-      };
-
-
-      // Register the custom plugins
-      Chart.register(glowPlugin, predictionIndicatorPlugin);
-
-      // Create the Chart.js instance
-      payoutChart = new Chart(ctx, { // Assign to globally declared payoutChart
-        type: 'line',
-        data: {
-          labels: Array.from({length: 501}, (_, i) => (i / 100).toFixed(2)), /* Labels for 0.00 to 5.00 */
-          datasets: [{
-            label: 'Potential Payout ($)',
-            data: generateChartData(initialPrediction),
-            borderColor: '#ff538c', /* Line color */
-            backgroundColor: (context) => { /* Gradient background */
-              const chart = context.chart;
-              const {ctx, chartArea} = chart;
-              if (!chartArea) {
-                return null;
-              }
-              const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
-              gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
-              gradient.addColorStop(0.5, 'rgba(255, 83, 140, 0.2)');
-              gradient.addColorStop(1, 'rgba(255, 83, 140, 0.4)');
-              return gradient;
-            },
-            tension: 0.4,
-            fill: true,
-            pointRadius: 0,
-            pointHitRadius: 10,
-            borderWidth: 3,
-            cubicInterpolationMode: 'monotone',
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          animation: {
-              duration: 500, /* Faster animation for snappier feel */
-              easing: 'easeOutQuad', /* Smoother easing function */
-          },
-          plugins: {
-              legend: {
-                  display: false
-              },
-              tooltip: {
-                  mode: 'index',
-                  intersect: false,
-                  backgroundColor: 'rgba(255, 83, 140, 0.8)',
-                  titleFont: {
-                      family: 'Orbitron',
-                      size: 14,
-                      weight: 'bold'
-                  },
-                  bodyFont: {
-                      family: 'Audiowide',
-                      size: 12
-                  },
-                  callbacks: {
-                      title: function(tooltipItems) {
-                          return `Actual: ${tooltipItems[0].label}%`;
-                      },
-                      label: function(tooltipItem) {
-                          // Tooltip should always show payout for 1 SOL for consistency
-                          return `${tooltipItem.dataset.label}: $${tooltipItem.parsed.y.toFixed(2)} (per 1 SOL stake)`;
-                      }
-                  }
-              }
-          },
-          scales: {
-            x: {
-              title: {
-                display: true,
-                text: 'Actual GDP Growth Rate (%)', /* Updated title */
-                color: '#ff538c',
-                font: { family: 'Orbitron', size: 14, weight: 'bold' }
-              },
-              grid: {
-                  color: 'rgba(255,255,255,0.1)',
-                  drawBorder: false
-              },
-              ticks: {
-                  color: '#e7e9ea',
-                  font: { family: 'Audiowide' }
-              }
-            },
-            y: {
-              title: {
-                display: true,
-                text: 'Potential Payout ($)', /* Clarified title */
-                color: '#ff538c',
-                font: { family: 'Orbitron', size: 14, weight: 'bold' }
-              },
-              beginAtZero: true,
-              grid: {
-                  color: 'rgba(255,255,255,0.1)',
-                  drawBorder: false
-              },
-              ticks: {
-                  color: '#e7e9ea',
-                  font: { family: 'Audiowide' },
-                  callback: function(value) {
-                      return '$' + value; /* Add dollar sign to y-axis ticks */
-                  }
-              }
-            }
-          }
-        }
-      });
-
-      // Function to update the SOL balance display (includes USD value)
-      const updateSolBalanceDisplay = () => {
-        userSolBalanceDisplay.textContent = `${userSolBalance.toFixed(2)} SOL ($${(userSolBalance * SOL_USD_RATE).toFixed(2)})`;
-      };
-
-      // Function to update the current bet amount display (includes USD value)
-      const updateCurrentBetAmountDisplay = () => {
-          currentBetAmountDisplay.textContent = `${currentBetAmount.toFixed(2)} SOL ($${(currentBetAmount * SOL_USD_RATE).toFixed(2)})`;
-      };
-
-
-      // Function to open the modal
-      betButtonMain.addEventListener('click', () => {
-        updateSolBalanceDisplay(); // Refresh balance when modal opens
-        currentBetAmount = 0; // Reset current bet when opening
-        updateCurrentBetAmountDisplay(); // Clear bet display
-        betPercentButtons.forEach(btn => btn.classList.remove('active')); // Deactivate all percent buttons
-        betModal.classList.add('show');
-      });
-
-      // Function to close the modal
-      closeModalButton.addEventListener('click', () => {
-        betModal.classList.remove('show');
-      });
-
-      // Close modal when clicking outside
-      betModal.addEventListener('click', (e) => {
-        if (e.target === betModal) {
-          betModal.classList.remove('show');
-        }
-      });
-
-      // Handle percentage button clicks
-      betPercentButtons.forEach(button => {
-        button.addEventListener('click', () => {
-          // Deactivate previous active button
-          betPercentButtons.forEach(btn => btn.classList.remove('active'));
-          // Activate current button
-          button.classList.add('active');
-
-          const percent = parseFloat(button.dataset.percent);
-          currentBetAmount = userSolBalance * percent;
-          updateCurrentBetAmountDisplay();
-        });
-      });
-
-      // Handle "Place Bet" button click inside modal
-      placeBetButton.addEventListener('click', () => {
-        if (currentBetAmount <= 0) {
-          window.alert("Please select a bet amount.");
-          return;
-        }
-        if (currentBetAmount > userSolBalance) {
-          window.alert("Insufficient SOL balance.");
-          return;
-        }
-
-        // Deduct bet amount from user's balance
-        userSolBalance -= currentBetAmount;
-        updateSolBalanceDisplay();
-
-        // Calculate potential payout based on the *current slider prediction* and *staked amount*
-        const currentSliderValue = parseFloat(document.getElementById('predictionSlider').value);
-        const payoutPerUnitStake = generateChartData(currentSliderValue)[Math.round(currentSliderValue * 100)];
-        const finalPotentialPayout = payoutPerUnitStake * currentBetAmount;
-
-        potentialPayoutDisplay.textContent = `Potential Payout: $${finalPotentialPayout.toFixed(2)} (from ${currentBetAmount.toFixed(2)} SOL bet)`;
-        
-        betModal.classList.remove('show'); // Close modal after placing bet
-        window.alert(`Bet of ${currentBetAmount.toFixed(2)} SOL placed! Potential Payout: $${finalPotentialPayout.toFixed(2)}`); // Confirmation message
-        
-        // Update the chart and slider display to reflect the new bet amount immediately
-        updateSliderAndChart(currentSliderValue);
-      });
-
-      // Function to update the slider info and chart
-      const updateSliderAndChart = (value) => {
-          // The chart always shows payout for a unit stake (e.g., 1 SOL)
-          const payoutAtPredictionForUnit = generateChartData(value)[Math.round(value * 100)];
-
-          predictedValueDisplay.textContent = `Predicted: ${value.toFixed(2)}%`;
-          
-          // If a bet has been set, reflect that in the potential payout display, otherwise show default for 1 SOL
-          if (currentBetAmount > 0) {
-              potentialPayoutDisplay.textContent = `Potential Payout: $${(payoutAtPredictionForUnit * currentBetAmount).toFixed(2)} (from ${currentBetAmount.toFixed(2)} SOL bet)`;
-          } else {
-              // Default display when no bet is placed yet (show payout for 1 SOL stake)
-              potentialPayoutDisplay.textContent = `Potential Payout: $${payoutAtPredictionForUnit.toFixed(2)} (per 1 SOL stake)`;
-          }
-
-          payoutChart.data.datasets[0].data = generateChartData(value);
-          payoutChart.update();
-      };
-
-      // Initial update to ensure the chart and display reflect a default state
-      updateSliderAndChart(parseFloat(predictionSlider.value));
+    // ---- INTERIOR RUNE / CIRCUIT GLOW ----
+    c.globalAlpha=glow*.6;
+    c.strokeStyle=`hsla(${hue},100%,90%,0.8)`; c.lineWidth=.7;
+    // Rune pattern on top face
+    const rune=this.shape; // reuse shape as rune vertices
+    c.save(); c.scale(.28,.16); c.translate(0,-h*1.2);
+    c.beginPath();
+    rune.forEach((p,i)=>{
+      const px=Math.cos(p.a)*h*p.r*.9, py=Math.sin(p.a)*h*p.r*.9;
+      if(i===0) c.moveTo(px,py); else c.lineTo(px,py);
     });
-  </script>
+    c.closePath(); c.stroke();
+    // center cross rune
+    c.strokeStyle=`hsla(${hue},100%,95%,0.5)`;
+    c.beginPath(); c.moveTo(-h*.4,0); c.lineTo(h*.4,0); c.moveTo(0,-h*.4); c.lineTo(0,h*.4); c.stroke();
+    c.restore();
+    c.globalAlpha=1;
+
+    // ---- FLOATING ENERGY SPARKS ----
+    const t=Date.now()*.002;
+    for(let i=0;i<4;i++){
+      const sa=(i/4)*Math.PI*2+t*(1+i*.3);
+      const sr=s*(.6+Math.sin(t*2+i)*.25);
+      const spx=Math.cos(sa)*sr*.6, spy=Math.sin(sa)*sr*.3-s*.3;
+      c.beginPath(); c.arc(spx,spy,1.2,0,Math.PI*2);
+      c.fillStyle=`hsla(${hue},100%,90%,${glow*(.4+Math.sin(t*3+i)*.3)})`;
+      c.fill();
+    }
+
+    // ---- TOP CRYSTAL SPIKE ----
+    const spikeG=c.createLinearGradient(0,-h*1.6,0,-h);
+    spikeG.addColorStop(0,`hsla(${hue},100%,95%,${glow*.5})`);
+    spikeG.addColorStop(1,`hsla(${hue},100%,70%,${glow})`);
+    c.fillStyle=spikeG;
+    c.beginPath(); c.moveTo(-s*.12,-h); c.lineTo(s*.12,-h); c.lineTo(0,-h*1.6); c.closePath(); c.fill();
+    c.strokeStyle=`hsla(${hue},100%,95%,${glow*.6})`; c.lineWidth=.5;
+    c.beginPath(); c.moveTo(-s*.12,-h); c.lineTo(0,-h*1.6); c.lineTo(s*.12,-h); c.stroke();
+
+    // ---- LEGENDARY EXTRA: second orbiting shard ----
+    if(this.isLegendary){
+      const ot=Date.now()*.0015;
+      c.save(); c.rotate(ot);
+      c.fillStyle=`hsla(300,100%,70%,${glow*.5})`;
+      c.beginPath(); c.moveTo(s*1.3,-s*.15); c.lineTo(s*1.55,0); c.lineTo(s*1.3,s*.15); c.lineTo(s*1.05,0); c.closePath(); c.fill();
+      c.strokeStyle=`hsla(300,100%,90%,${glow*.4})`; c.lineWidth=.7; c.stroke();
+      c.rotate(Math.PI);
+      c.fillStyle=`hsla(280,100%,60%,${glow*.4})`;
+      c.beginPath(); c.moveTo(s*1.3,-s*.12); c.lineTo(s*1.5,0); c.lineTo(s*1.3,s*.12); c.lineTo(s*1.1,0); c.closePath(); c.fill();
+      c.restore();
+      // outer hex ring
+      c.strokeStyle=`rgba(255,0,255,${glow*.25})`; c.lineWidth=1; c.setLineDash([4,6]);
+      c.beginPath();
+      for(let i=0;i<6;i++){const a=i/6*Math.PI*2+ot*.5; c.lineTo(Math.cos(a)*s*1.8,Math.sin(a)*s*.9);}
+      c.closePath(); c.stroke(); c.setLineDash([]);
+    }
+
+    // ---- LOCKED TARGETING RETICLE ----
+    if(this.locked){
+      c.setLineDash([]); c.globalAlpha=1;
+      const lockR=s*2;
+      // Pulsing amber ring
+      const lp=.6+Math.sin(Date.now()*.008)*.3;
+      c.strokeStyle=`rgba(255,170,0,${lp})`; c.lineWidth=1.5;
+      c.beginPath(); c.arc(0,0,lockR,0,Math.PI*2); c.stroke();
+      // Corner brackets
+      const blen=12, gap=Math.PI/6;
+      [0,Math.PI*.5,Math.PI,Math.PI*1.5].forEach(a=>{
+        const x1=Math.cos(a-gap)*lockR, y1=Math.sin(a-gap)*lockR;
+        const x2=Math.cos(a+gap)*lockR, y2=Math.sin(a+gap)*lockR;
+        const xi=Math.cos(a)*(lockR+blen), yi=Math.sin(a)*(lockR+blen);
+        c.strokeStyle=`rgba(255,200,0,${lp+.2})`; c.lineWidth=2;
+        c.beginPath(); c.moveTo(x1,y1); c.lineTo(xi,yi); c.lineTo(x2,y2); c.stroke();
+      });
+      // Lock progress arc
+      if(lockHold>0){
+        const pct=lockHold/LOCK_REQUIRED;
+        c.strokeStyle=`rgba(255,200,0,0.9)`; c.lineWidth=3;
+        c.beginPath(); c.arc(0,0,lockR,-Math.PI/2,-Math.PI/2+pct*Math.PI*2); c.stroke();
+      }
+      // Crosshair lines through center
+      c.strokeStyle=`rgba(255,170,0,0.3)`; c.lineWidth=1; c.setLineDash([3,5]);
+      c.beginPath(); c.moveTo(-lockR*1.3,0); c.lineTo(lockR*1.3,0);
+      c.moveTo(0,-lockR*1.3); c.lineTo(0,lockR*1.3); c.stroke();
+      c.setLineDash([]);
+    }
+
+    c.restore();
+
+    // ---- NAME LABEL (in goggle mode, when locked) ----
+    if(this.locked && goggleMode){
+      c.save(); c.translate(sx,sy);
+      const lbl=lockedFragName||'SCANNING...';
+      const lblY=-s*2.4;
+      c.font=`bold 11px "Orbitron",sans-serif`;
+      const tw=c.measureText(lbl).width;
+      // backing
+      c.fillStyle='rgba(0,8,2,0.82)';
+      c.fillRect(-tw/2-8,lblY-13,tw+16,18);
+      c.strokeStyle=`rgba(255,170,0,0.6)`; c.lineWidth=1;
+      c.strokeRect(-tw/2-8,lblY-13,tw+16,18);
+      // text
+      c.fillStyle='rgba(255,200,0,0.9)';
+      c.textAlign='center'; c.textBaseline='middle';
+      c.fillText(lbl,0,lblY-4);
+      // connector line
+      c.strokeStyle='rgba(255,170,0,0.3)'; c.lineWidth=1;
+      c.beginPath(); c.moveTo(0,lblY+5); c.lineTo(0,-s*1.1); c.stroke();
+      c.restore();
+    }
+
+    // Trail
+    if(this.trail.length>2){
+      c.save();
+      for(let i=1;i<this.trail.length;i++){
+        const tx=this.trail[i].x-camX+canvas.width/2;
+        const ty=this.trail[i].y-camY+canvas.height/2;
+        const ptx=this.trail[i-1].x-camX+canvas.width/2;
+        const pty=this.trail[i-1].y-camY+canvas.height/2;
+        c.beginPath(); c.moveTo(ptx,pty); c.lineTo(tx,ty);
+        c.strokeStyle=`hsla(${hue},100%,55%,${(i/this.trail.length)*.2})`; c.lineWidth=1; c.stroke();
+      }
+      c.restore();
+    }
+  }
+  get hitRadius(){return this.size*2;}
+  distToScreen(mx,my){return Math.hypot(this.screenX()-mx,this.screenY()-my);}
+}
+
+// ==================== WORLD RENDER (top-down ground) ====================
+function renderWorld(){
+  const W=canvas.width, H=canvas.height;
+  const cx=W/2, cy=H/2; // player always at screen center
+
+  // --- BASE GROUND ---
+  ctx.fillStyle='#1a1510'; ctx.fillRect(0,0,W,H);
+
+  // Cobblestone tiles
+  worldTiles.forEach(t=>{
+    const sx=t.x-camX+cx, sy=t.y-camY+cy;
+    if(sx<-80||sx>W+80||sy<-80||sy>H+80) return;
+    const base=Math.floor(28*t.light);
+    ctx.fillStyle=`rgb(${base+4},${base+2},${base-2})`;
+    ctx.fillRect(sx,sy,t.w,t.h);
+    // Tile grout lines
+    ctx.strokeStyle=`rgba(10,8,6,0.7)`; ctx.lineWidth=1.5;
+    ctx.strokeRect(sx+.75,sy+.75,t.w-1.5,t.h-1.5);
+    // Subtle inner highlight top-left
+    ctx.strokeStyle=`rgba(60,50,35,0.4)`; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(sx+2,sy+t.h-2); ctx.lineTo(sx+2,sy+2); ctx.lineTo(sx+t.w-2,sy+2); ctx.stroke();
+    // Crack
+    if(t.crack){
+      ctx.save(); ctx.translate(sx+t.w/2,sy+t.h/2); ctx.rotate(t.crackAngle);
+      ctx.strokeStyle='rgba(0,0,0,0.5)'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(-15,0); ctx.lineTo(0,3); ctx.lineTo(15,-2); ctx.stroke();
+      ctx.restore();
+    }
+    // Moss patch
+    if(t.moss){ ctx.fillStyle='rgba(30,60,15,0.25)'; ctx.fillRect(sx+2,sy+2,t.w-4,t.h-4); }
+  });
+
+  // Decals
+  worldDecals.forEach(d=>{
+    const sx=d.x-camX+cx, sy=d.y-camY+cy;
+    if(sx<-100||sx>W+100||sy<-100||sy>H+100) return;
+    ctx.save(); ctx.globalAlpha=d.alpha; ctx.translate(sx,sy); ctx.rotate(d.rot);
+    if(d.type==='line'){
+      ctx.strokeStyle='#3a2a10'; ctx.lineWidth=3;
+      ctx.beginPath(); ctx.moveTo(-d.size,0); ctx.lineTo(d.size,0); ctx.stroke();
+    } else if(d.type==='circle'){
+      ctx.strokeStyle='#2a1a08'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.arc(0,0,d.size*.5,0,Math.PI*2); ctx.stroke();
+    } else if(d.type==='drain'){
+      ctx.strokeStyle='#111'; ctx.lineWidth=3;
+      ctx.beginPath(); ctx.arc(0,0,d.size*.35,0,Math.PI*2); ctx.stroke();
+      ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=2;
+      for(let i=0;i<6;i++){const a=i/6*Math.PI*2;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(Math.cos(a)*d.size*.32,Math.sin(a)*d.size*.32);ctx.stroke();}
+    } else if(d.type==='scorch'){
+      const sg=ctx.createRadialGradient(0,0,0,0,0,d.size*.5);
+      sg.addColorStop(0,'rgba(0,0,0,0.6)'); sg.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=sg; ctx.beginPath(); ctx.arc(0,0,d.size*.5,0,Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
+  });
+
+  // Props
+  worldProps.forEach(p=>{
+    const sx=p.x-camX+cx, sy=p.y-camY+cy;
+    if(sx<-60||sx>W+60||sy<-60||sy>H+60) return;
+    ctx.save(); ctx.translate(sx,sy); ctx.rotate(p.rot);
+    const s=p.size;
+    if(p.type==='lamp'){
+      // Lamp post top-down: circle base + glow
+      ctx.fillStyle='#4a3a20'; ctx.beginPath(); ctx.arc(0,0,s*.3,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle='#8B6A30'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(0,0,s*.3,0,Math.PI*2); ctx.stroke();
+      // warm lamplight glow on ground
+      const lg=ctx.createRadialGradient(0,0,0,0,0,s*2.5);
+      lg.addColorStop(0,'rgba(255,200,80,0.18)'); lg.addColorStop(1,'rgba(255,200,80,0)');
+      ctx.fillStyle=lg; ctx.beginPath(); ctx.arc(0,0,s*2.5,0,Math.PI*2); ctx.fill();
+    } else if(p.type==='crate'){
+      ctx.fillStyle='#3a2a10'; ctx.fillRect(-s*.4,-s*.4,s*.8,s*.8);
+      ctx.strokeStyle='#6a4a20'; ctx.lineWidth=1.5; ctx.strokeRect(-s*.4,-s*.4,s*.8,s*.8);
+      // Cross planks
+      ctx.strokeStyle='#4a3818'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(-s*.4,0); ctx.lineTo(s*.4,0); ctx.moveTo(0,-s*.4); ctx.lineTo(0,s*.4); ctx.stroke();
+      // Shadow
+      ctx.fillStyle='rgba(0,0,0,0.3)'; ctx.fillRect(s*.1,s*.1,s*.8,s*.8);
+    } else if(p.type==='barrel'){
+      ctx.fillStyle='#2a1a08'; ctx.beginPath(); ctx.ellipse(0,0,s*.32,s*.38,0,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle='#5a3a18'; ctx.lineWidth=2; ctx.beginPath(); ctx.ellipse(0,0,s*.32,s*.38,0,0,Math.PI*2); ctx.stroke();
+      ctx.strokeStyle='#7a5a28'; ctx.lineWidth=1.5;
+      [-s*.14,0,s*.14].forEach(yy=>{ctx.beginPath();ctx.ellipse(0,yy,s*.3,s*.08,0,0,Math.PI*2);ctx.stroke();});
+    } else if(p.type==='pipe'){
+      ctx.strokeStyle='#4a3a28'; ctx.lineWidth=s*.25;
+      ctx.lineCap='round'; ctx.beginPath();
+      ctx.moveTo(-s*.6,0); ctx.lineTo(s*.6,0); ctx.stroke();
+      ctx.strokeStyle='#6a5a38'; ctx.lineWidth=s*.1;
+      ctx.beginPath(); ctx.moveTo(-s*.6,0); ctx.lineTo(s*.6,0); ctx.stroke();
+    } else if(p.type==='debris'){
+      ctx.fillStyle='#2a2018';
+      for(let i=0;i<4;i++){
+        const a=i/4*Math.PI*2+p.variant, r=s*.2+Math.random()*.1;
+        ctx.save(); ctx.translate(Math.cos(a)*s*.2,Math.sin(a)*s*.2); ctx.rotate(a);
+        ctx.fillRect(-r,-r*.6,r*2,r*1.2); ctx.restore();
+      }
+    } else if(p.type==='vent'){
+      ctx.fillStyle='#1a1510'; ctx.fillRect(-s*.38,-s*.38,s*.76,s*.76);
+      ctx.strokeStyle='#3a3028'; ctx.lineWidth=2; ctx.strokeRect(-s*.38,-s*.38,s*.76,s*.76);
+      for(let i=-2;i<=2;i++){ctx.strokeStyle='#2a2018';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(i*s*.12,-s*.32);ctx.lineTo(i*s*.12,s*.32);ctx.stroke();}
+      // Steam puff (animated)
+      const t=Date.now()*.001;
+      ctx.fillStyle=`rgba(180,180,160,${0.06+Math.sin(t*3+p.x)*.03})`;
+      ctx.beginPath(); ctx.arc(0,-s*.5,s*.2+Math.sin(t*4)*s*.05,0,Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
+  });
+
+  // Ambient ground fog near walls (dark vignette)
+  const vg=ctx.createRadialGradient(cx,cy,0,cx,cy,Math.max(W,H)*.6);
+  vg.addColorStop(.6,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,0.65)');
+  ctx.fillStyle=vg; ctx.fillRect(0,0,W,H);
+
+  // ---- GOGGLE MODE OVERLAY ----
+  if(goggleMode){
+    // Void tint over the ground
+    const vt=ctx.createRadialGradient(cx,cy,0,cx,cy,Math.max(W,H)*.7);
+    vt.addColorStop(0,'rgba(0,20,5,0.45)');
+    vt.addColorStop(1,'rgba(0,5,1,0.7)');
+    ctx.fillStyle=vt; ctx.fillRect(0,0,W,H);
+    // Nebula wisps visible through goggles
+    nebulae.forEach(n=>{
+      const nx=n.x-camX+cx, ny=n.y-camY+cy;
+      ctx.save(); ctx.translate(nx,ny); ctx.rotate(n.rotation);
+      const ng=ctx.createRadialGradient(0,0,0,0,0,n.rx);
+      ng.addColorStop(0,`hsla(${n.hue},80%,40%,${n.alpha*2})`);
+      ng.addColorStop(.5,`hsla(${n.hue},60%,30%,${n.alpha})`);
+      ng.addColorStop(1,`hsla(${n.hue},40%,20%,0)`);
+      ctx.fillStyle=ng; ctx.scale(1,n.ry/n.rx);
+      ctx.beginPath(); ctx.arc(0,0,n.rx,0,Math.PI*2); ctx.fill();
+      ctx.restore();
+    });
+    // Green grid scan overlay
+    const gridSize=80;
+    const offX=(-camX%gridSize+gridSize)%gridSize;
+    const offY=(-camY%gridSize+gridSize)%gridSize;
+    ctx.strokeStyle='rgba(0,255,65,0.04)'; ctx.lineWidth=1;
+    for(let x=offX;x<W;x+=gridSize){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+    for(let y=offY;y<H;y+=gridSize){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  }
+}
+
+// ==================== PLAYER CHARACTER (top-down) ====================
+function drawPlayer(){
+  const cx=canvas.width/2, cy=canvas.height/2;
+  const moving=keys.w||keys.a||keys.s||keys.d;
+
+  // Update direction based on movement
+  if(keys.w) playerDir=-Math.PI/2;
+  if(keys.s) playerDir=Math.PI/2;
+  if(keys.a) playerDir=Math.PI;
+  if(keys.d) playerDir=0;
+  if(keys.w&&keys.d) playerDir=-Math.PI/4;
+  if(keys.w&&keys.a) playerDir=-Math.PI*3/4;
+  if(keys.s&&keys.d) playerDir=Math.PI/4;
+  if(keys.s&&keys.a) playerDir=Math.PI*3/4;
+
+  // Step animation
+  if(moving){ playerStepTimer+=0.18; playerStep=Math.sin(playerStepTimer)*1; }
+
+  ctx.save(); ctx.translate(cx,cy);
+
+  // Shadow under player
+  ctx.fillStyle='rgba(0,0,0,0.35)';
+  ctx.beginPath(); ctx.ellipse(2,6,13,7,0,0,Math.PI*2); ctx.fill();
+
+  // Rotate whole character to face movement direction
+  ctx.rotate(playerDir+Math.PI/2);
+
+  // --- BODY ---
+  // Coat (steampunk long coat, top-down)
+  ctx.fillStyle='#2a1a08';
+  ctx.beginPath();
+  ctx.ellipse(0,2,9,13,0,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#4a3018'; ctx.lineWidth=1.2;
+  ctx.beginPath(); ctx.ellipse(0,2,9,13,0,0,Math.PI*2); ctx.stroke();
+
+  // Coat collar/lapel detail
+  ctx.fillStyle='#3a2510';
+  ctx.beginPath(); ctx.moveTo(-5,-6); ctx.lineTo(0,-10); ctx.lineTo(5,-6); ctx.closePath(); ctx.fill();
+
+  // Legs (walking bob)
+  const legSwing=playerStep*4;
+  ctx.fillStyle='#1a1008';
+  // Left leg
+  ctx.beginPath(); ctx.ellipse(-4+legSwing*.5, 9, 3.5, 5, legSwing*.04, 0, Math.PI*2); ctx.fill();
+  // Right leg
+  ctx.beginPath(); ctx.ellipse(4-legSwing*.5, 9, 3.5, 5, -legSwing*.04, 0, Math.PI*2); ctx.fill();
+
+  // Boots
+  ctx.fillStyle='#0d0a06';
+  ctx.beginPath(); ctx.ellipse(-4+legSwing*.5,13,3,3,0,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(4-legSwing*.5,13,3,3,0,0,Math.PI*2); ctx.fill();
+
+  // --- HEAD (top-down hat brim circle) ---
+  // Hat brim
+  ctx.fillStyle='#1a1008';
+  ctx.beginPath(); ctx.arc(0,-10,10,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#3a2510'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.arc(0,-10,10,0,Math.PI*2); ctx.stroke();
+  // Hat top
+  ctx.fillStyle='#0d0806';
+  ctx.beginPath(); ctx.arc(0,-10,7,0,Math.PI*2); ctx.fill();
+  // Hat band
+  ctx.strokeStyle='#8B6A30'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.arc(0,-10,7.5,0,Math.PI*2); ctx.stroke();
+  // Face (tiny)
+  ctx.fillStyle='#c8a070';
+  ctx.beginPath(); ctx.arc(0,-10,4,0,Math.PI*2); ctx.fill();
+
+  // Goggle lenses on face (if goggles on — glowing amber)
+  if(goggleMode){
+    ctx.fillStyle='rgba(255,170,0,0.6)';
+    ctx.beginPath(); ctx.arc(-2,-11,2.5,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(3,-11,2.5,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#8B5E00'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.arc(-2,-11,2.5,0,Math.PI*2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(3,-11,2.5,0,Math.PI*2); ctx.stroke();
+    // Goggle glow on ground around player
+    ctx.restore();
+    ctx.save(); ctx.translate(cx,cy);
+    const gg=ctx.createRadialGradient(0,0,0,0,0,50);
+    gg.addColorStop(0,'rgba(255,170,0,0.06)'); gg.addColorStop(1,'rgba(255,170,0,0)');
+    ctx.fillStyle=gg; ctx.beginPath(); ctx.arc(0,0,50,0,Math.PI*2); ctx.fill();
+  } else {
+    // Normal eyes
+    ctx.fillStyle='#1a0a00';
+    ctx.beginPath(); ctx.arc(-2,-11,1.2,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(3,-11,1.2,0,Math.PI*2); ctx.fill();
+  }
+
+  // Arms (one holds the scanner device when goggles on)
+  ctx.restore();
+  ctx.save(); ctx.translate(cx,cy); ctx.rotate(playerDir+Math.PI/2);
+  const armSwing=playerStep*5;
+  ctx.strokeStyle='#2a1a08'; ctx.lineWidth=5; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(-6,0); ctx.lineTo(-9+armSwing, 6); ctx.stroke();
+  ctx.strokeStyle='#3a2510'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.moveTo(-6,0); ctx.lineTo(-9+armSwing, 6); ctx.stroke();
+
+  if(goggleMode){
+    // Right arm holds scanner up/forward
+    ctx.strokeStyle='#2a1a08'; ctx.lineWidth=5; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(6,0); ctx.lineTo(10,-8); ctx.stroke();
+    ctx.strokeStyle='#3a2510'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(6,0); ctx.lineTo(10,-8); ctx.stroke();
+    // Scanner device
+    ctx.save(); ctx.translate(11,-11);
+    ctx.fillStyle='#3a3020'; ctx.fillRect(-6,-4,12,8);
+    ctx.strokeStyle='#8B6A30'; ctx.lineWidth=1; ctx.strokeRect(-6,-4,12,8);
+    ctx.fillStyle='rgba(255,170,0,0.7)'; ctx.fillRect(-4,-2,3,4);
+    ctx.restore();
+  } else {
+    // Normal right arm swing
+    ctx.strokeStyle='#2a1a08'; ctx.lineWidth=5; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(6,0); ctx.lineTo(9-armSwing, 6); ctx.stroke();
+    ctx.strokeStyle='#3a2510'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(6,0); ctx.lineTo(9-armSwing, 6); ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+// ==================== RADAR ====================
+function renderRadar(){
+  const W=170, R=83;
+  rctx.clearRect(0,0,W,W);
+  // BG
+  rctx.fillStyle='rgba(0,15,5,0.93)'; rctx.beginPath(); rctx.arc(R,R,R-2,0,Math.PI*2); rctx.fill();
+  // Rings
+  rctx.strokeStyle='rgba(0,255,65,0.12)'; rctx.lineWidth=1;
+  [20,40,60,78].forEach(r=>{rctx.beginPath();rctx.arc(R,R,r,0,Math.PI*2);rctx.stroke();});
+  // Cross
+  rctx.strokeStyle='rgba(0,255,65,0.08)';
+  rctx.beginPath();rctx.moveTo(R,5);rctx.lineTo(R,W-5);rctx.moveTo(5,R);rctx.lineTo(W-5,R);rctx.stroke();
+  // Sweep
+  const sw=(Date.now()*.0025)%(Math.PI*2);
+  rctx.save(); rctx.translate(R,R); rctx.rotate(sw);
+  const swg=rctx.createLinearGradient(0,-78,0,0);
+  swg.addColorStop(0,'rgba(0,255,65,0.5)'); swg.addColorStop(1,'rgba(0,255,65,0)');
+  rctx.fillStyle='rgba(0,255,65,0.12)'; rctx.beginPath();
+  rctx.moveTo(0,0); rctx.arc(0,0,78,-.4,0); rctx.closePath(); rctx.fill();
+  rctx.strokeStyle='rgba(0,255,65,0.3)'; rctx.lineWidth=1;
+  rctx.beginPath(); rctx.moveTo(0,0); rctx.lineTo(0,-78); rctx.stroke();
+  rctx.restore();
+  // Fragment blips
+  const VIEW=800;
+  fragments.forEach(f=>{
+    const dx=f.worldX-camX, dy=f.worldY-camY;
+    if(Math.abs(dx)<VIEW&&Math.abs(dy)<VIEW){
+      const rx=R+dx*(R/VIEW), ry=R+dy*(R/VIEW);
+      const hue=f.isLegendary?300:f.hue;
+      rctx.beginPath(); rctx.arc(rx,ry,f===targetFrag?4.5:f.isLegendary?3.5:2.5,0,Math.PI*2);
+      rctx.fillStyle=f===targetFrag?'rgba(255,170,0,1)':`hsla(${hue},100%,55%,0.8)`; rctx.fill();
+      if(f.isLegendary){
+        rctx.beginPath(); rctx.arc(rx,ry,7,0,Math.PI*2);
+        rctx.strokeStyle='rgba(255,0,255,0.4)'; rctx.lineWidth=1; rctx.stroke();
+      }
+    }
+  });
+  // Player
+  rctx.beginPath(); rctx.arc(R,R,5,0,Math.PI*2);
+  rctx.fillStyle='rgba(0,255,65,1)'; rctx.fill();
+  rctx.beginPath(); rctx.arc(R,R,5,0,Math.PI*2);
+  rctx.strokeStyle='rgba(0,255,65,0.5)'; rctx.lineWidth=2; rctx.stroke();
+  // Clip
+  rctx.save(); rctx.globalCompositeOperation='destination-in';
+  rctx.beginPath(); rctx.arc(R,R,R-2,0,Math.PI*2); rctx.fill(); rctx.restore();
+}
+
+// ==================== MAIN LOOP ====================
+let lastMoveSound=0;
+function gameLoop(){
+  if(!gameActive){requestAnimationFrame(gameLoop);return;}
+
+  // Movement
+  let moving=false;
+  if(keys.w){velY-=SPEED;moving=true;}
+  if(keys.s){velY+=SPEED;moving=true;}
+  if(keys.a){velX-=SPEED;moving=true;}
+  if(keys.d){velX+=SPEED;moving=true;}
+  velX*=FRICTION; velY*=FRICTION;
+  camX+=velX; camY+=velY;
+  // Wrap world
+  camX=((camX%WORLD_W)+WORLD_W)%WORLD_W;
+  camY=((camY%WORLD_H)+WORLD_H)%WORLD_H;
+
+  // Move sound
+  if(moving&&Date.now()-lastMoveSound>400){lastMoveSound=Date.now();/* playHum(); */}
+
+  // Render
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  renderWorld();
+
+  // Draw player at screen center
+  drawPlayer();
+
+  // Fragments and scan FX only visible with goggles ON
+  if(goggleMode){
+    // Scan beam
+    if(targetFrag&&!scanning){
+      const sx=targetFrag.screenX(), sy=targetFrag.screenY();
+      ctx.save(); ctx.strokeStyle='rgba(0,255,65,0.1)'; ctx.lineWidth=1; ctx.setLineDash([6,12]);
+      ctx.beginPath(); ctx.moveTo(mouseX,mouseY); ctx.lineTo(sx,sy); ctx.stroke();
+      ctx.setLineDash([]); ctx.restore();
+    }
+    // Scan rings on locked fragment
+    if(targetFrag&&scanning){
+      const sx=targetFrag.screenX(), sy=targetFrag.screenY();
+      const t=Date.now()*.003;
+      ctx.save(); ctx.translate(sx,sy);
+      for(let r=1;r<=4;r++){
+        const rad=targetFrag.size*(1.4+r*.9)+Math.sin(t*2+r)*6;
+        ctx.beginPath(); ctx.arc(0,0,rad,0,Math.PI*2);
+        ctx.strokeStyle=`rgba(255,170,0,${.7/r})`; ctx.lineWidth=2.5/r; ctx.stroke();
+      }
+      ctx.restore();
+    }
+    fragments.forEach(f=>{f.update();f.draw(ctx);});
+    if(!scanning) checkHover();
+  } else {
+    // Still update fragment positions when goggles off, just don't draw/hover
+    fragments.forEach(f=>f.update());
+    if(targetFrag){targetFrag=null; document.getElementById('cursor').className=''; clearHud();}
+  }
+  if(goggleMode) renderRadar();
+  updateSessionTime();
+  requestAnimationFrame(gameLoop);
+}
+
+// ==================== HOVER / LOCK ====================
+function checkHover(){
+  let hovered=null; let closest=999;
+  fragments.forEach(f=>{f.highlighted=false;f.locked=false;
+    const d=f.distToScreen(mouseX,mouseY);
+    if(d<f.hitRadius+24&&d<closest){closest=d;hovered=f;}
+  });
+
+  if(hovered){
+    hovered.highlighted=true; hovered.locked=true;
+    const cur=document.getElementById('cursor');
+    if(hovered.isLegendary) cur.className='legendary';
+    else cur.className='locked';
+
+    if(hovered===targetFrag){
+      // Same fragment — build lock
+      lockHold=Math.min(lockHold+1, LOCK_REQUIRED);
+      if(lockHold>=LOCK_REQUIRED) lockedFragName=hovered.isLegendary?'⚠ LEGENDARY FRAGMENT':'DCU FRAGMENT';
+    } else {
+      // New fragment
+      targetFrag=hovered; lockHold=0; lockedFragName='';
+      clearHud(); updateHudPartial();
+    }
+  } else {
+    // Lost target
+    if(targetFrag && scanning){
+      // Broke lock mid-scan — interrupt!
+      clearInterval(scanInterval); scanning=false;
+      document.getElementById('scanProgressWrap').style.display='none';
+      document.getElementById('grabBtn').style.display='none';
+      document.getElementById('corruptOverlay').classList.remove('active');
+      document.getElementById('scanAction').textContent='LOCK BROKEN';
+      playScanFail(); streak=0; updateStreakDisplay();
+      // Brief message then clear
+      setTimeout(()=>{},200);
+    }
+    targetFrag=null; lockHold=0; lockedFragName='';
+    document.getElementById('cursor').className='';
+    clearHud();
+  }
+}
+
+document.addEventListener('mousemove',e=>{
+  mouseX=e.clientX; mouseY=e.clientY;
+  const c=document.getElementById('cursor');
+  c.style.left=mouseX+'px'; c.style.top=mouseY+'px';
+});
+document.addEventListener('click',()=>{
+  if(!gameActive||scanning||!goggleMode) return;
+  if(targetFrag && lockHold>=LOCK_REQUIRED) beginScan();
+  else if(targetFrag && lockHold<LOCK_REQUIRED){
+    // Feedback: not locked yet
+    playTone(200,'sine',.05,.04);
+  }
+});
+
+// ==================== HUD ====================
+function clearHud(){['hudType','hudRarity','hudStable','hudValue','hudCorrupt'].forEach(id=>{const e=document.getElementById(id);e.textContent='???';e.className='hud-val unknown';});}
+function updateHudPartial(){document.getElementById('hudType').textContent='...DETECTING';document.getElementById('hudType').className='hud-val';['hudRarity','hudStable','hudValue','hudCorrupt'].forEach(id=>{const e=document.getElementById(id);e.textContent='???';e.className='hud-val unknown';});}
+function updateHudScan(pct,o){
+  const rev=(id,val,cls,thr)=>{if(pct>=thr){const e=document.getElementById(id);e.textContent=val;e.className=`hud-val ${cls}`;}};
+  rev('hudType',o.type,'',20);
+  rev('hudRarity',o.rarity,o.rarity==='CORRUPTED'?'corrupt':o.rarity==='LEGENDARY'?'corrupt':'',38);
+  rev('hudStable',o.stable+'%',o.stable<40?'danger':o.stable>70?'':'',55);
+  rev('hudValue',o.value>0?'+'+o.value:''+o.value,o.value>0?'':'danger',70);
+  rev('hudCorrupt',(o.corrupt*100).toFixed(0)+'%',o.corrupt>.6?'corrupt':o.corrupt>.3?'danger':'',85);
+}
+
+// ==================== SCAN ====================
+function beginScan(){
+  scanning=true; scanProgress=0; grabAllowed=false;
+  // Pick outcome - legendary frags have higher legendary chance
+  const pool=targetFrag.isLegendary?OUTCOMES.filter(o=>o.legendary||o.value>200):OUTCOMES;
+  currentOutcome=pool[Math.floor(Math.random()*pool.length)];
+  document.getElementById('scanProgressWrap').style.display='flex';
+  document.getElementById('grabBtn').style.display='none';
+  document.getElementById('scanPct').textContent='0%';
+  document.getElementById('scanBar').style.width='0%';
+  document.getElementById('scanAction').textContent='SCANNING...';
+  let cspike=false;
+  scanInterval=setInterval(()=>{
+    scanProgress+=1.3;
+    playScanBeep(scanProgress);
+    if(currentOutcome.corrupt>.35&&Math.random()<currentOutcome.corrupt*.06&&!cspike){
+      cspike=true; playCorrupt();
+      document.getElementById('corruptOverlay').classList.add('active');
+      document.getElementById('scanAction').textContent='⚠ CORRUPTION WAVE';
+      setTimeout(()=>{document.getElementById('corruptOverlay').classList.remove('active');document.getElementById('scanAction').textContent='STABILIZING...';cspike=false;},500);
+    }
+    updateHudScan(scanProgress,currentOutcome);
+    if(scanProgress>=25&&!grabAllowed){grabAllowed=true;document.getElementById('grabBtn').style.display='block';}
+    document.getElementById('scanPct').textContent=Math.min(100,Math.floor(scanProgress))+'%';
+    document.getElementById('scanBar').style.width=Math.min(100,scanProgress)+'%';
+    if(scanProgress>=100){clearInterval(scanInterval);playScanComplete();completeScan(false);}
+  },75);
+}
+
+function grabEarly(){if(!grabAllowed||!scanning)return;playGrab();clearInterval(scanInterval);completeScan(true);}
+
+function completeScan(early){
+  scanning=false;
+  document.getElementById('scanProgressWrap').style.display='none';
+  document.getElementById('grabBtn').style.display='none';
+  document.getElementById('corruptOverlay').classList.remove('active');
+  let o={...currentOutcome};
+  if(early){
+    if(Math.random()<o.corrupt){
+      o.value=Math.round(o.value*(Math.random()*.5-.9)); o.effect='⚠ DESTABILIZED'; o.color='negative';
+      o.desc='Grabbed too soon. The fragment collapsed. It took something with it.'; o.name='< D E S T A B I L I Z E D >';
+      playScanFail(); streak=0; updateStreakDisplay();
+    } else {
+      o.value=Math.round(o.value*(1.15+Math.random()*.6));
+      o.desc='Grabbed before the void could interfere. Fortune favors the reckless. This time.';
+    }
+  }
+  showReveal(o,early);
+}
+
+// ==================== STREAK ====================
+function updateStreakDisplay(){
+  document.getElementById('streakVal').textContent='×'+streak;
+  const sd=document.getElementById('streakDisplay');
+  if(streak>=3) sd.classList.add('hot'); else sd.classList.remove('hot');
+}
+
+// ==================== REVEAL ====================
+function showReveal(o,early){
+  if(targetFrag){
+    fragments=fragments.filter(f=>f!==targetFrag);
+    targetFrag=null;
+    document.getElementById('cursor').className='';
+    setTimeout(()=>spawnFragment(),2000);
+  }
+  fragCount++; document.getElementById('fragCount').textContent=fragCount;
+
+  // Streak
+  let streakBonus=0;
+  if(o.value>0){
+    streak++; maxStreak=Math.max(maxStreak,streak);
+    if(streak>=3){streakBonus=Math.round(o.value*(streak*.1));playStreak(streak);}
+  } else { streak=0; }
+  updateStreakDisplay();
+
+  const finalVal=o.value+streakBonus;
+  score+=finalVal; document.getElementById('scoreVal').textContent=score;
+
+  sessionLog.push(`${o.name} [${o.rarity}] ${finalVal>=0?'+':''}${finalVal}`);
+
+  // Card
+  const card=document.getElementById('revealCard');
+  card.className=o.legendary?'legendary-card':'';
+  const ne=document.getElementById('revealName');
+  ne.textContent=o.name; ne.className=`reveal-dcu-name ${o.color}`;
+  document.getElementById('revealType').textContent=`${o.type} DCU — ${o.rarity}`;
+  const sbl=document.getElementById('streakBonusLine');
+  if(streakBonus>0){sbl.style.display='block';sbl.textContent=`STREAK ×${streak} BONUS +${streakBonus}`;}
+  else sbl.style.display='none';
+  document.getElementById('revealAttrs').innerHTML=`
+    <div class="reveal-attr"><span class="reveal-attr-label">EFFECT</span><span class="reveal-attr-val ${o.color}">${o.effect}</span></div>
+    <div class="reveal-attr"><span class="reveal-attr-label">STABILITY</span><span class="reveal-attr-val ${o.stable<40?'negative':o.stable>70?'positive':''}">${o.stable}%</span></div>
+    <div class="reveal-attr"><span class="reveal-attr-label">CORRUPTION</span><span class="reveal-attr-val ${o.corrupt>.6?'corrupt':o.corrupt>.3?'negative':'positive'}">${(o.corrupt*100).toFixed(0)}%</span></div>
+    ${early?'<div class="reveal-attr"><span class="reveal-attr-label">METHOD</span><span class="reveal-attr-val corrupt">EARLY GRAB</span></div>':''}
+  `;
+  document.getElementById('revealDesc').textContent=o.desc;
+  const se=document.getElementById('revealScore');
+  se.textContent=(finalVal>=0?'+':'')+finalVal+' VOID CREDITS';
+  se.className=finalVal>=0?'positive':'negative';
+  document.getElementById('revealModal').classList.add('show');
+  clearHud();
+}
+
+function continueGame(){document.getElementById('revealModal').classList.remove('show');scheduleWhisper();scheduleLegendarySpawn();}
+
+// ==================== SPAWN ====================
+function spawnFragment(){if(fragments.length<MAX_FRAGS) fragments.push(new Fragment());}
+
+function scheduleLegendarySpawn(){
+  if(fragCount>0&&fragCount%7===0){
+    // Force spawn a legendary nearby
+    const f=new Fragment();
+    f.worldX=camX+200+Math.random()*400;
+    f.worldY=camY+200+Math.random()*400;
+    f.isLegendary=true; f.hue=300; f.size=28;
+    fragments.push(f);
+    const la=document.getElementById('legendaryAlert');
+    la.className='show'; playLegendary();
+    setTimeout(()=>{la.className='';},2200);
+  }
+}
+
+// ==================== WHISPER ====================
+function scheduleWhisper(){
+  if(whisperTimeout) clearTimeout(whisperTimeout);
+  whisperTimeout=setTimeout(()=>{
+    const w=document.getElementById('voidWhisper');
+    w.textContent=WHISPERS[Math.floor(Math.random()*WHISPERS.length)];
+    w.style.opacity='1';
+    setTimeout(()=>{w.style.opacity='0';scheduleWhisper();},4500);
+  },9000+Math.random()*18000);
+}
+
+// ==================== SESSION TIME ====================
+function updateSessionTime(){
+  const elapsed=Math.floor((Date.now()-sessionStart)/1000);
+  const m=Math.floor(elapsed/60).toString().padStart(2,'0');
+  const s=(elapsed%60).toString().padStart(2,'0');
+  document.getElementById('sessionTime').textContent=`${m}:${s}`;
+}
+
+// ==================== END SESSION ====================
+function endSession(){
+  gameActive=false;
+  const elapsed=Math.floor((Date.now()-sessionStart)/1000);
+  const m=Math.floor(elapsed/60).toString().padStart(2,'0');
+  const s=(elapsed%60).toString().padStart(2,'0');
+  const positive=sessionLog.filter(l=>l.includes('+')).length;
+  const negative=sessionLog.filter(l=>!l.includes('+')&&l.includes('-')).length;
+  document.getElementById('summaryStats').innerHTML=`
+    <div class="summary-stat"><div class="summary-stat-label">TOTAL CREDITS</div><div class="summary-stat-val ${score>=0?'':'red'}">${score>=0?'+':''}${score}</div></div>
+    <div class="summary-stat"><div class="summary-stat-label">FRAGMENTS</div><div class="summary-stat-val">${fragCount}</div></div>
+    <div class="summary-stat"><div class="summary-stat-label">MAX STREAK</div><div class="summary-stat-val amber">×${maxStreak}</div></div>
+    <div class="summary-stat"><div class="summary-stat-label">TIME IN VOID</div><div class="summary-stat-val">${m}:${s}</div></div>
+    <div class="summary-stat"><div class="summary-stat-label">GAINS</div><div class="summary-stat-val">${positive}</div></div>
+    <div class="summary-stat"><div class="summary-stat-label">LOSSES</div><div class="summary-stat-val red">${negative}</div></div>
+  `;
+  document.getElementById('summaryLog').innerHTML=sessionLog.slice(-12).map(l=>`<div>${l}</div>`).join('');
+  document.getElementById('summaryModal').classList.add('show');
+}
+
+function resetGame(){
+  document.getElementById('summaryModal').classList.remove('show');
+  score=0; fragCount=0; streak=0; maxStreak=0; sessionLog=[];
+  fragments=[]; camX=WORLD_W/2; camY=WORLD_H/2; velX=0; velY=0;
+  document.getElementById('scoreVal').textContent='0';
+  document.getElementById('fragCount').textContent='0';
+  document.getElementById('streakVal').textContent='×0';
+  document.getElementById('sessionId').textContent=Math.random().toString(36).substr(2,6).toUpperCase();
+  sessionStart=Date.now();
+  for(let i=0;i<14;i++) spawnFragment();
+  gameActive=true;
+  scheduleWhisper();
+}
+
+// ==================== START ====================
+function startGame(){
+  resumeAudio();
+  document.getElementById('introScreen').classList.add('hidden');
+  gameActive=true;
+  sessionStart=Date.now();
+  document.getElementById('sessionId').textContent=Math.random().toString(36).substr(2,6).toUpperCase();
+  generateWorld();
+  camX=WORLD_W/2; camY=WORLD_H/2;
+  for(let i=0;i<14;i++) spawnFragment();
+  setInterval(()=>{if(fragments.length<MAX_FRAGS) spawnFragment();},2500);
+  setInterval(()=>{
+    const d=['∞','[DEEP]','[DEEPER]','[UNKNOWN]','[NULL]','[SECTOR 7]','[LOST]'];
+    document.getElementById('voidDepth').textContent=d[Math.floor(Math.random()*d.length)];
+  },6000);
+  scheduleWhisper();
+  gameLoop();
+}
+// Start loop (shows nothing until startGame)
+gameLoop();
+</script>
 </body>
 </html>
