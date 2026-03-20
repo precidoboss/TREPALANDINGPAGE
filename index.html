@@ -1076,6 +1076,16 @@ main{position:relative;z-index:1;padding:.8rem;max-width:1440px;margin:0 auto}
 </main>
 
 <script>
+// ── STATE (declared first to prevent temporal dead zone errors) ──
+let allPts=[], allEvs=[], moatMap={}, wMap={}, charts={};
+let evPage=1, evTotal=0, evLoading=false;
+let activeMoat=null, priceCache={}, supplyCache={}, zephyrNames={}, cMoatN=1;
+let prevData={wallets:0,points:0,events:0}, isFirstLoad=true;
+let allocCurrentStep=1, allocState={usdc:0,goal:'council',method:'stake',risk:'medium',selectedMoats:[],allocPcts:{},perMoatMethod:{},prices:{},results:null};
+let moatTokenCache={};
+let copyMoatTarget=null;
+let dbLogEntries=0;
+
 const RAW = 'https://raw.githubusercontent.com/precidoboss/my-game-sprites/main/';
 const API  = 'https://moat-api.fortifi.network/api';
 // DexScreener pair endpoint — use pairAddr directly, much more reliable than token search
@@ -1117,10 +1127,6 @@ Object.values(MOATS).forEach(m => {
 const ZEPHYR_API = 'https://zephyr.jankystudios.xyz/api/usernames';
 
 // ── STATE ──
-let allPts=[], allEvs=[], moatMap={}, wMap={}, charts={};
-let evPage=1, evTotal=0, evLoading=false; // events pagination
-let activeMoat=null, priceCache={}, supplyCache={}, zephyrNames={}, cMoatN=1;
-let prevData={wallets:0,points:0,events:0}, isFirstLoad=true;
 
 // ── LOGO HELPER ──
 function logoImg(logoFile, cls='moat-logo', emoji='⬡', color='#f97316') {
@@ -1156,6 +1162,10 @@ function getWallet(r){return(r.address||r.walletAddress||r.wallet||r.owner||r.ho
 function nav(el){
   if (!el || !el.dataset) return;
   const v=el.dataset.v;
+  // Guard: don't render data-dependent views before first load completes
+  if(isFirstLoad && v!=='overview' && v!=='guide' && v!=='debug' && v!=='invest-home') {
+    // Still switch the tab visually but skip data render
+  }
   document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
   document.getElementById('view-'+v).classList.add('on');
@@ -1519,7 +1529,6 @@ function buildDistChart(sw){
 // Query ERC20 balanceOf(moatAddress) to get actual tokens held in the moat contract.
 // This gives us REAL staked+locked total (burned tokens go to 0xDead, not the moat).
 const DEAD_ADDR = '0x000000000000000000000000000000000000dead';
-let moatTokenCache = {}; // moatAddr -> {staked, burned, total, fetchedAt}
 
 async function fetchMoatTokenTotals(moatAddr) {
   const meta = MOATS[moatAddr]; if(!meta||!meta.tokenAddr) return null;
@@ -2686,18 +2695,6 @@ function buildWChart(pts){
 // ══════════════════════════════════════════════════════
 // ALLOCATOR MODAL ENGINE
 // ══════════════════════════════════════════════════════
-let allocCurrentStep = 1;
-let allocState = {
-  usdc: 0,
-  goal: 'council',
-  method: 'stake',
-  risk: 'medium',
-  selectedMoats: [],        // array of moat addrs
-  allocPcts: {},            // addr -> percentage (0-100)
-  perMoatMethod: {},        // addr -> method override
-  prices: {},               // addr -> price obj
-  results: null
-};
 
 function openAllocator() {
   allocCurrentStep = 1;
@@ -3798,8 +3795,10 @@ function copts({yFmt=false}={}){return{responsive:true,maintainAspectRatio:false
 function dopts(){return{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#6b5f54',font:{family:"'DM Mono'",size:9},boxWidth:9}}}};}
 
 // ── INIT ──
-document.addEventListener('DOMContentLoaded', function(){
-  document.getElementById('wIn').addEventListener('keydown',function(e){if(e.key==='Enter')analyzeW();});
+// Script is at bottom of <body> — DOM is already ready, run directly
+(function init(){
+  const wIn=document.getElementById('wIn');
+  if(wIn) wIn.addEventListener('keydown',function(e){if(e.key==='Enter')analyzeW();});
   const cAct=document.getElementById('cAct');
   if(cAct) cAct.addEventListener('change',function(){
     document.getElementById('lockRow').style.display=cAct.value==='lock'?'block':'none';
@@ -3810,14 +3809,13 @@ document.addEventListener('DOMContentLoaded', function(){
   fetchAllSupplies();
   fetchZephyrUsernames();
   populateEvMoatFilter();
-  setInterval(loadAll,300000); // 5 minutes
+  setInterval(loadAll,300000); // 5 min auto-refresh
   setInterval(fetchAllSupplies,600000);
-});
+})();
 
 // ════════════════════════════════════════════
 //  DEBUG PANEL
 // ════════════════════════════════════════════
-let dbLogEntries = 0;
 
 // All endpoint presets we want to explore
 const DB_PRESETS = [
@@ -4101,7 +4099,6 @@ async function dbFireWallet() {
 // ════════════════════════════════════════════
 //  COPY MOAT PLANNER
 // ════════════════════════════════════════════
-let copyMoatTarget = null;
 
 function openCopyMoat(walletAddr) {
   copyMoatTarget = walletAddr.toLowerCase();
