@@ -934,7 +934,7 @@ main{position:relative;z-index:1;padding:.8rem;max-width:1440px;margin:0 auto}
     <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:.92rem;margin-bottom:.35rem">Ready to participate?</div>
     <div style="font-size:.75rem;color:var(--dim);margin-bottom:.85rem">Use the Investment Allocator to plan your strategy, then check the leaderboard to benchmark.</div>
     <div style="display:flex;gap:7px;justify-content:center;flex-wrap:wrap">
-      <button class="btn btn-sm" onclick="nav(document.querySelector('[data-v=calculator]'))">Open Allocator →</button>
+      <button class="btn btn-sm" onclick="nav(document.querySelector('[data-v=invest-home]'))">Open Allocator →</button>
       <button class="btn btn-sm btn-g" onclick="nav(document.querySelector('[data-v=signals]'))">View Signals →</button>
       <a href="https://moats.app" target="_blank" class="btn btn-sm btn-p" style="text-decoration:none">Go to Moats.app ↗</a>
     </div>
@@ -1127,7 +1127,7 @@ function getWallet(r){return(r.address||r.walletAddress||r.wallet||r.owner||r.ho
 
 // ── NAV ──
 function nav(el){
-  if (!el) return;
+  if (!el || !el.dataset) return;
   const v=el.dataset.v;
   document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
@@ -2627,7 +2627,7 @@ async function gotoW(addr,silent=false){
   const missing=Object.keys(MOATS).filter(a=>!joinedAddrs.has(a)&&moatMap[a]?.walletCount>0&&!MOATS[a]?.lpOnly);
   if(missing.length){
     const best=missing.sort((a,b)=>(moatMap[a]?.totalPoints||0)-(moatMap[b]?.totalPoints||0))[0];
-    tips.push({t:'Best Next Moat',b:'Try '+MOATS[best]?.name+' — lowest eco share you haven't joined.',action:'openAllocator()'});
+    tips.push({t:'Best Next Moat',b:'Try '+MOATS[best]?.name+' — lowest eco share — not yet joined.',action:'openAllocator()'});
   }
   wSig.innerHTML=tips.map(t=>`<div style="background:var(--sur);border:1px solid var(--bor);border-radius:8px;padding:.65rem .8rem;margin-bottom:.45rem;font-size:.73rem;${t.action?'cursor:pointer':''}" ${t.action?'onclick="'+t.action+'"':''}><b style="color:var(--acc)">${t.t}</b><br><span style="color:var(--dim)">${t.b}</span></div>`).join('')||'<div style="color:var(--mut);font-size:.72rem">No specific signals.</div>';
   buildWChart(moatPts);
@@ -3752,25 +3752,21 @@ function copts({yFmt=false}={}){return{responsive:true,maintainAspectRatio:false
 function dopts(){return{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#6b5f54',font:{family:"'DM Mono'",size:9},boxWidth:9}}}};}
 
 // ── INIT ──
-document.getElementById('wIn').addEventListener('keydown',e=>{if(e.key==='Enter')analyzeW();});
-document.getElementById('cAct').addEventListener('change',()=>{
-  document.getElementById('lockRow').style.display=document.getElementById('cAct').value==='lock'?'block':'none';
-  calcPts();
+document.addEventListener('DOMContentLoaded', function(){
+  document.getElementById('wIn').addEventListener('keydown',function(e){if(e.key==='Enter')analyzeW();});
+  const cAct=document.getElementById('cAct');
+  if(cAct) cAct.addEventListener('change',function(){
+    document.getElementById('lockRow').style.display=cAct.value==='lock'?'block':'none';
+    calcPts();
+  });
+  populateMoatSelects();
+  loadAll();
+  fetchAllSupplies();
+  fetchZephyrUsernames();
+  populateEvMoatFilter();
+  setInterval(loadAll,15000);
+  setInterval(fetchAllSupplies,600000);
 });
-// Populate moat selects initially
-populateMoatSelects();
-// First load
-loadAll();
-// Fetch token supply data from Snowtrace (fire-and-forget)
-fetchAllSupplies();
-// Fetch Zephyr usernames
-fetchZephyrUsernames();
-// Populate event moat filter
-populateEvMoatFilter();
-// Real-time: every 15s
-setInterval(loadAll,15000);
-// Refresh supply data every 10 minutes
-setInterval(fetchAllSupplies, 600000);
 
 // ════════════════════════════════════════════
 //  DEBUG PANEL
