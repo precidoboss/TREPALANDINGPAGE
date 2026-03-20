@@ -941,6 +941,23 @@ main{position:relative;z-index:1;padding:.8rem;max-width:1440px;margin:0 auto}
   </div>
 </div>
 
+<!-- ══ COPY MOAT MODAL ══ -->
+<div class="modal-overlay" id="copyMoatModal" onclick="if(event.target===this)closeCopyMoat()">
+  <div class="modal" style="max-width:600px" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title">📋 Copy Moat Strategy</div>
+      <button class="modal-close" onclick="closeCopyMoat()">✕</button>
+    </div>
+    <div class="modal-body" id="copyMoatBody" style="padding:1rem">
+      <div class="empty"><span class="spin"></span>Loading strategy…</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-sm btn-g" onclick="closeCopyMoat()">Close</button>
+      <button class="btn btn-sm" id="copyMoatInvestBtn" style="display:none" onclick="copyCopyMoatToAllocator()">Open in Allocator →</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ DEBUG PANEL ══ -->
 <div id="view-debug" class="view">
   <div class="sh">
@@ -1077,12 +1094,22 @@ const MOATS = {
   '0x9c5f177cdc0332e61e423ee9ad9e4f2333f62685':{name:'Where Is Malek Moat',short:'MALEK',ticker:'$malek',   emoji:'🔍', color:'#34d399',tokenAddr:'0xeB55FAB1C23EC0Aa5024Ee593A12edCD031Ecd9b',  pairAddr:'0xa7e81808219cb1a27c71bd56f551a43fc8cad23',   url:'https://moats.app/moat/0x9c5f177cdc0332e61e423ee9ad9e4f2333f62685',    logo:'wheremalek.jpg',                knownSupply:10000000000, isNew:true},
 };
 
-// Known supplies (hardcoded as fallback when Snowtrace API is unavailable)
-// Key = tokenAddr (lowercase)
+// Pre-seed supply cache with known values — app works instantly, Snowtrace enriches later
 const KNOWN_SUPPLIES = {};
 Object.values(MOATS).forEach(m => {
   if (m.knownSupply && m.tokenAddr) {
-    KNOWN_SUPPLIES[m.tokenAddr.toLowerCase()] = m.knownSupply;
+    const key = m.tokenAddr.toLowerCase();
+    KNOWN_SUPPLIES[key] = m.knownSupply;
+    // Pre-populate cache with hardcoded values (source='hardcoded')
+    supplyCache[key] = {
+      totalSupply: m.knownSupply,
+      decimals: 18,
+      name: m.name,
+      symbol: m.ticker||'',
+      tokenAddr: key,
+      fetchedAt: Date.now() - 590000, // almost stale so Snowtrace will refresh in bg
+      source: 'hardcoded'
+    };
   }
 });
 
@@ -1186,26 +1213,55 @@ function normPts(d,addr){
 
 function normEvs(d){
   if(!d)return[];
-  let a=d; if(!Array.isArray(d))a=d?.data||d?.events||d?.items||d?.results||d?.logs||[];
-  if(!Array.isArray(a)||!a.length){const v=Object.values(d||{});a=v.filter(x=>typeof x==='object'&&x);}
+  // Handle {total, results:[...]} shape from /events endpoint
+  if(d && typeof d==='object' && !Array.isArray(d)){
+    if(Array.isArray(d.results)) return normEvs(d.results);
+    if(Array.isArray(d.data)) return normEvs(d.data);
+    if(Array.isArray(d.events)) return normEvs(d.events);
+    if(Array.isArray(d.items)) return normEvs(d.items);
+    if(Array.isArray(d.logs)) return normEvs(d.logs);
+  }
+  let a=d;
   if(!Array.isArray(a)||!a.length)return[];
-  return a.map(e=>({
-    ...e,
-    id: e.id||e._id||e.txHash||e.transactionHash||e.hash||Math.random().toString(36).slice(2),
-    eventType: e.eventType||e.type||e.event||e.action||e.name||'activity',
-    timestamp: e.timestamp||e.time||e.createdAt||e.blockTimestamp||0,
-    contractAddress: e.contractAddress||e.contract||e.moatAddress||e.address||'',
-    txHash: e.txHash||e.transactionHash||e.hash||'',
-    wallet: getWallet(e),
-    // Token amounts
-    tokenAmount: Number(e.tokenAmount||e.stakedAmount||e.lockedAmount||e.burnedAmount||e.amount||e.value||e.tokens||0),
-    tokenSymbol: e.tokenSymbol||e.symbol||e.tokenName||null,
-    lockDays: Number(e.lockDays||e.lockDuration||e.duration||e.days||0),
-    // Reward
-    rewardAmount: Number(e.rewardAmount||e.reward||e.claimed||e.claimedAmount||e.rewardValue||0),
-    rewardToken: e.rewardToken||e.rewardCurrency||e.currency||e.rewardSymbol||null,
-    rewardTokenAddr: e.rewardTokenAddress||e.rewardContract||null,
-  }));
+  return a.map(e=>{
+    // Resolve wallet — API uses 'user' or 'from' or nested fields
+    const wallet = (e.user||e.from||e.walletAddress||e.wallet||e.address||e.owner||'').toLowerCase();
+    const txHash = e.transactionHash||e.txHash||e.hash||'';
+    // Parse timestamp — API returns ISO string like "2025-01-15T..." or unix seconds
+    let ts = e.timestamp||e.time||e.createdAt||e.blockTimestamp||0;
+    if(typeof ts==='string' && ts.includes('T')) ts = Math.floor(new Date(ts).getTime()/1000);
+    else ts = Number(ts)||0;
+
+    // Parse amounts — API may return as string or in event data sub-object
+    const evtData = e.data||e.eventData||e.args||{};
+    const rawAmt = e.amount||e.tokenAmount||e.stakedAmount||evtData.amount||evtData.value||0;
+    const tokenAmount = Number(rawAmt)||0;
+    const rawReward = e.rewardAmount||e.reward||e.claimed||e.claimedAmount||evtData.rewardAmount||evtData.reward||0;
+    const rewardAmount = Number(rawReward)||0;
+
+    // Resolve moat token symbol from MOATS config
+    const cAddr = (e.contractAddress||e.contract||e.moatAddress||'').toLowerCase();
+    const moatMeta = MOATS[cAddr];
+    const tokenSymbol = e.tokenSymbol||e.symbol||moatMeta?.ticker||null;
+
+    return {
+      ...e,
+      id: e._id||e.id||txHash||Math.random().toString(36).slice(2),
+      eventType: e.eventType||e.type||e.event||e.action||e.name||'activity',
+      timestamp: ts,
+      contractAddress: cAddr,
+      txHash,
+      wallet,
+      tokenAmount,
+      tokenSymbol,
+      lockDays: Number(e.lockDays||e.lockDuration||e.duration||e.days||evtData.lockDays||0),
+      rewardAmount,
+      rewardToken: e.rewardToken||e.rewardCurrency||e.currency||e.rewardSymbol||null,
+      rewardTokenAddr: e.rewardTokenAddress||e.rewardContract||null,
+      blockNumber: e.blockNumber||null,
+      network: e.network||'avalanche',
+    };
+  });
 }
 function synthEvs(pts){
   const out=[];
@@ -1279,38 +1335,38 @@ async function loadAll(){
   const btn=document.getElementById('rfBtn');
   btn.classList.add('loading'); btn.textContent='↻ Loading…';
   try{
-    const addrs=Object.keys(MOATS); // all moats have real addresses now
-    // 3 parallel requests: global events, global leaderboard, per-moat breakdown
-    const [evR, globalLbR, ...ptR] = await Promise.allSettled([
-      fetch(`${API}/events?limit=100`).then(r=>r.json()).catch(()=>null),
-      fetch(`${API}/moat-points/all`).then(r=>r.json()).catch(()=>null),   // global LB — 400 records
-      ...addrs.map(a=>fetch(`${API}/moat-points/all?contractAddress=${a}`).then(r=>r.json()).then(d=>normPts(d,a)).catch(()=>[]))
+    const addrs=Object.keys(MOATS);
+
+    // ── TIER 1: Fast parallel — events + global LB (2 requests, ~500ms) ──
+    const [evR, globalLbR] = await Promise.allSettled([
+      fetch(`${API}/events?limit=200`).then(r=>r.json()).catch(()=>null),
+      fetch(`${API}/moat-points/all`).then(r=>r.json()).catch(()=>null),
     ]);
 
-    // Normalize events — response is {total, results:[...]}
+    // Process events immediately
     const evData = evR.status==='fulfilled' ? evR.value : null;
-    const evArray = evData?.results || evData;
-    if(evData?.total) evTotal=evData.total;
+    const evArray = Array.isArray(evData) ? evData : (evData?.results || evData?.data || []);
+    if(evData?.total) evTotal = Number(evData.total);
     let newEvs = normEvs(evArray);
 
-    // Global leaderboard data (flat, no moat split)
+    // Process global leaderboard — has usernames + weights
     const globalLbData = globalLbR.status==='fulfilled' ? globalLbR.value : null;
-    const globalPts = Array.isArray(globalLbData) ? globalLbData : (globalLbData?.results||[]);
-
-    // Per-moat detailed breakdowns
-    const newPts = ptR.flatMap(r=>r.status==='fulfilled'?r.value:[]);
-
-    // Merge global pts (has usernames + weight) into per-moat pts for wallet map
-    // Global pts don't have contractAddress — we use per-moat for moat detail
-    // but use global for leaderboard + usernames
+    const globalPts = Array.isArray(globalLbData) ? globalLbData : (globalLbData?.results || globalLbData?.data || []);
     globalPts.forEach(p => {
       const addr = (p.address||'').toLowerCase();
       if (!addr) return;
-      // Store username in zephyrNames as fallback source
       const uname = p.username||'';
-      if (uname && !uname.startsWith('0x') && addr) zephyrNames[addr] = uname;
+      if (uname && !uname.startsWith('0x')) zephyrNames[addr] = uname;
     });
-    if(!newEvs.length&&newPts.length)newEvs=synthEvs(newPts);
+
+    // ── TIER 2: Per-moat breakdown (background, ~2-3s) ──
+    const ptResults = await Promise.allSettled(
+      addrs.map(a => fetch(`${API}/moat-points/all?contractAddress=${a}`)
+        .then(r=>r.json()).then(d=>normPts(d,a)).catch(()=>[]))
+    );
+    const newPts = ptResults.flatMap(r=>r.status==='fulfilled'?r.value:[]);
+
+    if(!newEvs.length && newPts.length) newEvs = synthEvs(newPts);
     const newEids=new Set(newEvs.map(e=>e.id));
     const oldEids=new Set(allEvs.map(e=>e.id));
     const freshEids=[...newEids].filter(id=>!oldEids.has(id));
@@ -1686,33 +1742,20 @@ function renderMoatDetail(addr,silent=false){
   const actNoteEl=document.getElementById('mActNote');
   if(actNoteEl) actNoteEl.innerHTML='<span class="spin"></span>Fetching on-chain token totals…';
   // Fetch real on-chain token totals
-  fetchMoatTokenTotals(addr).then(totals=>{
+  setTimeout(()=>fetchMoatTokenTotals(addr).then(totals=>{
     const mSlb = document.getElementById('mSlbRow');
     if(!mSlb) return;
     if(totals && totals.staked>0) {
-      // Real on-chain data available — update SLB row
       const tkr=meta.ticker||'tokens';
       if(actNoteEl) actNoteEl.innerHTML='<span style="color:var(--grn)">● on-chain real token amounts</span>';
-      // Update staked card with real data
       const stakeCard=mSlb.children[0];
-      const lockBurnNote=mSlb.children[1];
       const burnCard=mSlb.children[2];
-      if(stakeCard) {
-        stakeCard.innerHTML=`
-          <div class="rv2 ca">${fmtP(totals.staked)}</div>
-          <div class="rl2">🔒 Staked + Locked</div>
-          <div style="font-size:.62rem;color:var(--dim);margin-top:3px">${tkr} in moat contract</div>`;
-      }
-      if(burnCard) {
-        burnCard.innerHTML=`
-          <div class="rv2 cr">${fmtP(totals.burned)}</div>
-          <div class="rl2">🔥 Burned Total</div>
-          <div style="font-size:.62rem;color:var(--dim);margin-top:3px">${tkr} at 0xDead</div>`;
-      }
+      if(stakeCard) stakeCard.innerHTML='<div class="rv2 ca">'+fmtP(totals.staked)+'</div><div class="rl2">🔒 Staked + Locked</div><div style="font-size:.62rem;color:var(--dim);margin-top:3px">'+tkr+' in moat contract</div>';
+      if(burnCard) burnCard.innerHTML='<div class="rv2 cr">'+fmtP(totals.burned)+'</div><div class="rl2">🔥 Burned Total</div><div style="font-size:.62rem;color:var(--dim);margin-top:3px">'+tkr+' at 0xDead</div>';
     } else {
       if(actNoteEl) actNoteEl.innerHTML='<span style="color:var(--gld)">⚠️ estimated — API returns points only</span>';
     }
-  });
+  }), 0);
   document.getElementById('mSlbRow').innerHTML=`
     <div class="reward-card" style="border-color:rgba(249,115,22,.2)">
       <div class="rv2 ca">${m.stakeCount}<span style="font-size:.62rem;color:var(--mut);font-family:'DM Mono',monospace"> wallets</span></div>
@@ -1737,23 +1780,16 @@ function renderMoatDetail(addr,silent=false){
   buildMoatLB(addr);
   renderMoatRewards(addr);
   // Fetch on-chain token totals from Snowtrace
-  fetchMoatTokenTotals(addr).then(totals => {
+  setTimeout(()=>fetchMoatTokenTotals(addr).then(totals => {
     if (!totals) return;
     const tkr2 = meta.ticker || 'tokens';
     const note2 = document.getElementById('mActNote');
-    if (note2) note2.innerHTML = '<span style="color:var(--grn)">&#9679; on-chain data · Snowtrace</span>';
+    if (note2) note2.innerHTML = '<span style="color:var(--grn)">&#9679; on-chain data</span>';
     const stakedEl = document.getElementById('mStakedTotal');
     const burnedEl = document.getElementById('mBurnedTotal');
-    if (stakedEl) stakedEl.innerHTML = '<span style="color:var(--acc);font-weight:700">'+fmtP(totals.staked)+'</span> '+tkr2+' <span style="color:var(--mut)">(staked+locked)</span>';
-    if (burnedEl) burnedEl.innerHTML = '<span style="color:var(--red);font-weight:700">'+fmtP(totals.burned)+'</span> '+tkr2+' burned';
-    const supEl2 = document.getElementById('mSupplyStat');
-    if (supEl2 && totals.total > 0) {
-      const existHtml = supEl2.innerHTML;
-      if (!existHtml.includes('in moat')) {
-        // append in-moat count
-      }
-    }
-  });
+    if (stakedEl && totals.staked>0) stakedEl.innerHTML = fmtP(totals.staked)+' '+tkr2+' (staked+locked)';
+    if (burnedEl && totals.burned>0) burnedEl.innerHTML = fmtP(totals.burned)+' '+tkr2+' burned';
+  }), 0);
   // Fetch real on-chain events with token amounts
   fetchMoatOnchainEvents(addr, 25).then(ocEvs => {
     if (!ocEvs.length) return;
@@ -2312,6 +2348,7 @@ function renderLB(){
       <td><div class="bw"><div class="bt"><div class="bf" style="width:${sw[0].totalPoints?w.totalPoints/sw[0].totalPoints*100:0}%"></div></div><span class="bv">${fmtP(w.totalPoints)}</span></div></td>
       <td style="font-family:'DM Mono',monospace;font-size:.66rem;color:var(--acc)">${fmtP(cs)}</td>
       <td style="font-family:'DM Mono',monospace;font-size:.62rem;color:var(--mut)">${sh}%</td>
+      <td><button class="btn btn-sm" style="padding:2px 8px;font-size:.58rem" onclick="openCopyMoat('${w.wallet}')">📋 Copy</button></td>
     </tr>`;
   }).join('');
   buildConcChart(sw,tot); buildMCChart(sw);
@@ -2629,7 +2666,11 @@ async function gotoW(addr,silent=false){
     const best=missing.sort((a,b)=>(moatMap[a]?.totalPoints||0)-(moatMap[b]?.totalPoints||0))[0];
     tips.push({t:'Best Next Moat',b:'Try '+MOATS[best]?.name+' — lowest eco share — not yet joined.',action:'openAllocator()'});
   }
-  wSig.innerHTML=tips.map(t=>`<div style="background:var(--sur);border:1px solid var(--bor);border-radius:8px;padding:.65rem .8rem;margin-bottom:.45rem;font-size:.73rem;${t.action?'cursor:pointer':''}" ${t.action?'onclick="'+t.action+'"':''}><b style="color:var(--acc)">${t.t}</b><br><span style="color:var(--dim)">${t.b}</span></div>`).join('')||'<div style="color:var(--mut);font-size:.72rem">No specific signals.</div>';
+  wSig.innerHTML=tips.map(function(t){
+    var cls='background:var(--sur);border:1px solid var(--bor);border-radius:8px;padding:.65rem .8rem;margin-bottom:.45rem;font-size:.73rem'+(t.action?';cursor:pointer':'');
+    var clk=t.action?' onclick="'+t.action+'"':'';
+    return '<div style="'+cls+'"'+clk+'><b style="color:var(--acc)">'+t.t+'</b><br><span style="color:var(--dim)">'+t.b+'</span></div>';
+  }).join('')||'<div style="color:var(--mut);font-size:.72rem">No specific signals.</div>';
   buildWChart(moatPts);
 }
 function buildWChart(pts){
@@ -3546,10 +3587,15 @@ async function fetchTokenSupply(tokenAddr) {
 // Fetch supply for ALL moats on startup (fire-and-forget, updates cache)
 async function fetchAllSupplies() {
   const addrs = [...new Set(Object.values(MOATS).map(m => m.tokenAddr).filter(Boolean))];
-  // Stagger requests to avoid rate limiting
-  for (let i = 0; i < addrs.length; i++) {
-    setTimeout(() => fetchTokenSupply(addrs[i]), i * 400);
-  }
+  // Skip if already cached and fresh (< 10 min) — use knownSupply as instant fallback
+  const uncached = addrs.filter(a => {
+    const key = a.toLowerCase();
+    const c = supplyCache[key];
+    return !c || c.source==='unavailable' || (Date.now()-c.fetchedAt)>600000;
+  });
+  if(!uncached.length) return;
+  // Stagger to avoid rate limiting
+  uncached.forEach((addr, i) => setTimeout(() => fetchTokenSupply(addr), i * 300));
 }
 
 // Get supply data for a moat address (looks up by moat addr → tokenAddr)
@@ -3764,7 +3810,7 @@ document.addEventListener('DOMContentLoaded', function(){
   fetchAllSupplies();
   fetchZephyrUsernames();
   populateEvMoatFilter();
-  setInterval(loadAll,15000);
+  setInterval(loadAll,300000); // 5 minutes
   setInterval(fetchAllSupplies,600000);
 });
 
@@ -4050,6 +4096,199 @@ async function dbFireWallet() {
 }
 
 // dbInit is called from nav() directly — see nav() function above
+
+
+// ════════════════════════════════════════════
+//  COPY MOAT PLANNER
+// ════════════════════════════════════════════
+let copyMoatTarget = null;
+
+function openCopyMoat(walletAddr) {
+  copyMoatTarget = walletAddr.toLowerCase();
+  const modal = document.getElementById('copyMoatModal');
+  if (modal) { modal.classList.add('open'); document.body.style.overflow='hidden'; }
+  renderCopyMoatPlan(copyMoatTarget);
+}
+
+function closeCopyMoat() {
+  const modal = document.getElementById('copyMoatModal');
+  if (modal) { modal.classList.remove('open'); document.body.style.overflow=''; }
+  copyMoatTarget = null;
+}
+
+async function renderCopyMoatPlan(addr) {
+  const body = document.getElementById('copyMoatBody');
+  const investBtn = document.getElementById('copyMoatInvestBtn');
+  body.innerHTML = '<div class="empty"><span class="spin"></span>Fetching strategy…</div>';
+
+  // Fetch profile from API for accurate per-moat data
+  let profile = null;
+  try { profile = await fetch(API+'/profile/'+addr).then(r=>r.json()); } catch(e){}
+
+  // Get local pts as fallback
+  const localPts = allPts.filter(p=>getWallet(p)===addr);
+  let moatPts = localPts;
+  if(profile?.contractPoints?.length){
+    moatPts = profile.contractPoints.map(cp=>({
+      contractAddress:(cp.contractAddress||'').toLowerCase(),
+      points:Number(cp.points||0), rank:cp.rank, weight:cp.weight,
+    })).filter(p=>p.contractAddress&&p.points>0);
+    if(!moatPts.length) moatPts = localPts;
+  }
+
+  if(!moatPts.length){
+    body.innerHTML='<div class="empty">No moat data found for this wallet.</div>';
+    return;
+  }
+
+  const username = profile?.username&&!profile.username.startsWith('0x')?profile.username:(wMap[addr]?.username||shortA(addr));
+  const totPts = moatPts.reduce((s,p)=>s+p.points,0);
+  const mCnt = new Set(moatPts.map(p=>p.contractAddress)).size;
+  const mult = cMult(mCnt), council = Math.round(totPts*mult);
+  const ecoTot = allPts.reduce((s,p)=>s+p.points,0);
+
+  // Fetch live prices for all their moats
+  const priceJobs = moatPts.map(p => {
+    if(priceCache[p.contractAddress]?.price>0) return Promise.resolve(priceCache[p.contractAddress]);
+    const meta = MOATS[p.contractAddress];
+    if(!meta) return Promise.resolve(null);
+    return fetchPairData(meta).then(px=>{
+      if(!px)return null;
+      const obj={price:Number(px.priceUsd||0),ch24:Number(px.priceChange?.h24||0),liq:Number(px.liquidity?.usd||0)};
+      priceCache[p.contractAddress]=obj; return obj;
+    }).catch(()=>null);
+  });
+  const prices = await Promise.all(priceJobs);
+
+  // Infer strategy from points magnitude vs moat avg
+  function inferStrategy(p) {
+    const m = moatMap[p.contractAddress];
+    if(!m||!m.avgPoints) return {type:'staked',mult:1,label:'Stake (1×)'};
+    const ratio = p.points / m.avgPoints;
+    if(ratio>5) return {type:'burned',mult:10,label:'Burn (10×)'};
+    if(ratio>4.5) return {type:'locked',mult:lockM(730),label:'Lock ~730d (5×)'};
+    if(ratio>3.5) return {type:'locked',mult:lockM(365),label:'Lock ~365d (4×)'};
+    if(ratio>2.5) return {type:'locked',mult:lockM(180),label:'Lock ~180d (3.23×)'};
+    if(ratio>1.5) return {type:'locked',mult:lockM(90),label:'Lock ~90d (2.73×)'};
+    return {type:'staked',mult:1,label:'Stake (1×)'};
+  }
+
+  const plans = moatPts.sort((a,b)=>b.points-a.points).map((p,i)=>{
+    const meta = MOATS[p.contractAddress];
+    const px = prices[i];
+    const strat = inferStrategy(p);
+    const supply = supplyCache[meta?.tokenAddr?.toLowerCase()]||{totalSupply:meta?.knownSupply||0};
+    // Estimate tokens held: pts / (ptsPerToken * mult)
+    const ppt = estPtsPerToken(p.contractAddress);
+    const estTokens = ppt&&strat.mult ? p.points/(ppt*strat.mult) : null;
+    const estUsd = estTokens&&px?.price>0 ? estTokens*px.price : null;
+    return {p, meta, px, strat, estTokens, estUsd};
+  });
+
+  const totalEstUsd = plans.reduce((s,r)=>s+(r.estUsd||0),0);
+
+  body.innerHTML = `
+    <!-- Target wallet header -->
+    <div style="background:var(--sur);border:1px solid var(--bor);border-radius:10px;padding:.9rem;margin-bottom:.9rem;display:flex;align-items:center;gap:11px">
+      <div style="font-size:1.6rem">👤</div>
+      <div style="flex:1">
+        <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:.88rem">${username}</div>
+        <div style="font-family:'DM Mono',monospace;font-size:.58rem;color:var(--mut)">${shortA(addr)}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:.88rem;color:var(--acc)">${fmtP(council)}</div>
+        <div style="font-family:'DM Mono',monospace;font-size:.54rem;color:var(--mut)">Council Score · ${mult}×</div>
+      </div>
+    </div>
+
+    <!-- Strategy note -->
+    <div style="background:rgba(168,85,247,.07);border:1px solid rgba(168,85,247,.2);border-radius:9px;padding:.75rem;margin-bottom:.9rem;font-size:.72rem;color:var(--dim);line-height:1.65">
+      🤖 <b style="color:var(--pur)">Strategy inferred</b> from points magnitude relative to moat average. Actual lock duration is not visible on-chain without indexing transaction history — this is the best estimate from available data.
+      ${totalEstUsd>0?'<br>💰 <b style="color:var(--acc)">Estimated portfolio value: $'+f2(totalEstUsd)+'</b> based on current prices.':''}
+    </div>
+
+    <!-- Per-moat plan cards -->
+    ${plans.map(r=>{
+      if(!r.meta) return '';
+      const stratCol = r.strat.type==='burned'?'var(--red)':r.strat.type==='locked'?'var(--gld)':'var(--acc)';
+      const stratIcon = r.strat.type==='burned'?'🔥':r.strat.type==='locked'?'⏳':'🔒';
+      return `<div style="background:${r.meta.color}0d;border:1px solid ${r.meta.color}44;border-left:3px solid ${r.meta.color};border-radius:9px;padding:.85rem;margin-bottom:.55rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;flex-wrap:wrap;gap:6px">
+          <div style="display:flex;align-items:center;gap:8px">
+            ${logoImg(r.meta.logo,'moat-logo-sm',r.meta.emoji,r.meta.color)}
+            <div>
+              <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:.82rem">${r.meta.name}</div>
+              <div style="font-family:'DM Mono',monospace;font-size:.58rem;color:${stratCol}">${stratIcon} ${r.strat.label}</div>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:.85rem;color:var(--gld)">${fmtP(r.p.points)} pts</div>
+            <div style="font-family:'DM Mono',monospace;font-size:.54rem;color:var(--mut)">${r.p.weight?r.p.weight.toFixed(2)+'% weight':''}</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px">
+          <div style="background:var(--card);border-radius:6px;padding:.4rem;text-align:center">
+            <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:.75rem">${r.estTokens?('~'+fmtP(r.estTokens)):'—'}</div>
+            <div style="font-family:'DM Mono',monospace;font-size:.48rem;color:var(--mut)">Est. Tokens</div>
+          </div>
+          <div style="background:var(--card);border-radius:6px;padding:.4rem;text-align:center">
+            <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:.75rem">${r.px?.price?'$'+fmtPrice(r.px.price):'—'}</div>
+            <div style="font-family:'DM Mono',monospace;font-size:.48rem;color:var(--mut)">Token Price</div>
+          </div>
+          <div style="background:var(--card);border-radius:6px;padding:.4rem;text-align:center">
+            <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:.75rem;color:var(--acc)">${r.estUsd?'$'+f2(r.estUsd):'—'}</div>
+            <div style="font-family:'DM Mono',monospace;font-size:.48rem;color:var(--mut)">Est. Value</div>
+          </div>
+        </div>
+        ${!r.meta.lpOnly?`<div style="margin-top:.5rem;font-size:.58rem;color:var(--mut)">
+          To copy: buy ${r.estTokens?'~'+fmtP(r.estTokens)+' '+r.meta.ticker:r.meta.ticker} on
+          <a href="https://traderjoexyz.com/avalanche/trade?outputCurrency=${r.meta.tokenAddr}" target="_blank" style="color:var(--acc)">TraderJoe ↗</a> then
+          <a href="${r.meta.url||'https://moats.app'}" target="_blank" style="color:var(--acc)">stake on Moats ↗</a>
+        </div>`:'<div style="margin-top:.5rem;font-size:.58rem;color:var(--gld)">&#9888; LP NFT moat — provide liquidity on Pharaoh first</div>'}
+      </div>`;
+    }).join('')}
+
+    <!-- USDC input for matching -->
+    <div style="background:var(--card);border:1px solid var(--bor);border-radius:10px;padding:.9rem;margin-top:.5rem">
+      <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:.75rem;margin-bottom:.6rem">💰 Match with your USDC</div>
+      <div style="display:flex;gap:7px;align-items:center">
+        <input class="inp" id="copyMoatUsdc" type="number" placeholder="USDC amount" style="flex:1">
+        <button class="btn btn-sm" onclick="calcCopyMoatMatch()">Calculate →</button>
+      </div>
+      <div id="copyMoatMatchResult" style="margin-top:.6rem;font-size:.72rem;color:var(--dim)"></div>
+    </div>`;
+
+  if(investBtn) investBtn.style.display='block';
+}
+
+function calcCopyMoatMatch() {
+  const usdc = Number(document.getElementById('copyMoatUsdc')?.value)||0;
+  const resultEl = document.getElementById('copyMoatMatchResult');
+  if(!usdc||!copyMoatTarget){resultEl.textContent='Enter a USDC amount.';return;}
+
+  const localPts = allPts.filter(p=>getWallet(p)===copyMoatTarget);
+  if(!localPts.length){resultEl.textContent='No data.';return;}
+
+  // Distribute USDC proportionally across moats by their point weight
+  const totPts = localPts.reduce((s,p)=>s+p.points,0);
+  const rows = localPts.sort((a,b)=>b.points-a.points).map(p=>{
+    const share = totPts?p.points/totPts:0;
+    const myUsd = usdc*share;
+    const px = priceCache[p.contractAddress];
+    const tokens = px?.price>0 ? myUsd/px.price : null;
+    const meta = MOATS[p.contractAddress];
+    return `<div style="display:flex;justify-content:space-between;padding:.25rem 0;border-bottom:1px solid var(--bor)">
+      <span style="color:${meta?.color||'var(--dim)'}">${meta?.short||shortA(p.contractAddress)}</span>
+      <span style="font-family:'DM Mono',monospace;font-size:.66rem">$${f2(myUsd)} ${tokens?'≈ '+fmtP(tokens)+' '+meta?.ticker:''}  </span>
+    </div>`;
+  }).join('');
+  resultEl.innerHTML = `<div style="margin-bottom:.4rem;font-weight:600;color:var(--acc)">$${f2(usdc)} split to match their allocation:</div>${rows}`;
+}
+
+function copyCopyMoatToAllocator() {
+  closeCopyMoat();
+  openAllocator();
+}
 
 
 </script>
