@@ -8,6 +8,7 @@
 <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/precidoboss/my-game-sprites/main/photo_2026-03-14_06-11-33.jpg">
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=DM+Mono:wght@300;400;500&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 <style>
 :root{
   --bg:#141210;--sur:#1c1916;--card:#211e1a;--bor:#332e28;
@@ -105,6 +106,40 @@ main{position:relative;z-index:1;padding:.8rem;max-width:1440px;margin:0 auto}
 .r3{background:rgba(140,90,60,.1);color:#a07050;border:1px solid rgba(140,90,60,.22)}
 .rn{background:rgba(107,95,84,.08);color:var(--mut);border:1px solid var(--bor)}
 .zname{font-family:'DM Mono',monospace;font-size:.66rem;color:var(--acc);font-weight:600;line-height:1.2}
+
+/* COPY MOAT PAGE */
+.wallet-connect-btn{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,rgba(249,115,22,.15),rgba(212,168,67,.08));border:2px solid rgba(249,115,22,.4);border-radius:14px;padding:1rem 1.4rem;cursor:pointer;transition:all .2s;width:100%}
+.wallet-connect-btn:hover{border-color:var(--acc);transform:translateY(-2px);box-shadow:0 8px 24px rgba(249,115,22,.2)}
+.wallet-connect-btn.connected{border-color:var(--grn);background:linear-gradient(135deg,rgba(109,184,122,.1),rgba(109,184,122,.04))}
+.cm-step{display:flex;align-items:flex-start;gap:12px;padding:.85rem 1rem;background:var(--card);border:1px solid var(--bor);border-radius:10px;margin-bottom:.5rem;transition:all .25s}
+.cm-step.active{border-color:var(--acc);background:rgba(249,115,22,.06)}
+.cm-step.done{border-color:var(--grn);background:rgba(109,184,122,.05)}
+.cm-step.error{border-color:var(--red);background:rgba(224,82,82,.06)}
+.cm-step.waiting{opacity:.5}
+.cm-step-num{width:28px;height:28px;border-radius:50%;background:var(--bor);display:flex;align-items:center;justify-content:center;font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:.75rem;flex-shrink:0;transition:all .25s}
+.cm-step.active .cm-step-num{background:var(--acc);color:#141210}
+.cm-step.done .cm-step-num{background:var(--grn);color:#141210}
+.cm-step.error .cm-step-num{background:var(--red);color:#fff}
+.cm-step-body{flex:1;min-width:0}
+.cm-step-title{font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:.8rem;margin-bottom:2px}
+.cm-step-detail{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--mut);line-height:1.5;word-break:break-all}
+.cm-step-action{margin-top:.6rem}
+.cm-progress{height:4px;background:var(--bor);border-radius:2px;overflow:hidden;margin:.4rem 0}
+.cm-progress-fill{height:100%;background:var(--acc);border-radius:2px;transition:width .4s ease}
+.cm-target-card{background:var(--sur);border:1px solid var(--bor);border-radius:12px;padding:1rem;margin-bottom:.9rem;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .2s}
+.cm-target-card:hover{border-color:var(--acc);background:rgba(249,115,22,.04)}
+.cm-target-card.selected{border-color:var(--acc);background:rgba(249,115,22,.07)}
+.amount-input-row{display:flex;gap:8px;align-items:center}
+.amount-input-row input{flex:1}
+.token-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:6px;font-family:'DM Mono',monospace;font-size:.65rem;font-weight:600;cursor:pointer;transition:all .15s;border:1.5px solid transparent}
+.token-badge.active{border-color:var(--acc);background:rgba(249,115,22,.12);color:var(--acc)}
+.token-badge.inactive{border-color:var(--bor);background:var(--card);color:var(--mut)}
+.token-badge:hover{border-color:var(--acc2);color:var(--acc2)}
+.tx-hash-link{font-family:'DM Mono',monospace;font-size:.58rem;color:var(--acc);text-decoration:none;word-break:break-all}
+.tx-hash-link:hover{text-decoration:underline}
+.moat-position-row{display:flex;align-items:center;justify-content:space-between;padding:.6rem .8rem;background:var(--card);border:1px solid var(--bor);border-radius:8px;margin-bottom:.4rem;transition:all .15s}
+.moat-position-row.selected{border-color:var(--acc);background:rgba(249,115,22,.06)}
+.gas-estimate{font-family:'DM Mono',monospace;font-size:.6rem;color:var(--mut);padding:.4rem .7rem;background:var(--sur);border-radius:6px;margin-top:.4rem}
 .lp-tag{font-family:'DM Mono',monospace;font-size:.52rem;color:var(--gld);margin-left:6px;background:rgba(212,168,67,.1);border:1px solid rgba(212,168,67,.22);border-radius:3px;padding:1px 4px}
 
 /* WALLET LINK */
@@ -352,6 +387,7 @@ main{position:relative;z-index:1;padding:.8rem;max-width:1440px;margin:0 auto}
     <div class="tab"    data-v="wallet"      onclick="nav(this)">🔎 Wallet</div>
     <div class="tab"    data-v="invest-home" onclick="nav(this)">🧮 Invest</div>
     <div class="tab"    data-v="guide"       onclick="nav(this)">💡 Guide</div>
+    <div class="tab"    data-v="copymoat"    onclick="nav(this)">📋 Copy Moat</div>
     <div class="tab"    data-v="debug"       onclick="nav(this)">🛠️ Debug</div>
   </nav>
   <div class="hdr-r">
@@ -1073,6 +1109,155 @@ main{position:relative;z-index:1;padding:.8rem;max-width:1440px;margin:0 auto}
 </div>
 
 
+<!-- ══ COPY MOAT PAGE ══ -->
+<div id="view-copymoat" class="view">
+  <div class="sh">
+    <div class="sh-t">📋 Copy Moat</div>
+    <div style="font-family:'DM Mono',monospace;font-size:.58rem;color:var(--mut)">Mirror a top wallet's moat strategy with your own funds</div>
+  </div>
+
+  <!-- Wallet Connect Banner -->
+  <div id="cmWalletBanner" style="margin-bottom:1rem">
+    <div class="wallet-connect-btn" id="cmConnectBtn" onclick="cmConnectWallet()">
+      <div style="font-size:1.6rem">🦊</div>
+      <div style="flex:1">
+        <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:.9rem">Connect Wallet</div>
+        <div style="font-size:.7rem;color:var(--dim);margin-top:2px">MetaMask · WalletConnect · any injected wallet</div>
+      </div>
+      <div style="font-size:1.2rem;color:var(--acc)">→</div>
+    </div>
+    <div id="cmWalletConnected" style="display:none">
+      <div class="wallet-connect-btn connected">
+        <div style="font-size:1.4rem">✅</div>
+        <div style="flex:1">
+          <div style="font-family:'DM Mono',monospace;font-size:.72rem;color:var(--grn);font-weight:600" id="cmConnectedAddr">—</div>
+          <div style="font-size:.68rem;color:var(--mut);margin-top:2px">
+            Balance: <span id="cmUsdcBal" style="color:var(--txt)">—</span> USDC ·
+            <span id="cmAvaxBal" style="color:var(--txt)">—</span> AVAX ·
+            Network: <span id="cmNetwork" style="color:var(--acc)">—</span>
+          </div>
+        </div>
+        <button class="btn btn-sm btn-g" onclick="cmDisconnect()" style="font-size:.6rem;padding:3px 10px">Disconnect</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="g2" style="margin-bottom:1rem">
+    <!-- Left: Target wallet picker -->
+    <div>
+      <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:.8rem;margin-bottom:.6rem;color:var(--acc)">① Choose Wallet to Copy</div>
+      <div style="display:flex;gap:7px;margin-bottom:.7rem">
+        <input class="inp" id="cmTargetInput" placeholder="Paste any 0x… wallet address" style="flex:1;font-size:.72rem">
+        <button class="btn btn-sm" onclick="cmLoadTarget()">Load →</button>
+      </div>
+      <div style="font-family:'DM Mono',monospace;font-size:.6rem;color:var(--mut);margin-bottom:.7rem">— or pick from top leaderboard —</div>
+      <div id="cmLeaderList" style="max-height:280px;overflow-y:auto">
+        <div style="color:var(--mut);font-size:.72rem;text-align:center;padding:1rem"><span class="spin"></span> Loading leaderboard…</div>
+      </div>
+    </div>
+
+    <!-- Right: Target profile -->
+    <div>
+      <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:.8rem;margin-bottom:.6rem;color:var(--acc)">② Target Profile</div>
+      <div id="cmTargetProfile">
+        <div style="background:var(--card);border:1px solid var(--bor);border-radius:12px;padding:1.5rem;text-align:center;color:var(--mut);font-size:.75rem">
+          Select a wallet to see their strategy →
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Strategy builder -->
+  <div id="cmStrategySection" style="display:none">
+    <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:.85rem;margin-bottom:.75rem;padding-bottom:.5rem;border-bottom:1px solid var(--bor)">
+      ③ Configure Your Copy
+    </div>
+
+    <!-- Amount + currency -->
+    <div class="ccard" style="margin-bottom:.85rem">
+      <div class="ctit">Investment Amount</div>
+      <div style="display:flex;gap:8px;margin-bottom:.6rem;align-items:center">
+        <div class="token-badge active" id="cmBadgeUsdc" onclick="cmSetCurrency('USDC')">💵 USDC</div>
+        <div class="token-badge inactive" id="cmBadgeAvax" onclick="cmSetCurrency('AVAX')">🔺 AVAX</div>
+        <div style="flex:1"></div>
+        <div style="font-family:'DM Mono',monospace;font-size:.62rem;color:var(--mut)">Balance: <span id="cmCurrencyBal">—</span></div>
+      </div>
+      <div class="amount-input-row">
+        <input class="inp" id="cmAmount" type="number" placeholder="0.00" oninput="cmUpdateAmountPreview()" style="font-size:1rem;font-weight:600">
+        <button class="btn btn-sm btn-g" onclick="cmSetMax()">MAX</button>
+      </div>
+      <div id="cmAmountNote" style="font-family:'DM Mono',monospace;font-size:.6rem;color:var(--mut);margin-top:.4rem"></div>
+    </div>
+
+    <!-- Moat positions to copy -->
+    <div class="ccard" style="margin-bottom:.85rem">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.7rem">
+        <div class="ctit" style="margin-bottom:0">Moat Positions to Copy</div>
+        <div style="display:flex;gap:5px">
+          <button class="btn btn-sm btn-g" onclick="cmSelectAllMoats(true)" style="font-size:.58rem;padding:2px 8px">All</button>
+          <button class="btn btn-sm btn-g" onclick="cmSelectAllMoats(false)" style="font-size:.58rem;padding:2px 8px">None</button>
+        </div>
+      </div>
+      <div id="cmMoatPositions"></div>
+    </div>
+
+    <!-- Strategy method -->
+    <div class="ccard" style="margin-bottom:.85rem">
+      <div class="ctit">Participation Method</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem" id="cmMethodGrid">
+        <div class="token-badge active" id="cmMethod_mirror" onclick="cmSetMethod('mirror')" style="padding:.6rem;flex-direction:column;align-items:flex-start;gap:2px">
+          <span>🪞 Mirror</span>
+          <span style="font-size:.52rem;color:var(--mut);font-weight:400">Copy their exact method</span>
+        </div>
+        <div class="token-badge inactive" id="cmMethod_stake" onclick="cmSetMethod('stake')" style="padding:.6rem;flex-direction:column;align-items:flex-start;gap:2px">
+          <span>🔒 Stake</span>
+          <span style="font-size:.52rem;color:var(--mut);font-weight:400">Flexible, 1×</span>
+        </div>
+        <div class="token-badge inactive" id="cmMethod_lock90" onclick="cmSetMethod('lock90')" style="padding:.6rem;flex-direction:column;align-items:flex-start;gap:2px">
+          <span>⏳ Lock 90d</span>
+          <span style="font-size:.52rem;color:var(--mut);font-weight:400">2.73×</span>
+        </div>
+        <div class="token-badge inactive" id="cmMethod_lock180" onclick="cmSetMethod('lock180')" style="padding:.6rem;flex-direction:column;align-items:flex-start;gap:2px">
+          <span>⏳ Lock 180d</span>
+          <span style="font-size:.52rem;color:var(--mut);font-weight:400">3.23×</span>
+        </div>
+        <div class="token-badge inactive" id="cmMethod_lock365" onclick="cmSetMethod('lock365')" style="padding:.6rem;flex-direction:column;align-items:flex-start;gap:2px">
+          <span>⏳ Lock 365d</span>
+          <span style="font-size:.52rem;color:var(--mut);font-weight:400">4.00×</span>
+        </div>
+        <div class="token-badge inactive" id="cmMethod_burn" onclick="cmSetMethod('burn')" style="padding:.6rem;flex-direction:column;align-items:flex-start;gap:2px">
+          <span>🔥 Burn</span>
+          <span style="font-size:.52rem;color:var(--mut);font-weight:400">10×, permanent</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preview + execute -->
+    <div id="cmPreviewSection">
+      <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:.82rem;margin-bottom:.6rem">④ Preview &amp; Execute</div>
+      <div id="cmPreviewCards"></div>
+      <div id="cmGasEstimate" class="gas-estimate" style="display:none"></div>
+      <button class="btn" id="cmExecuteBtn" style="width:100%;margin-top:.8rem;display:none;font-size:.88rem;padding:.85rem" onclick="cmExecute()">
+        🚀 Execute Copy Strategy
+      </button>
+      <div style="font-family:'DM Mono',monospace;font-size:.58rem;color:var(--mut);text-align:center;margin-top:.4rem" id="cmConnectPrompt">
+        Connect wallet above to execute
+      </div>
+    </div>
+  </div>
+
+  <!-- Live Transaction Progress -->
+  <div id="cmTxProgress" style="display:none;margin-top:1rem">
+    <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:.85rem;margin-bottom:.7rem;display:flex;align-items:center;gap:8px">
+      <span class="spin" id="cmTxSpinner"></span>
+      <span id="cmTxTitle">Processing…</span>
+    </div>
+    <div class="cm-progress"><div class="cm-progress-fill" id="cmProgressBar" style="width:0%"></div></div>
+    <div id="cmStepsList"></div>
+    <div id="cmTxResult" style="display:none;margin-top:.8rem"></div>
+  </div>
+</div>
+
 </main>
 
 <script>
@@ -1177,6 +1362,7 @@ function nav(el){
   if(v==='invest-home'){populateMoatSelects();}
   if(v==='calculator'){populateMoatSelects();runAllocator();}
   if(v==='debug')dbInit();
+  if(v==='copymoat')initCopyMoat();
 }
 function mTab(el){
   document.querySelectorAll('.mtab').forEach(x=>x.classList.remove('on'));
@@ -4101,10 +4287,9 @@ async function dbFireWallet() {
 // ════════════════════════════════════════════
 
 function openCopyMoat(walletAddr) {
-  copyMoatTarget = walletAddr.toLowerCase();
-  const modal = document.getElementById('copyMoatModal');
-  if (modal) { modal.classList.add('open'); document.body.style.overflow='hidden'; }
-  renderCopyMoatPlan(copyMoatTarget);
+  // Navigate to the copy moat page and pre-load the wallet
+  nav(document.querySelector('[data-v="copymoat"]'));
+  setTimeout(() => cmLoadTarget(walletAddr.toLowerCase()), 100);
 }
 
 function closeCopyMoat() {
@@ -4287,6 +4472,627 @@ function copyCopyMoatToAllocator() {
   openAllocator();
 }
 
+
+// ════════════════════════════════════════════════════════════════
+//  COPY MOAT ENGINE  — ethers.js v6 + Avalanche C-Chain
+// ════════════════════════════════════════════════════════════════
+
+// ── CONSTANTS ──
+const AVAX_CHAIN_ID = 43114;
+const AVAX_RPC      = 'https://api.avax.network/ext/bc/C/rpc';
+const USDC_ADDR     = '0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E'; // USDC on Avalanche
+const WAVAX_ADDR    = '0xB31f66AA3C1e785363F0875a1b74E27b85FD66c7'; // WAVAX
+const DEAD_ADDR_CM  = '0x000000000000000000000000000000000000dEaD';
+
+// LFJ (TraderJoe) routers — we try V2.1 first, fallback to V1
+const LFJ_ROUTER_V2 = '0xb4315e873dBcf96Ffd0acd8EA43f689D8c20fB30'; // V2.1 LB Router
+const LFJ_ROUTER_V1 = '0x60aE616a2155Ee3d9A68541Ba4544862310933d4'; // V1 classic
+
+const ERC20_ABI = [
+  'function approve(address spender, uint256 amount) returns (bool)',
+  'function allowance(address owner, address spender) view returns (uint256)',
+  'function balanceOf(address account) view returns (uint256)',
+  'function decimals() view returns (uint8)',
+  'function symbol() view returns (string)',
+];
+
+const MOAT_ABI = [
+  'function stake(uint256 _amount) nonpayable',
+  'function lock(uint256 _amount, uint256 _duration) nonpayable',
+  'function burn(uint256 _amount) nonpayable',
+  'function unstake(uint256 _amount) nonpayable',
+  'function earlyExitLock(uint256 _lockIndex) nonpayable',
+  'function exitLock(uint256 _lockIndex) nonpayable',
+  'function claimAllRewards() nonpayable',
+  'function getTotalAmounts() view returns (uint256 _totalStaked, uint256 _totalLocked, uint256 _totalBurned, uint256 _totalInContract)',
+  'function getCurrentPoints(address _user) view returns (uint256)',
+  'function getUserAllLocks(address _user) view returns (uint256[] amounts, uint256[] ends, uint256[] points, uint256[] originalDurations, uint256[] lastUpdated, bool[] active)',
+  'function userInfo(address) view returns (uint256 stakedAmount, uint256 totalUserBurn, uint256 stakingPoints, uint256 burnPoints, uint256 activeLockCount)',
+  'function getAllPendingRewards(address _user) view returns (address[] tokens, uint256[] amounts)',
+  'function calculateEarlyExitFee(address _user, uint256 _lockIndex) view returns (uint256 fee, uint256 amountAfterFee)',
+  'function getRewardTokens() view returns (address[] addresses, uint256[] totalDeposited, uint256[] totalClaimed, uint256[] unallocated)',
+  'function stakingEnabled() view returns (bool)',
+  'function lockingEnabled() view returns (bool)',
+  'function burningEnabled() view returns (bool)',
+  'function tokenDecimals() view returns (uint8)',
+  'function POINTS_PER_TOKEN() view returns (uint256)',
+  'function MULTIPLIER_PRECISION() view returns (uint256)',
+];
+
+const LFJ_V1_ABI = [
+  'function swapExactTokensForTokens(uint256 amountIn, uint256 amountOutMin, address[] path, address to, uint256 deadline) returns (uint256[] amounts)',
+  'function swapExactAVAXForTokens(uint256 amountOutMin, address[] path, address to, uint256 deadline) payable returns (uint256[] amounts)',
+  'function getAmountsOut(uint256 amountIn, address[] path) view returns (uint256[] amounts)',
+];
+
+// ── WALLET STATE ──
+let cmProvider = null;
+let cmSigner   = null;
+let cmAddress  = null;
+let cmCurrency = 'USDC'; // USDC | AVAX
+let cmMethod   = 'mirror';
+let cmTargetWallet = null;
+let cmTargetMoats  = []; // [{addr, meta, pts, strat, selected, pct}]
+let cmSelectedMoats = new Set();
+let cmExecuting = false;
+
+// ── WALLET CONNECT ──
+async function cmConnectWallet() {
+  try {
+    if (!window.ethereum) {
+      cmShowError('No wallet detected. Please install MetaMask.');
+      return;
+    }
+    cmProvider = new ethers.BrowserProvider(window.ethereum);
+    const accounts = await cmProvider.send('eth_requestAccounts', []);
+    // Check / switch to Avalanche
+    const network = await cmProvider.getNetwork();
+    if (Number(network.chainId) !== AVAX_CHAIN_ID) {
+      try {
+        await cmProvider.send('wallet_switchEthereumChain', [{ chainId: '0xa86a' }]);
+      } catch(e) {
+        if (e.code === 4902) {
+          await cmProvider.send('wallet_addEthereumChain', [{
+            chainId: '0xa86a',
+            chainName: 'Avalanche C-Chain',
+            rpcUrls: [AVAX_RPC],
+            nativeCurrency: { name: 'AVAX', symbol: 'AVAX', decimals: 18 },
+            blockExplorerUrls: ['https://snowtrace.io'],
+          }]);
+        }
+      }
+    }
+    cmSigner  = await cmProvider.getSigner();
+    cmAddress = await cmSigner.getAddress();
+    await cmUpdateWalletUI();
+    // Listen for account changes
+    window.ethereum.on('accountsChanged', async (accs) => {
+      if (accs.length === 0) { cmDisconnect(); return; }
+      cmSigner  = await cmProvider.getSigner();
+      cmAddress = await cmSigner.getAddress();
+      await cmUpdateWalletUI();
+    });
+  } catch(e) {
+    cmShowError('Wallet connect failed: ' + (e.reason || e.message || e));
+  }
+}
+
+function cmDisconnect() {
+  cmProvider = null; cmSigner = null; cmAddress = null;
+  document.getElementById('cmWalletConnected').style.display = 'none';
+  document.getElementById('cmConnectBtn').style.display = 'flex';
+  document.getElementById('cmExecuteBtn').style.display = 'none';
+  document.getElementById('cmConnectPrompt').style.display = 'block';
+}
+
+async function cmUpdateWalletUI() {
+  if (!cmAddress) return;
+  document.getElementById('cmConnectBtn').style.display = 'none';
+  document.getElementById('cmWalletConnected').style.display = 'block';
+  document.getElementById('cmConnectedAddr').textContent = shortA(cmAddress);
+
+  // Balances
+  const [avaxBal, usdcBal] = await Promise.allSettled([
+    cmProvider.getBalance(cmAddress),
+    (async () => {
+      const usdc = new ethers.Contract(USDC_ADDR, ERC20_ABI, cmProvider);
+      return usdc.balanceOf(cmAddress);
+    })(),
+  ]);
+  const avax = avaxBal.status==='fulfilled' ? parseFloat(ethers.formatEther(avaxBal.value)).toFixed(4) : '?';
+  const usdc = usdcBal.status==='fulfilled' ? parseFloat(ethers.formatUnits(usdcBal.value, 6)).toFixed(2) : '?';
+  document.getElementById('cmAvaxBal').textContent = avax;
+  document.getElementById('cmUsdcBal').textContent = usdc;
+
+  const net = await cmProvider.getNetwork();
+  document.getElementById('cmNetwork').textContent = Number(net.chainId)===AVAX_CHAIN_ID ? 'Avalanche ✓' : '⚠️ Wrong network';
+
+  document.getElementById('cmExecuteBtn').style.display = cmTargetMoats.length ? 'block' : 'none';
+  document.getElementById('cmConnectPrompt').style.display = 'none';
+  cmUpdateCurrencyBal();
+}
+
+async function cmUpdateCurrencyBal() {
+  if (!cmAddress || !cmProvider) return;
+  const balEl = document.getElementById('cmCurrencyBal');
+  try {
+    if (cmCurrency === 'AVAX') {
+      const b = await cmProvider.getBalance(cmAddress);
+      balEl.textContent = parseFloat(ethers.formatEther(b)).toFixed(4) + ' AVAX';
+    } else {
+      const usdc = new ethers.Contract(USDC_ADDR, ERC20_ABI, cmProvider);
+      const b = await usdc.balanceOf(cmAddress);
+      balEl.textContent = parseFloat(ethers.formatUnits(b, 6)).toFixed(2) + ' USDC';
+    }
+  } catch(e) { balEl.textContent = '—'; }
+}
+
+// ── TARGET WALLET LOADER ──
+async function cmLoadTarget(addr) {
+  const inputEl = document.getElementById('cmTargetInput');
+  const target  = (addr || inputEl.value).trim().toLowerCase();
+  if (!target || !target.startsWith('0x')) { cmShowError('Invalid wallet address'); return; }
+  cmTargetWallet = target;
+  document.getElementById('cmTargetProfile').innerHTML = '<div style="text-align:center;padding:1rem;color:var(--mut)"><span class="spin"></span> Fetching profile…</div>';
+
+  let profile = null;
+  try { profile = await fetch(API + '/profile/' + target).then(r=>r.json()); } catch(e) {}
+
+  const localPts = allPts.filter(p => getWallet(p) === target);
+  let moatPts = localPts;
+  if (profile?.contractPoints?.length) {
+    moatPts = profile.contractPoints.map(cp => ({
+      contractAddress: (cp.contractAddress||'').toLowerCase(),
+      points: Number(cp.points||0), rank: cp.rank, weight: cp.weight,
+    })).filter(p => p.contractAddress && p.points > 0);
+    if (!moatPts.length) moatPts = localPts;
+  }
+
+  if (!moatPts.length) {
+    document.getElementById('cmTargetProfile').innerHTML = '<div class="empty">No moat data for this wallet.</div>';
+    return;
+  }
+
+  const username = profile?.username && !profile.username.startsWith('0x') ? profile.username : shortA(target);
+  const totPts   = moatPts.reduce((s,p) => s+p.points, 0);
+  const mCnt     = new Set(moatPts.map(p=>p.contractAddress)).size;
+  const council  = Math.round(totPts * cMult(mCnt));
+
+  // Infer strategy per moat
+  cmTargetMoats = moatPts.sort((a,b) => b.points - a.points).map(p => {
+    const meta = MOATS[p.contractAddress];
+    if (!meta || meta.lpOnly) return null;
+    const m = moatMap[p.contractAddress] || {};
+    const ratio = m.avgPoints ? p.points / m.avgPoints : 1;
+    let strat = 'stake', lockDays = 0;
+    if (ratio > 8)       { strat = 'burn'; }
+    else if (ratio > 4)  { strat = 'lock'; lockDays = 365; }
+    else if (ratio > 2.5){ strat = 'lock'; lockDays = 180; }
+    else if (ratio > 1.5){ strat = 'lock'; lockDays = 90; }
+    const stratLabel = strat==='burn' ? '🔥 Burn (10×)' : strat==='lock' ? '⏳ Lock '+lockDays+'d ('+lockM(lockDays).toFixed(2)+'×)' : '🔒 Stake (1×)';
+    return { addr: p.contractAddress, meta, pts: p.points, weight: p.weight||0, strat, lockDays, stratLabel, selected: true, pct: 0 };
+  }).filter(Boolean);
+
+  // Calculate percentage split by points weight
+  const totalW = cmTargetMoats.reduce((s,m) => s+m.pts, 0);
+  cmTargetMoats.forEach(m => { m.pct = totalW ? Math.round(m.pts/totalW*100) : Math.round(100/cmTargetMoats.length); });
+  cmSelectedMoats = new Set(cmTargetMoats.map(m=>m.addr));
+
+  // Render profile card
+  document.getElementById('cmTargetProfile').innerHTML = `
+    <div style="background:var(--sur);border:1px solid rgba(249,115,22,.3);border-radius:12px;padding:1rem">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:.7rem">
+        <div style="font-size:1.4rem">👤</div>
+        <div style="flex:1">
+          <div style="font-family:'Chakra Petch',sans-serif;font-weight:700">${username}</div>
+          <div style="font-family:'DM Mono',monospace;font-size:.58rem;color:var(--mut)">${shortA(target)}</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;text-align:center">
+        <div><div style="font-family:'Chakra Petch',sans-serif;font-weight:700;color:var(--acc)">${fmtP(council)}</div><div style="font-family:'DM Mono',monospace;font-size:.5rem;color:var(--mut)">Council</div></div>
+        <div><div style="font-family:'Chakra Petch',sans-serif;font-weight:700">${mCnt}</div><div style="font-family:'DM Mono',monospace;font-size:.5rem;color:var(--mut)">Moats</div></div>
+        <div><div style="font-family:'Chakra Petch',sans-serif;font-weight:700;color:var(--gld)">${cMult(mCnt)}×</div><div style="font-family:'DM Mono',monospace;font-size:.5rem;color:var(--mut)">Diversity</div></div>
+      </div>
+    </div>`;
+
+  document.getElementById('cmStrategySection').style.display = 'block';
+  cmRenderMoatPositions();
+  cmUpdatePreview();
+
+  // Highlight selected in leaderboard
+  document.querySelectorAll('.cm-target-card').forEach(el => {
+    el.classList.toggle('selected', el.dataset.addr === target);
+  });
+}
+
+// ── LEADERBOARD PICKER ──
+function cmRenderLeaderboard() {
+  const el = document.getElementById('cmLeaderList'); if (!el) return;
+  const sw = sortedWallets().slice(0, 20);
+  if (!sw.length) { el.innerHTML = '<div style="color:var(--mut);font-size:.72rem;padding:.5rem">Load data first — hit Refresh</div>'; return; }
+  const ecoTot = allPts.reduce((s,p)=>s+p.points,0);
+  el.innerHTML = sw.map((w,i) => {
+    const uname = w.username || zephyrNames[w.wallet] || '';
+    const mult = cMult(w.moatCount), cs = Math.round(w.totalPoints*mult);
+    const sh = ecoTot ? (w.totalPoints/ecoTot*100).toFixed(3) : '0';
+    return `<div class="cm-target-card" data-addr="${w.wallet}" onclick="cmLoadTarget('${w.wallet}')">
+      <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:.78rem;color:var(--mut);width:22px">#${i+1}</div>
+      <div style="flex:1;min-width:0">
+        ${uname ? `<div style="font-family:'DM Mono',monospace;font-size:.7rem;color:var(--acc);font-weight:600">${uname}</div>` : ''}
+        <div style="font-family:'DM Mono',monospace;font-size:.62rem;color:var(--dim)">${shortA(w.wallet)}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:.78rem;color:var(--acc)">${fmtP(cs)}</div>
+        <div style="font-family:'DM Mono',monospace;font-size:.54rem;color:var(--mut)">${w.moatCount} moats · ${sh}%</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── MOAT POSITIONS RENDERER ──
+function cmRenderMoatPositions() {
+  const el = document.getElementById('cmMoatPositions'); if (!el) return;
+  el.innerHTML = cmTargetMoats.map((m,i) => {
+    const sel = cmSelectedMoats.has(m.addr);
+    const stratCol = m.strat==='burn'?'var(--red)':m.strat==='lock'?'var(--gld)':'var(--acc)';
+    return `<div class="moat-position-row${sel?' selected':''}" onclick="cmToggleMoat('${m.addr}')">
+      <div style="display:flex;align-items:center;gap:8px;flex:1">
+        <div style="font-size:.9rem">${sel?'☑':'☐'}</div>
+        ${logoImg(m.meta.logo,'moat-logo-sm',m.meta.emoji,m.meta.color)}
+        <div style="flex:1">
+          <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:.75rem;color:${m.meta.color}">${m.meta.short}</div>
+          <div style="font-family:'DM Mono',monospace;font-size:.58rem;color:${stratCol}">${m.stratLabel}</div>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:.75rem">${m.pct}%</div>
+        <div style="font-family:'DM Mono',monospace;font-size:.54rem;color:var(--mut)">${fmtP(m.pts)} pts</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function cmToggleMoat(addr) {
+  if (cmSelectedMoats.has(addr)) cmSelectedMoats.delete(addr);
+  else cmSelectedMoats.add(addr);
+  cmRenderMoatPositions();
+  cmUpdatePreview();
+}
+
+function cmSelectAllMoats(selectAll) {
+  if (selectAll) cmTargetMoats.forEach(m => cmSelectedMoats.add(m.addr));
+  else cmSelectedMoats.clear();
+  cmRenderMoatPositions();
+  cmUpdatePreview();
+}
+
+// ── CURRENCY / METHOD ──
+function cmSetCurrency(cur) {
+  cmCurrency = cur;
+  document.getElementById('cmBadgeUsdc').className = 'token-badge ' + (cur==='USDC'?'active':'inactive');
+  document.getElementById('cmBadgeAvax').className = 'token-badge ' + (cur==='AVAX'?'active':'inactive');
+  cmUpdateCurrencyBal();
+  cmUpdatePreview();
+}
+
+function cmSetMethod(method) {
+  cmMethod = method;
+  document.querySelectorAll('[id^="cmMethod_"]').forEach(el => {
+    el.className = 'token-badge ' + (el.id==='cmMethod_'+method ? 'active' : 'inactive');
+  });
+  cmUpdatePreview();
+}
+
+async function cmSetMax() {
+  if (!cmAddress || !cmProvider) { document.getElementById('cmTargetInput').focus(); return; }
+  try {
+    let max;
+    if (cmCurrency === 'AVAX') {
+      const b = await cmProvider.getBalance(cmAddress);
+      max = Math.max(0, parseFloat(ethers.formatEther(b)) - 0.05); // keep 0.05 AVAX for gas
+    } else {
+      const usdc = new ethers.Contract(USDC_ADDR, ERC20_ABI, cmProvider);
+      const b = await usdc.balanceOf(cmAddress);
+      max = parseFloat(ethers.formatUnits(b, 6));
+    }
+    document.getElementById('cmAmount').value = max.toFixed(cmCurrency==='AVAX'?4:2);
+    cmUpdateAmountPreview();
+  } catch(e) { cmShowError('Could not fetch balance: '+e.message); }
+}
+
+// ── PREVIEW ──
+async function cmUpdateAmountPreview() {
+  cmUpdatePreview();
+}
+
+async function cmUpdatePreview() {
+  const amtRaw = parseFloat(document.getElementById('cmAmount')?.value) || 0;
+  const selected = cmTargetMoats.filter(m => cmSelectedMoats.has(m.addr));
+  const previewEl = document.getElementById('cmPreviewCards');
+  const executeBtn = document.getElementById('cmExecuteBtn');
+  const gasEl = document.getElementById('cmGasEstimate');
+  if (!previewEl) return;
+
+  if (!selected.length || !amtRaw) {
+    previewEl.innerHTML = '<div style="color:var(--mut);font-size:.72rem;text-align:center;padding:.8rem">Select moats and enter an amount to preview</div>';
+    if (executeBtn) executeBtn.style.display = 'none';
+    return;
+  }
+
+  // Recalculate pcts for selected only
+  const totalPts = selected.reduce((s,m) => s+m.pts, 0);
+  const allocations = selected.map(m => ({
+    ...m,
+    allocPct: totalPts ? m.pts/totalPts : 1/selected.length,
+    usd: amtRaw * (totalPts ? m.pts/totalPts : 1/selected.length),
+    method: cmMethod==='mirror' ? m.strat : cmMethod,
+    lockSeconds: cmMethod==='mirror' ? m.lockDays*86400 : ({lock90:7776000,lock180:15552000,lock365:31536000,lock730:63072000}[cmMethod]||0),
+  }));
+
+  // Get prices and estimate tokens
+  const priceJobs = allocations.map(a => {
+    if (priceCache[a.addr]?.price > 0) return Promise.resolve(priceCache[a.addr]);
+    return fetchPairData(a.meta).then(p => {
+      if (!p) return null;
+      const obj = {price:Number(p.priceUsd||0), ch24:Number(p.priceChange?.h24||0), liq:Number(p.liquidity?.usd||0)};
+      priceCache[a.addr]=obj; return obj;
+    }).catch(()=>null);
+  });
+  const prices = await Promise.all(priceJobs);
+
+  // Estimate total points we'll get
+  let totalEstPts = 0;
+  const cards = allocations.map((a,i) => {
+    const px = prices[i];
+    const inUsd = cmCurrency==='AVAX' ? a.usd * (priceCache['avax']?.price||25) : a.usd;
+    const tokens = px?.price > 0 ? inUsd/px.price : null;
+    const multMap = {stake:1,lock:lockM(a.lockDays||90),burn:10};
+    const mult = multMap[a.method]||1;
+    const supply = supplyCache[a.meta.tokenAddr?.toLowerCase()]?.totalSupply || a.meta.knownSupply || 0;
+    const m = moatMap[a.addr] || {};
+    let estPts = 0;
+    if (tokens && supply > 0 && m.totalPoints > 0) {
+      const bwc=m.burnCount||0,lwc=m.lockCount||0,swc=m.stakeCount||0,totc=m.walletCount||1;
+      const avgM=(bwc*10+lwc*3.5+swc*1)/totc||1;
+      estPts=(tokens/supply)*m.totalPoints*(mult/avgM);
+    } else if (tokens) estPts=tokens*mult;
+    totalEstPts += estPts;
+    const stratCol = a.method==='burn'?'var(--red)':a.method.startsWith('lock')||a.method==='lock'?'var(--gld)':'var(--acc)';
+    const methodLabel = a.method==='burn'?'🔥 Burn (10×)':a.method==='stake'?'🔒 Stake (1×)':a.method==='lock'?'⏳ Lock '+a.lockDays+'d':'⏳ '+a.method;
+    return `<div style="background:${a.meta.color}0d;border:1px solid ${a.meta.color}44;border-left:3px solid ${a.meta.color};border-radius:9px;padding:.75rem;margin-bottom:.45rem">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:.4rem">
+        ${logoImg(a.meta.logo,'moat-logo-sm',a.meta.emoji,a.meta.color)}
+        <div style="flex:1">
+          <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:.78rem">${a.meta.name}</div>
+          <div style="font-family:'DM Mono',monospace;font-size:.56rem;color:${stratCol}">${methodLabel}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;color:var(--acc);font-size:.82rem">$${f2(a.usd)}</div>
+          <div style="font-family:'DM Mono',monospace;font-size:.52rem;color:var(--mut)">${(a.allocPct*100).toFixed(0)}% of budget</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+        ${px?.price?`<span style="font-family:'DM Mono',monospace;font-size:.58rem;background:var(--sur);border:1px solid var(--bor);border-radius:4px;padding:1px 6px">$${fmtPrice(px.price)} per token</span>`:''}
+        ${tokens?`<span style="font-family:'DM Mono',monospace;font-size:.58rem;background:var(--sur);border:1px solid var(--bor);border-radius:4px;padding:1px 6px">~${fmtP(tokens)} ${a.meta.ticker}</span>`:''}
+        ${estPts?`<span style="font-family:'DM Mono',monospace;font-size:.58rem;color:var(--acc);background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.2);border-radius:4px;padding:1px 6px">~${fmtP(estPts)} pts</span>`:''}
+      </div>
+      <div style="margin-top:.4rem;font-family:'DM Mono',monospace;font-size:.56rem;color:var(--mut)">
+        1 tx: swap ${cmCurrency} → ${a.meta.ticker} on LFJ &nbsp;·&nbsp; 1 tx: approve moat &nbsp;·&nbsp; 1 tx: ${a.method==='burn'?'burn':a.method==='stake'?'stake':'lock'}
+      </div>
+    </div>`;
+  });
+
+  previewEl.innerHTML = cards.join('') + `
+    <div style="background:var(--sur);border:1px solid var(--bor);border-radius:8px;padding:.7rem;display:flex;justify-content:space-between;align-items:center;margin-top:.4rem">
+      <span style="font-family:'DM Mono',monospace;font-size:.65rem;color:var(--mut)">Total est. points</span>
+      <span style="font-family:'Chakra Petch',sans-serif;font-weight:700;color:var(--acc)">${fmtP(totalEstPts)}</span>
+    </div>
+    <div style="font-family:'DM Mono',monospace;font-size:.58rem;color:var(--mut);text-align:center;margin-top:.4rem">
+      ${allocations.length} moats · ${allocations.length*3} transactions total (swap + approve + stake/lock per moat)
+    </div>`;
+
+  if (executeBtn) executeBtn.style.display = cmAddress ? 'block' : 'none';
+  if (gasEl) { gasEl.style.display='block'; gasEl.textContent='⛽ Estimated gas: ~'+((allocations.length*3)*0.15).toFixed(2)+' AVAX total (approx 0.15 AVAX per transaction)'; }
+}
+
+// ── EXECUTION ENGINE ──
+let cmSteps = [];
+
+function cmAddStep(id, title, detail, state='waiting') {
+  cmSteps.push({id, title, detail, state});
+  cmRenderSteps();
+}
+function cmUpdateStep(id, state, detail) {
+  const step = cmSteps.find(s=>s.id===id);
+  if (step) { step.state=state; if(detail) step.detail=detail; cmRenderSteps(); }
+}
+function cmRenderSteps() {
+  const el = document.getElementById('cmStepsList'); if (!el) return;
+  const spinIcon = '<span class="spin" style="display:inline-block;width:12px;height:12px;border:2px solid var(--acc);border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite"></span>';
+  el.innerHTML = cmSteps.map((s,i) => {
+    const numContent = s.state==='done'?'✓':s.state==='error'?'✕':s.state==='active'?spinIcon:(i+1);
+    return `<div class="cm-step ${s.state}">
+      <div class="cm-step-num">${numContent}</div>
+      <div class="cm-step-body">
+        <div class="cm-step-title">${s.title}</div>
+        <div class="cm-step-detail">${s.detail||''}</div>
+      </div>
+    </div>`;
+  }).join('');
+  // Update progress bar
+  const done = cmSteps.filter(s=>s.state==='done').length;
+  const pct = cmSteps.length ? Math.round(done/cmSteps.length*100) : 0;
+  const bar = document.getElementById('cmProgressBar');
+  if (bar) bar.style.width = pct+'%';
+}
+
+async function cmExecute() {
+  if (cmExecuting) return;
+  if (!cmAddress || !cmSigner) { cmShowError('Connect wallet first'); return; }
+  const amtRaw = parseFloat(document.getElementById('cmAmount')?.value) || 0;
+  if (!amtRaw || amtRaw <= 0) { cmShowError('Enter an amount'); return; }
+
+  const selected = cmTargetMoats.filter(m => cmSelectedMoats.has(m.addr));
+  if (!selected.length) { cmShowError('Select at least one moat'); return; }
+
+  cmExecuting = true;
+  cmSteps = [];
+  document.getElementById('cmTxProgress').style.display = 'block';
+  document.getElementById('cmExecuteBtn').disabled = true;
+  document.getElementById('cmTxSpinner').style.display = 'inline-block';
+  document.getElementById('cmTxTitle').textContent = 'Executing Copy Strategy…';
+  document.getElementById('cmTxResult').style.display = 'none';
+
+  const totalPts = selected.reduce((s,m) => s+m.pts, 0);
+  const router = new ethers.Contract(LFJ_ROUTER_V1, LFJ_V1_ABI, cmSigner);
+  const deadline = Math.floor(Date.now()/1000) + 1200; // 20 min
+
+  try {
+    for (let i = 0; i < selected.length; i++) {
+      const m = selected[i];
+      const allocPct = totalPts ? m.pts/totalPts : 1/selected.length;
+      const moatUsd  = amtRaw * allocPct;
+      const method   = cmMethod==='mirror' ? m.strat : cmMethod;
+      const lockDays = cmMethod==='mirror' ? m.lockDays : ({lock90:90,lock180:180,lock365:365,lock730:730}[cmMethod]||0);
+      const lockSecs = lockDays * 86400;
+      const moatContract = new ethers.Contract(m.addr, MOAT_ABI, cmSigner);
+      const tokenContract= new ethers.Contract(m.meta.tokenAddr, ERC20_ABI, cmSigner);
+
+      // Get token decimals
+      let decimals = 18;
+      try { decimals = Number(await tokenContract.decimals()); } catch(e) {}
+
+      // ── STEP 1: SWAP ──
+      const stepSwapId = `swap_${i}`;
+      cmAddStep(stepSwapId, `Swap ${cmCurrency} → ${m.meta.ticker} (${m.meta.short})`,
+        `Swapping $${f2(moatUsd)} ${cmCurrency} on LFJ router…`, 'active');
+
+      let tokenAmountReceived;
+      try {
+        if (cmCurrency === 'USDC') {
+          const usdcContract = new ethers.Contract(USDC_ADDR, ERC20_ABI, cmSigner);
+          const usdcAmount   = ethers.parseUnits(moatUsd.toFixed(6), 6);
+
+          // Check/set allowance for router
+          const allowance = await usdcContract.allowance(cmAddress, LFJ_ROUTER_V1);
+          if (allowance < usdcAmount) {
+            cmUpdateStep(stepSwapId, 'active', 'Approving USDC for LFJ router…');
+            const approveTx = await usdcContract.approve(LFJ_ROUTER_V1, ethers.MaxUint256);
+            cmUpdateStep(stepSwapId, 'active', 'Waiting for USDC approval… tx: '+approveTx.hash);
+            await approveTx.wait();
+          }
+
+          // Get quote
+          const path = [USDC_ADDR, WAVAX_ADDR, m.meta.tokenAddr];
+          let amountsOut;
+          try { amountsOut = await router.getAmountsOut(usdcAmount, path); }
+          catch(e) { throw new Error('No liquidity path found for this token on LFJ V1. Try a DEX aggregator.'); }
+
+          const minOut = amountsOut[amountsOut.length-1] * 95n / 100n; // 5% slippage
+          cmUpdateStep(stepSwapId, 'active', `Quote: ~${fmtP(Number(ethers.formatUnits(amountsOut[amountsOut.length-1],decimals)))} ${m.meta.ticker}. Confirm swap in wallet…`);
+
+          const swapTx = await router.swapExactTokensForTokens(usdcAmount, minOut, path, cmAddress, deadline);
+          cmUpdateStep(stepSwapId, 'active', 'Swap tx sent: ' + swapTx.hash + '\nWaiting for confirmation…');
+          const swapReceipt = await swapTx.wait();
+          tokenAmountReceived = minOut; // conservative estimate; real amount from receipt
+          cmUpdateStep(stepSwapId, 'done', `✓ Swapped! tx: ${swapTx.hash}`);
+
+        } else { // AVAX
+          const avaxAmount = ethers.parseEther(moatUsd.toFixed(18));
+          const path = [WAVAX_ADDR, m.meta.tokenAddr];
+          let amountsOut;
+          try { amountsOut = await router.getAmountsOut(avaxAmount, path); }
+          catch(e) { throw new Error('No liquidity path found for this token on LFJ V1.'); }
+          const minOut = amountsOut[amountsOut.length-1] * 95n / 100n;
+          cmUpdateStep(stepSwapId, 'active', `Quote: ~${fmtP(Number(ethers.formatUnits(amountsOut[amountsOut.length-1],decimals)))} ${m.meta.ticker}. Confirm swap in wallet…`);
+          const swapTx = await router.swapExactAVAXForTokens(minOut, path, cmAddress, deadline, {value: avaxAmount});
+          cmUpdateStep(stepSwapId, 'active', 'Swap tx sent: ' + swapTx.hash + '\nWaiting for confirmation…');
+          await swapTx.wait();
+          tokenAmountReceived = minOut;
+          cmUpdateStep(stepSwapId, 'done', `✓ Swapped! tx: ${swapTx.hash}`);
+        }
+
+        // ── STEP 2: APPROVE MOAT ──
+        const stepApproveId = `approve_${i}`;
+        cmAddStep(stepApproveId, `Approve ${m.meta.short} Moat Contract`, 'Checking token allowance…', 'active');
+        const tokenBalance = await tokenContract.balanceOf(cmAddress);
+        const currentAllowance = await tokenContract.allowance(cmAddress, m.addr);
+        if (currentAllowance < tokenBalance) {
+          cmUpdateStep(stepApproveId, 'active', 'Approving tokens for moat contract. Confirm in wallet…');
+          const approveTx2 = await tokenContract.approve(m.addr, ethers.MaxUint256);
+          cmUpdateStep(stepApproveId, 'active', 'Approval tx: ' + approveTx2.hash + '\nWaiting…');
+          await approveTx2.wait();
+        }
+        cmUpdateStep(stepApproveId, 'done', '✓ Moat contract approved');
+
+        // ── STEP 3: STAKE / LOCK / BURN ──
+        const stepMoatId = `moat_${i}`;
+        const amountToDeposit = tokenBalance; // use all received tokens
+        let moatTx;
+        if (method === 'burn') {
+          cmAddStep(stepMoatId, `Burn ${m.meta.ticker} in ${m.meta.short} Moat`, `Burning ${fmtP(Number(ethers.formatUnits(amountToDeposit,decimals)))} ${m.meta.ticker} for 10×. PERMANENT. Confirm in wallet…`, 'active');
+          moatTx = await moatContract.burn(amountToDeposit);
+        } else if (method === 'lock' || method.startsWith('lock')) {
+          cmAddStep(stepMoatId, `Lock ${m.meta.ticker} in ${m.meta.short} Moat`, `Locking ${fmtP(Number(ethers.formatUnits(amountToDeposit,decimals)))} ${m.meta.ticker} for ${lockDays} days. Confirm in wallet…`, 'active');
+          moatTx = await moatContract.lock(amountToDeposit, BigInt(lockSecs));
+        } else {
+          cmAddStep(stepMoatId, `Stake ${m.meta.ticker} in ${m.meta.short} Moat`, `Staking ${fmtP(Number(ethers.formatUnits(amountToDeposit,decimals)))} ${m.meta.ticker}. Confirm in wallet…`, 'active');
+          moatTx = await moatContract.stake(amountToDeposit);
+        }
+        cmUpdateStep(stepMoatId, 'active', 'Transaction sent: ' + moatTx.hash + '\nWaiting for confirmation…');
+        await moatTx.wait();
+        cmUpdateStep(stepMoatId, 'done', `✓ ${method==='burn'?'Burned':method==='stake'?'Staked':'Locked'}! tx: ${moatTx.hash} · <a href="https://snowtrace.io/tx/${moatTx.hash}" target="_blank" class="tx-hash-link">View on Snowtrace ↗</a>`);
+
+      } catch(err) {
+        const msg = err.reason || err.shortMessage || err.message || String(err);
+        cmUpdateStep(cmSteps[cmSteps.length-1]?.id, 'error', '❌ ' + msg);
+        cmShowTxResult(false, 'Step failed: ' + msg + '\nCompleted ' + cmSteps.filter(s=>s.state==='done').length + '/' + (selected.length*3) + ' steps.');
+        cmExecuting = false;
+        document.getElementById('cmExecuteBtn').disabled = false;
+        document.getElementById('cmTxSpinner').style.display = 'none';
+        return;
+      }
+    }
+
+    // All done!
+    document.getElementById('cmTxTitle').textContent = '✅ Copy Strategy Complete!';
+    document.getElementById('cmTxSpinner').style.display = 'none';
+    cmShowTxResult(true, 'All '+selected.length+' moat positions copied successfully! Your positions will appear in the leaderboard after the next data refresh.');
+    setTimeout(loadAll, 3000); // refresh data
+
+  } catch(e) {
+    const msg = e.reason || e.shortMessage || e.message || String(e);
+    document.getElementById('cmTxTitle').textContent = '❌ Execution failed';
+    document.getElementById('cmTxSpinner').style.display = 'none';
+    cmShowTxResult(false, msg);
+  }
+  cmExecuting = false;
+  document.getElementById('cmExecuteBtn').disabled = false;
+}
+
+function cmShowTxResult(success, msg) {
+  const el = document.getElementById('cmTxResult');
+  if (!el) return;
+  el.style.display = 'block';
+  const col = success ? 'var(--grn)' : 'var(--red)';
+  const icon = success ? '🎉' : '⚠️';
+  el.innerHTML = `<div style="background:${success?'rgba(109,184,122,.1)':'rgba(224,82,82,.1)'};border:1px solid ${col};border-radius:10px;padding:.9rem;font-size:.75rem;line-height:1.6">
+    <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;color:${col};margin-bottom:.3rem">${icon} ${success?'Success!':'Error'}</div>
+    <div style="color:var(--dim);white-space:pre-wrap">${msg}</div>
+    ${success?'<button class="btn btn-sm" style="margin-top:.6rem" onclick="gotoW(\''+cmAddress+'\')">View My Wallet Profile →</button>':''}
+  </div>`;
+}
+
+function cmShowError(msg) {
+  cmShowTxResult(false, msg);
+  document.getElementById('cmTxProgress').style.display = 'block';
+}
+
+// ── INIT: called when Copy Moat tab is opened ──
+function initCopyMoat() {
+  cmRenderLeaderboard();
+  if (cmAddress) cmUpdateWalletUI();
+}
 
 </script>
 </body>
