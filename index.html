@@ -87,6 +87,9 @@
 const API_KEY = "hc_live_C9jUxh9Knr3Qn-ZEo4SSO-ga0SLjFFjX";
 const API_BASE = "https://api.hashcash.club/api/v1/public";
 
+// Image Proxy to solve CORS (wsrv.nl is a free, high-performance image proxy)
+const PROXY_URL = "https://wsrv.nl/?url=";
+
 let scene, camera, renderer, clock;
 let pillars = [];
 let targetMiner = null;
@@ -284,14 +287,18 @@ function nextRound() {
 
 function updateScreen(url) {
     const loader = new THREE.TextureLoader();
-    loader.setCrossOrigin('anonymous'); // Vital for CORS
+    loader.setCrossOrigin('anonymous');
+    
+    // Wrap original URL in proxy to bypass CORS
+    // wsrv.nl automatically adds Access-Control-Allow-Origin: *
+    const proxiedUrl = url.startsWith('http') ? `${PROXY_URL}${encodeURIComponent(url)}` : url;
     
     const screen = scene.getObjectByName("ScreenMesh");
     
-    // Loading state
+    // Loading visual
     screen.material.emissive = new THREE.Color(0x222200);
     
-    loader.load(url, 
+    loader.load(proxiedUrl, 
         (tex) => {
             screen.material.map = tex;
             screen.material.emissive = new THREE.Color(0x000000);
@@ -299,20 +306,41 @@ function updateScreen(url) {
         },
         undefined,
         (err) => {
-            // Fallback: Generate "Missing Texture" procedural canvas
+            console.warn("Asset Load Failed, applying diagnostic fallback.");
+            // Fallback: Generate "Asset Restricted" procedural canvas
             const canvas = document.createElement('canvas');
             canvas.width = 512; canvas.height = 512;
             const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#111'; ctx.fillRect(0,0,512,512);
-            ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 10;
-            ctx.strokeRect(50,50,412,412);
-            ctx.fillStyle = '#fbbf24'; ctx.font = 'bold 40px monospace';
+            
+            // Background
+            ctx.fillStyle = '#0a0a0a'; ctx.fillRect(0,0,512,512);
+            
+            // Grid Background
+            ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 1;
+            for(let i=0; i<512; i+=40) {
+                ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,512); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(512,i); ctx.stroke();
+            }
+
+            // Warning Box
+            ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 4;
+            ctx.strokeRect(40,40,432,432);
+            
+            // Text
+            ctx.fillStyle = '#ef4444'; ctx.font = 'bold 36px "JetBrains Mono"';
             ctx.textAlign = 'center';
-            ctx.fillText("IMAGE LINK BROKEN", 256, 240);
-            ctx.fillText("CHECK API CORS", 256, 300);
+            ctx.fillText("NETWORK ERROR", 256, 180);
+            
+            ctx.fillStyle = '#ffffff'; ctx.font = '16px "JetBrains Mono"';
+            ctx.fillText("CORS / 404 DETECTED", 256, 230);
+            ctx.fillText("RESOURCE: " + url.split('/').pop(), 256, 260);
+            
+            ctx.fillStyle = '#fbbf24'; ctx.font = 'bold 14px "Orbitron"';
+            ctx.fillText("CORE SECURITY OVERRIDE ACTIVE", 256, 380);
             
             const tex = new THREE.CanvasTexture(canvas);
             screen.material.map = tex;
+            screen.material.emissive = new THREE.Color(0x000000);
             screen.material.needsUpdate = true;
         }
     );
