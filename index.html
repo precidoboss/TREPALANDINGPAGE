@@ -1,459 +1,1536 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HashCash 3D Miner Quiz - Elite</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        body { margin: 0; overflow: hidden; background: #020202; font-family: 'Orbitron', sans-serif; cursor: crosshair; }
-        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
-        .interactive { pointer-events: auto; }
-        
-        /* Scanline effect */
-        #ui-layer::after {
-            content: " ";
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            background-size: 100% 2px, 3px 100%;
-            pointer-events: none;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THE GROTTO — HashCash Miner Quiz</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --fire: #ff6a00;
+    --ember: #ff3d00;
+    --gold: #ffd700;
+    --dim-gold: #a88a00;
+    --lava: #ff4500;
+    --stone: #1a1410;
+    --deep: #0a0806;
+    --mid-stone: #2a201a;
+    --light-stone: #3d2f25;
+    --crack-glow: rgba(255,100,0,0.4);
+    --health-red: #cc0000;
+    --correct-green: #00ff88;
+    --wrong-red: #ff1744;
+    --pillar-base: #251c15;
+    --pillar-face: #2f2318;
+    --pillar-highlight: #4a3628;
+  }
 
-        #loading-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; z-index: 100;
-            color: #fbbf24; transition: opacity 0.8s ease-out;
-        }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        .hud-panel {
-            background: rgba(0, 20, 20, 0.7);
-            border-left: 4px solid #fbbf24;
-            backdrop-filter: blur(10px);
-        }
+  body {
+    background: var(--deep);
+    color: #e8d5b0;
+    font-family: 'Cinzel', serif;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+    cursor: crosshair;
+  }
 
-        @keyframes glitch {
-            0% { transform: translate(0) }
-            20% { transform: translate(-2px, 2px) }
-            40% { transform: translate(-2px, -2px) }
-            60% { transform: translate(2px, 2px) }
-            80% { transform: translate(2px, -2px) }
-            100% { transform: translate(0) }
-        }
-        .glitch-text { animation: glitch 0.3s infinite; }
-    </style>
+  /* ── GROTTO BACKGROUND ─────────────────────────────── */
+  #grotto-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 100%, rgba(255,80,0,0.18) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 30% at 20% 80%, rgba(255,60,0,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 30% at 80% 80%, rgba(255,60,0,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse 100% 100% at 50% 50%, #0e0a06 0%, #050302 100%);
+  }
+
+  /* Stalactites */
+  .stalactite {
+    position: absolute;
+    top: 0;
+    background: linear-gradient(to bottom, #1a1208, #0d0a05);
+    clip-path: polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%);
+    opacity: 0.9;
+  }
+
+  /* Lava cracks on floor */
+  #floor-cracks {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 120px;
+    z-index: 1;
+    background: linear-gradient(to top, rgba(255,69,0,0.15), transparent);
+  }
+
+  /* Torch flames */
+  .torch {
+    position: fixed;
+    z-index: 2;
+    width: 40px;
+  }
+  .torch-left { left: 40px; top: 30%; }
+  .torch-right { right: 40px; top: 30%; }
+
+  .torch-body {
+    width: 14px;
+    height: 40px;
+    background: linear-gradient(to bottom, #5a3a1a, #3a2010);
+    margin: 0 auto;
+    border-radius: 2px;
+  }
+
+  .torch-flame {
+    width: 28px;
+    height: 50px;
+    margin: 0 auto -5px;
+    position: relative;
+    animation: flicker 0.15s infinite alternate;
+    transform-origin: bottom center;
+  }
+  .torch-flame::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 100%, #fff700 0%, #ff8c00 40%, #ff3300 70%, transparent 100%);
+    border-radius: 50% 50% 40% 40%;
+    animation: flicker2 0.2s infinite alternate;
+  }
+  .torch-flame::after {
+    content: '';
+    position: absolute;
+    left: 5px; right: 5px; top: 10px; bottom: 0;
+    background: radial-gradient(ellipse at 50% 100%, rgba(255,255,100,0.8) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .torch-glow {
+    position: absolute;
+    top: -30px; left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 120px;
+    background: radial-gradient(ellipse, rgba(255,140,0,0.3) 0%, transparent 70%);
+    animation: glow-pulse 0.3s infinite alternate;
+    pointer-events: none;
+  }
+
+  @keyframes flicker { 0%{transform:skewX(-3deg) scaleY(0.95)} 100%{transform:skewX(3deg) scaleY(1.05)} }
+  @keyframes flicker2 { 0%{opacity:0.9;transform:scaleX(0.9)} 100%{opacity:1;transform:scaleX(1.1)} }
+  @keyframes glow-pulse { 0%{opacity:0.6;transform:translateX(-50%) scale(0.9)} 100%{opacity:1;transform:translateX(-50%) scale(1.1)} }
+
+  /* ── MAIN GAME CONTAINER ───────────────────────────── */
+  #game-wrap {
+    position: relative;
+    z-index: 10;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    perspective: 1200px;
+  }
+
+  /* ── TOP HUD ───────────────────────────────────────── */
+  #hud {
+    width: 100%;
+    max-width: 900px;
+    padding: 14px 30px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    z-index: 20;
+  }
+
+  #hearts-wrap {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .heart {
+    font-size: 26px;
+    filter: drop-shadow(0 0 8px #ff1744);
+    transition: all 0.3s;
+    transform-origin: center;
+  }
+  .heart.lost {
+    filter: grayscale(1) brightness(0.3);
+    transform: scale(0.85);
+  }
+  .heart.shake {
+    animation: heart-shake 0.4s ease;
+  }
+  @keyframes heart-shake {
+    0%{transform:scale(1)} 25%{transform:scale(1.4) rotate(-10deg)} 50%{transform:scale(0.7) rotate(5deg)} 75%{transform:scale(1.1)} 100%{transform:scale(0.85)}
+  }
+
+  #score-wrap {
+    text-align: center;
+  }
+  #score-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--dim-gold);
+    text-transform: uppercase;
+  }
+  #score-val {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 28px;
+    color: var(--gold);
+    text-shadow: 0 0 20px rgba(255,215,0,0.7);
+    line-height: 1;
+  }
+
+  #streak-wrap {
+    text-align: right;
+  }
+  #streak-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--dim-gold);
+  }
+  #streak-val {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 22px;
+    color: var(--fire);
+    text-shadow: 0 0 15px rgba(255,106,0,0.8);
+    line-height: 1;
+  }
+
+  /* ── TIMER BAR ─────────────────────────────────────── */
+  #timer-wrap {
+    width: 100%;
+    max-width: 900px;
+    padding: 0 30px;
+    position: relative;
+    z-index: 20;
+  }
+  #timer-track {
+    height: 8px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid rgba(255,150,50,0.2);
+  }
+  #timer-fill {
+    height: 100%;
+    background: linear-gradient(to right, var(--gold), var(--fire), var(--ember));
+    border-radius: 4px;
+    transition: width 0.1s linear;
+    box-shadow: 0 0 12px rgba(255,100,0,0.6);
+  }
+  #timer-text {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--fire);
+    text-align: right;
+    margin-top: 3px;
+    letter-spacing: 2px;
+  }
+
+  /* ── QUESTION NUMBER ──────────────────────────────── */
+  #question-num {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 4px;
+    color: rgba(255,200,100,0.5);
+    margin: 6px 0 0;
+  }
+
+  /* ── MINER DISPLAY PEDESTAL ───────────────────────── */
+  #pedestal-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    width: 100%;
+    margin-top: -10px;
+  }
+
+  #miner-frame {
+    position: relative;
+    width: 280px;
+    height: 280px;
+    transform-style: preserve-3d;
+  }
+
+  /* Stone frame around miner */
+  #miner-frame::before {
+    content: '';
+    position: absolute;
+    inset: -16px;
+    background:
+      linear-gradient(135deg, #4a3020 0%, #2a1c10 50%, #3a2618 100%);
+    border-radius: 8px;
+    box-shadow:
+      0 0 0 3px #1a1008,
+      0 0 0 6px rgba(255,140,0,0.2),
+      0 0 40px rgba(255,100,0,0.3),
+      inset 0 0 20px rgba(0,0,0,0.8);
+  }
+
+  /* Rune decorations on corners */
+  #miner-frame::after {
+    content: '✦ IDENTIFY THE MINER ✦';
+    position: absolute;
+    bottom: -46px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--dim-gold);
+    white-space: nowrap;
+  }
+
+  #miner-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    position: relative;
+    z-index: 2;
+    border-radius: 4px;
+    filter: drop-shadow(0 0 20px rgba(255,140,0,0.5));
+    transition: transform 0.6s ease;
+    image-rendering: pixelated;
+    background: radial-gradient(ellipse at center, rgba(255,100,0,0.05) 0%, transparent 80%);
+  }
+
+  #miner-img.reveal {
+    animation: miner-reveal 0.6s cubic-bezier(0.175,0.885,0.32,1.275);
+  }
+  @keyframes miner-reveal {
+    0%{transform:scale(0.5) rotateY(90deg);opacity:0}
+    100%{transform:scale(1) rotateY(0);opacity:1}
+  }
+
+  /* Stat tags */
+  #miner-stats-display {
+    display: flex;
+    gap: 12px;
+    margin-top: 54px;
+    justify-content: center;
+  }
+  .stat-chip {
+    background: rgba(255,100,0,0.12);
+    border: 1px solid rgba(255,100,0,0.25);
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    color: rgba(255,200,100,0.8);
+    letter-spacing: 1px;
+    backdrop-filter: blur(4px);
+  }
+
+  /* ── DIFFICULTY BADGE ─────────────────────────────── */
+  #diff-badge {
+    position: absolute;
+    top: 10px;
+    right: 30px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    padding: 4px 12px;
+    border-radius: 3px;
+    border: 1px solid currentColor;
+    text-transform: uppercase;
+  }
+  #diff-badge.easy { color: var(--correct-green); border-color: rgba(0,255,136,0.4); }
+  #diff-badge.medium { color: var(--gold); border-color: rgba(255,215,0,0.4); }
+  #diff-badge.hard { color: var(--fire); border-color: rgba(255,106,0,0.4); }
+  #diff-badge.extreme { color: var(--wrong-red); border-color: rgba(255,23,68,0.4); animation: pulse-red 0.8s infinite alternate; }
+  @keyframes pulse-red { 0%{box-shadow:0 0 0 rgba(255,23,68,0)} 100%{box-shadow:0 0 12px rgba(255,23,68,0.5)} }
+
+  /* ── 3D PILLARS / ANSWER CHOICES ─────────────────── */
+  #pillars-section {
+    width: 100%;
+    max-width: 940px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 0 20px 20px;
+    position: relative;
+    z-index: 20;
+  }
+
+  .pillar-wrap {
+    flex: 1;
+    max-width: 280px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.15s ease;
+  }
+  .pillar-wrap:hover { transform: translateY(-6px); }
+  .pillar-wrap:active { transform: translateY(-2px); }
+
+  /* Pillar sides for 3D illusion */
+  .pillar-top {
+    width: 100%;
+    height: 16px;
+    background: linear-gradient(to bottom, #5a4030, #3a2820);
+    border-radius: 4px 4px 0 0;
+    box-shadow: 0 -4px 12px rgba(255,100,0,0.2);
+    position: relative;
+    border-top: 2px solid rgba(255,180,80,0.3);
+  }
+  .pillar-top::before {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+    background: rgba(0,0,0,0.4);
+  }
+
+  .pillar-body {
+    width: 100%;
+    padding: 16px 14px;
+    background:
+      linear-gradient(180deg, var(--pillar-face) 0%, var(--pillar-base) 100%);
+    border-left: 3px solid var(--pillar-highlight);
+    border-right: 3px solid rgba(0,0,0,0.5);
+    position: relative;
+    text-align: center;
+    min-height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Rune lines on pillar */
+  .pillar-body::before {
+    content: '';
+    position: absolute;
+    left: 10px; top: 6px; bottom: 6px;
+    width: 1px;
+    background: linear-gradient(to bottom, transparent, rgba(255,180,80,0.15), transparent);
+  }
+  .pillar-body::after {
+    content: '';
+    position: absolute;
+    right: 10px; top: 6px; bottom: 6px;
+    width: 1px;
+    background: linear-gradient(to bottom, transparent, rgba(255,180,80,0.15), transparent);
+  }
+
+  .pillar-text {
+    font-family: 'Cinzel', serif;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #d4b87a;
+    line-height: 1.3;
+    position: relative;
+    z-index: 2;
+    letter-spacing: 0.5px;
+  }
+
+  .pillar-base-block {
+    width: 100%;
+    height: 12px;
+    background: linear-gradient(to bottom, #2a1c10, #1a1008);
+    border-radius: 0 0 3px 3px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.6), 0 2px 0 rgba(255,140,0,0.1);
+  }
+
+  /* Pillar letter badge */
+  .pillar-letter {
+    position: absolute;
+    top: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 14px;
+    color: var(--dim-gold);
+    background: var(--pillar-base);
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255,180,80,0.3);
+    z-index: 5;
+  }
+
+  /* Pillar states */
+  .pillar-wrap.correct .pillar-body {
+    background: linear-gradient(180deg, rgba(0,100,50,0.4) 0%, rgba(0,60,30,0.4) 100%);
+    border-left-color: var(--correct-green);
+    box-shadow: 0 0 30px rgba(0,255,136,0.4);
+  }
+  .pillar-wrap.correct .pillar-text { color: var(--correct-green); text-shadow: 0 0 15px rgba(0,255,136,0.8); }
+
+  .pillar-wrap.wrong .pillar-body {
+    background: linear-gradient(180deg, rgba(120,0,0,0.5) 0%, rgba(80,0,0,0.5) 100%);
+    border-left-color: var(--wrong-red);
+    box-shadow: 0 0 30px rgba(255,23,68,0.4);
+    animation: wrong-shake 0.4s ease;
+  }
+  .pillar-wrap.wrong .pillar-text { color: var(--wrong-red); }
+
+  @keyframes wrong-shake {
+    0%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} 100%{transform:translateX(0)}
+  }
+
+  .pillar-wrap.disabled { pointer-events: none; }
+
+  /* Glow on hover */
+  .pillar-wrap:not(.correct):not(.wrong):not(.disabled):hover .pillar-body {
+    background: linear-gradient(180deg, #3d2d1f 0%, #2a1e14 100%);
+    border-left-color: rgba(255,180,80,0.6);
+    box-shadow: 0 0 20px rgba(255,140,0,0.25);
+  }
+  .pillar-wrap:not(.correct):not(.wrong):not(.disabled):hover .pillar-text { color: #ffcc66; }
+
+  /* ── FEEDBACK FLASH ───────────────────────────────── */
+  #feedback-flash {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.1s;
+  }
+  #feedback-flash.correct-flash {
+    background: rgba(0,255,136,0.1);
+    opacity: 1;
+  }
+  #feedback-flash.wrong-flash {
+    background: rgba(255,23,68,0.15);
+    opacity: 1;
+  }
+
+  /* ── CORRECT LABEL POPUP ──────────────────────────── */
+  #answer-reveal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%) scale(0);
+    z-index: 200;
+    text-align: center;
+    pointer-events: none;
+    transition: transform 0.3s cubic-bezier(0.175,0.885,0.32,1.275);
+  }
+  #answer-reveal.show { transform: translate(-50%,-50%) scale(1); }
+  #answer-reveal-text {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 36px;
+    text-shadow: 0 0 40px currentColor;
+    padding: 12px 32px;
+    border-radius: 6px;
+    backdrop-filter: blur(4px);
+  }
+  #answer-reveal-text.correct-txt {
+    color: var(--correct-green);
+    background: rgba(0,80,40,0.7);
+    border: 2px solid var(--correct-green);
+  }
+  #answer-reveal-text.wrong-txt {
+    color: var(--wrong-red);
+    background: rgba(80,0,0,0.7);
+    border: 2px solid var(--wrong-red);
+  }
+  #answer-reveal-sub {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    margin-top: 6px;
+    color: rgba(255,220,100,0.8);
+    letter-spacing: 2px;
+  }
+
+  /* ── TIMEOUT OVERLAY ──────────────────────────────── */
+  #timeout-msg {
+    position: fixed;
+    top: 45%;
+    left: 50%;
+    transform: translate(-50%,-50%) scale(0);
+    z-index: 200;
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 30px;
+    color: #ff8800;
+    text-shadow: 0 0 30px #ff4400;
+    background: rgba(30,10,0,0.85);
+    border: 2px solid #ff4400;
+    padding: 12px 30px;
+    border-radius: 6px;
+    pointer-events: none;
+    transition: transform 0.3s ease;
+  }
+  #timeout-msg.show { transform: translate(-50%,-50%) scale(1); }
+
+  /* ── SCREENS ──────────────────────────────────────── */
+  .screen {
+    position: fixed;
+    inset: 0;
+    z-index: 300;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(5,3,2,0.97);
+    text-align: center;
+    padding: 30px;
+  }
+
+  /* INTRO */
+  #intro-screen {
+    background:
+      radial-gradient(ellipse 60% 40% at 50% 100%, rgba(255,80,0,0.2) 0%, transparent 70%),
+      rgba(5,3,2,0.98);
+  }
+
+  .screen-title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(28px, 6vw, 60px);
+    color: var(--gold);
+    text-shadow: 0 0 40px rgba(255,215,0,0.6), 0 0 80px rgba(255,100,0,0.3);
+    line-height: 1.1;
+    margin-bottom: 8px;
+  }
+  .screen-sub {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 4px;
+    color: rgba(255,150,50,0.7);
+    margin-bottom: 30px;
+    text-transform: uppercase;
+  }
+
+  .stone-divider {
+    width: 200px;
+    height: 2px;
+    background: linear-gradient(to right, transparent, var(--dim-gold), transparent);
+    margin: 16px auto;
+    opacity: 0.6;
+  }
+
+  .rules-box {
+    max-width: 500px;
+    background: rgba(255,100,0,0.05);
+    border: 1px solid rgba(255,150,50,0.2);
+    border-radius: 6px;
+    padding: 20px 30px;
+    margin: 16px 0 28px;
+    text-align: left;
+  }
+  .rules-box li {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    color: rgba(220,180,100,0.8);
+    margin-bottom: 8px;
+    list-style: none;
+    padding-left: 16px;
+    position: relative;
+    line-height: 1.5;
+  }
+  .rules-box li::before {
+    content: '⛏';
+    position: absolute;
+    left: -4px;
+    font-size: 11px;
+  }
+
+  .btn-primary {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 18px;
+    color: var(--deep);
+    background: linear-gradient(135deg, #ffcc00, #ff8800);
+    border: none;
+    padding: 16px 48px;
+    border-radius: 4px;
+    cursor: pointer;
+    letter-spacing: 2px;
+    box-shadow: 0 0 30px rgba(255,150,0,0.5), inset 0 1px 0 rgba(255,255,200,0.3);
+    transition: all 0.2s;
+    text-shadow: 0 1px 0 rgba(0,0,0,0.3);
+  }
+  .btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0 50px rgba(255,150,0,0.7), inset 0 1px 0 rgba(255,255,200,0.3);
+    background: linear-gradient(135deg, #ffe040, #ffaa00);
+  }
+  .btn-primary:active { transform: translateY(0); }
+
+  .btn-secondary {
+    font-family: 'Cinzel', serif;
+    font-size: 14px;
+    color: var(--dim-gold);
+    background: transparent;
+    border: 1px solid rgba(255,180,80,0.3);
+    padding: 10px 28px;
+    border-radius: 4px;
+    cursor: pointer;
+    letter-spacing: 2px;
+    margin-top: 14px;
+    transition: all 0.2s;
+  }
+  .btn-secondary:hover { border-color: var(--dim-gold); color: var(--gold); background: rgba(255,180,0,0.06); }
+
+  /* GAME OVER */
+  #gameover-screen .screen-title { color: var(--wrong-red); text-shadow: 0 0 40px rgba(255,23,68,0.6); }
+
+  #final-score {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 64px;
+    color: var(--gold);
+    text-shadow: 0 0 30px rgba(255,215,0,0.7);
+    line-height: 1;
+    margin: 10px 0;
+  }
+  #final-stats {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    color: rgba(220,180,100,0.7);
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+    line-height: 2;
+  }
+  #highscore-note {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 16px;
+    color: var(--fire);
+    text-shadow: 0 0 20px rgba(255,106,0,0.8);
+    margin-bottom: 24px;
+    min-height: 24px;
+  }
+
+  /* WIN */
+  #win-screen {
+    background:
+      radial-gradient(ellipse 60% 40% at 50% 50%, rgba(255,215,0,0.12) 0%, transparent 70%),
+      rgba(5,3,2,0.97);
+  }
+  #win-screen .screen-title { color: var(--gold); animation: golden-pulse 1.5s infinite alternate; }
+  @keyframes golden-pulse {
+    0%{text-shadow:0 0 30px rgba(255,215,0,0.5)} 100%{text-shadow:0 0 80px rgba(255,215,0,0.9),0 0 120px rgba(255,100,0,0.5)}
+  }
+
+  #win-particles {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .particle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    animation: particle-rise linear infinite;
+  }
+  @keyframes particle-rise {
+    0%{transform:translateY(100vh) rotate(0);opacity:1}
+    100%{transform:translateY(-10vh) rotate(720deg);opacity:0}
+  }
+
+  /* ── LOADING ─────────────────────────────────────── */
+  #loading-screen {
+    background: rgba(5,3,2,0.99);
+  }
+  #loading-text {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 14px;
+    letter-spacing: 4px;
+    color: rgba(255,150,50,0.7);
+    margin-top: 16px;
+    animation: loading-dots 1.2s infinite;
+  }
+  @keyframes loading-dots {
+    0%{opacity:0.3} 50%{opacity:1} 100%{opacity:0.3}
+  }
+  .pick-icon {
+    font-size: 48px;
+    animation: spin-pick 2s linear infinite;
+    display: inline-block;
+  }
+  @keyframes spin-pick { 0%{transform:rotate(-15deg)} 50%{transform:rotate(15deg)} 100%{transform:rotate(-15deg)} }
+
+  /* ── STREAK POPUP ─────────────────────────────────── */
+  #streak-popup {
+    position: fixed;
+    top: 30%;
+    left: 50%;
+    transform: translate(-50%,-50%) scale(0);
+    z-index: 250;
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 22px;
+    color: var(--fire);
+    text-shadow: 0 0 20px rgba(255,100,0,0.9);
+    pointer-events: none;
+    transition: transform 0.25s cubic-bezier(0.175,0.885,0.32,1.275), opacity 0.25s;
+    opacity: 0;
+    white-space: nowrap;
+  }
+  #streak-popup.show { transform: translate(-50%,-50%) scale(1); opacity: 1; }
+
+  /* ── BONUS ROUND BANNER ───────────────────────────── */
+  #bonus-banner {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 290;
+    background: linear-gradient(to right, transparent, rgba(255,215,0,0.15), transparent);
+    border-bottom: 1px solid rgba(255,215,0,0.3);
+    padding: 8px;
+    text-align: center;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 4px;
+    color: var(--gold);
+    transform: translateY(-100%);
+    transition: transform 0.3s ease;
+  }
+  #bonus-banner.show { transform: translateY(0); }
+
+  /* ── HINT SYSTEM ──────────────────────────────────── */
+  #hint-btn {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: rgba(200,150,50,0.5);
+    background: rgba(255,100,0,0.06);
+    border: 1px solid rgba(255,100,0,0.2);
+    padding: 6px 18px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    z-index: 30;
+  }
+  #hint-btn:hover:not(:disabled) { color: var(--fire); border-color: var(--fire); background: rgba(255,100,0,0.1); }
+  #hint-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* Progress bar between questions */
+  #progress-dots {
+    display: flex;
+    gap: 6px;
+    margin: 4px 0 8px;
+  }
+  .pdot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255,150,50,0.2);
+    border: 1px solid rgba(255,150,50,0.3);
+    transition: all 0.3s;
+  }
+  .pdot.done-correct { background: var(--correct-green); border-color: var(--correct-green); box-shadow: 0 0 6px rgba(0,255,136,0.6); }
+  .pdot.done-wrong { background: var(--wrong-red); border-color: var(--wrong-red); }
+  .pdot.done-timeout { background: #ff8800; border-color: #ff8800; }
+  .pdot.current { background: var(--gold); border-color: var(--gold); box-shadow: 0 0 8px rgba(255,215,0,0.6); animation: dot-pulse 0.6s infinite alternate; }
+  @keyframes dot-pulse { 0%{transform:scale(1)} 100%{transform:scale(1.3)} }
+
+  /* Cave ambient particles */
+  #cave-dust { position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden; }
+  .dust { position:absolute;width:2px;height:2px;background:rgba(255,180,80,0.3);border-radius:50%;animation:dust-fall linear infinite; }
+  @keyframes dust-fall { 0%{transform:translateY(-10px) translateX(0);opacity:0} 20%{opacity:0.5} 80%{opacity:0.3} 100%{transform:translateY(100vh) translateX(20px);opacity:0} }
+
+  /* Keyboard shortcut hints */
+  .key-hint {
+    display: inline-block;
+    background: rgba(255,100,0,0.1);
+    border: 1px solid rgba(255,100,0,0.3);
+    border-radius: 3px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    padding: 1px 5px;
+    color: rgba(255,150,50,0.6);
+    margin-left: 4px;
+    vertical-align: middle;
+  }
+
+  /* Highscore table */
+  #hs-table {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: rgba(200,160,80,0.7);
+    letter-spacing: 2px;
+    margin: 10px 0 20px;
+    width: 100%;
+    max-width: 380px;
+  }
+  #hs-table tr:first-child { color: var(--gold); }
+  #hs-table td { padding: 4px 12px; }
+  #hs-table td:last-child { text-align: right; }
+
+  /* Category round display */
+  #round-type {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: rgba(255,150,50,0.5);
+    margin-bottom: 4px;
+  }
+</style>
 </head>
 <body>
 
-<div id="loading-screen">
-    <div class="text-5xl font-black mb-4 tracking-tighter italic">HASHCASH <span class="text-white">CORE</span></div>
-    <div class="w-64 h-1 bg-gray-800 rounded-full overflow-hidden mb-4">
-        <div id="load-bar" class="h-full bg-yellow-500 transition-all duration-300" style="width: 10%"></div>
-    </div>
-    <div id="load-status" class="text-gray-500 font-mono text-xs uppercase tracking-widest">Warming up GPUs...</div>
+<!-- CAVE ATMOSPHERE -->
+<div id="grotto-bg"></div>
+<div id="cave-dust"></div>
+<div id="floor-cracks"></div>
+
+<!-- Stalactites -->
+<div style="position:fixed;top:0;left:0;right:0;height:120px;z-index:1;display:flex;justify-content:space-between;pointer-events:none;">
+  <div class="stalactite" style="width:80px;height:100px;left:5%;"></div>
+  <div class="stalactite" style="width:55px;height:70px;left:18%;"></div>
+  <div class="stalactite" style="width:100px;height:120px;left:32%;"></div>
+  <div class="stalactite" style="width:65px;height:85px;left:48%;"></div>
+  <div class="stalactite" style="width:90px;height:110px;left:62%;"></div>
+  <div class="stalactite" style="width:50px;height:65px;left:78%;"></div>
+  <div class="stalactite" style="width:75px;height:95px;left:90%;"></div>
 </div>
 
-<div id="ui-layer">
-    <div class="flex justify-between p-8 w-full">
-        <div class="hud-panel p-4 rounded-r-xl border-r border-yellow-500/20 shadow-2xl">
-            <div class="text-yellow-500 text-[10px] uppercase tracking-[0.3em] font-bold">Session Rewards</div>
-            <div class="flex items-baseline gap-2">
-                <span id="score-val" class="text-5xl text-white font-black font-mono">0</span>
-                <span class="text-yellow-500 font-bold">HC</span>
-            </div>
-        </div>
-        
-        <div class="text-right">
-            <div class="hud-panel p-4 rounded-l-xl border-l border-green-500/20 mb-2">
-                <div class="text-green-500 text-[10px] uppercase tracking-[0.3em] font-bold">Network Load</div>
-                <div class="text-white font-mono text-xl">98.4 TH/s</div>
-            </div>
-        </div>
-    </div>
+<!-- TORCHES -->
+<div class="torch torch-left">
+  <div class="torch-glow"></div>
+  <div class="torch-flame"></div>
+  <div class="torch-body"></div>
+</div>
+<div class="torch torch-right">
+  <div class="torch-glow"></div>
+  <div class="torch-flame"></div>
+  <div class="torch-body"></div>
+</div>
 
-    <div id="feedback" class="absolute top-[60%] left-1/2 -translate-x-1/2 -translate-y-1/2 text-center opacity-0 transition-all duration-500">
-        <h2 id="feedback-text" class="text-8xl font-black italic uppercase tracking-tighter drop-shadow-[0_0_30px_rgba(251,191,36,0.8)]"></h2>
-    </div>
+<!-- FEEDBACK FLASH -->
+<div id="feedback-flash"></div>
 
-    <div class="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center">
-        <div class="text-yellow-500/40 text-[10px] tracking-[0.5em] mb-2 font-bold uppercase">Select Asset ID</div>
-        <div class="w-1 bg-yellow-500/50 h-12 animate-pulse"></div>
+<!-- STREAK POPUP -->
+<div id="streak-popup"></div>
+
+<!-- ANSWER REVEAL -->
+<div id="answer-reveal">
+  <div id="answer-reveal-text"></div>
+  <div id="answer-reveal-sub"></div>
+</div>
+
+<!-- TIMEOUT MSG -->
+<div id="timeout-msg">⏳ TIME'S UP!</div>
+
+<!-- BONUS BANNER -->
+<div id="bonus-banner">⚡ SPEED BONUS ROUND — DOUBLE POINTS ⚡</div>
+
+<!-- HINT BUTTON -->
+<button id="hint-btn" disabled>⛏ USE HINT <span class="key-hint">H</span></button>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- LOADING SCREEN -->
+<div class="screen" id="loading-screen">
+  <div class="pick-icon">⛏</div>
+  <div class="screen-title" style="font-size:32px;margin-top:16px;">DELVING DEEP...</div>
+  <div id="loading-text">FETCHING MINERS FROM THE CHAIN</div>
+</div>
+
+<!-- INTRO SCREEN -->
+<div class="screen" id="intro-screen" style="display:none;">
+  <div class="screen-title">THE GROTTO</div>
+  <div class="screen-sub">⛏ HashCash Miner Trials ⛏</div>
+  <div class="stone-divider"></div>
+  <ul class="rules-box">
+    <li>Identify each miner NFT from its image — 10 rounds per run</li>
+    <li>You have 3 lives — a wrong answer costs you one</li>
+    <li>Timer shortens as you go deeper — speed earns bonus points</li>
+    <li>Build streaks for massive score multipliers</li>
+    <li>Use your one hint wisely — it removes a wrong option</li>
+    <li>Lose all lives and the grotto claims you</li>
+  </ul>
+  <button class="btn-primary" id="start-btn">ENTER THE GROTTO</button>
+  <div id="best-score-intro" style="margin-top:16px;font-family:'Share Tech Mono',monospace;font-size:12px;color:rgba(255,180,50,0.5);letter-spacing:3px;"></div>
+</div>
+
+<!-- GAME OVER SCREEN -->
+<div class="screen" id="gameover-screen" style="display:none;">
+  <div class="screen-title">CONSUMED BY DARKNESS</div>
+  <div class="screen-sub">You fell in the grotto</div>
+  <div class="stone-divider"></div>
+  <div id="final-score">0</div>
+  <div id="final-stats"></div>
+  <div id="highscore-note"></div>
+  <button class="btn-primary" id="retry-btn">DESCEND AGAIN</button>
+  <button class="btn-secondary" id="retry-intro-btn">VIEW RULES</button>
+</div>
+
+<!-- WIN SCREEN -->
+<div class="screen" id="win-screen" style="display:none;">
+  <div id="win-particles"></div>
+  <div class="screen-title">MASTERY ACHIEVED</div>
+  <div class="screen-sub">The grotto bows before you</div>
+  <div class="stone-divider"></div>
+  <div id="final-score-win" style="font-family:'Cinzel Decorative',serif;font-size:64px;color:var(--gold);text-shadow:0 0 30px rgba(255,215,0,0.7);line-height:1;margin:10px 0;"></div>
+  <div id="final-stats-win" style="font-family:'Share Tech Mono',monospace;font-size:13px;color:rgba(220,180,100,0.7);letter-spacing:2px;margin-bottom:6px;line-height:2;"></div>
+  <div id="highscore-note-win" style="font-family:'Cinzel Decorative',serif;font-size:16px;color:var(--gold);text-shadow:0 0 20px rgba(255,215,0,0.8);margin-bottom:24px;min-height:24px;"></div>
+  <button class="btn-primary" id="win-retry-btn">CHALLENGE AGAIN</button>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- MAIN GAME UI -->
+<div id="game-wrap">
+
+  <!-- HUD -->
+  <div id="hud">
+    <div id="hearts-wrap">
+      <span class="heart" data-h="0">❤️</span>
+      <span class="heart" data-h="1">❤️</span>
+      <span class="heart" data-h="2">❤️</span>
     </div>
+    <div>
+      <div id="round-type">IDENTIFICATION TRIAL</div>
+      <div id="question-num">ROUND 1 / 10</div>
+      <div id="progress-dots"></div>
+    </div>
+    <div id="score-wrap">
+      <div id="score-label">SCORE</div>
+      <div id="score-val">0</div>
+    </div>
+    <div id="streak-wrap">
+      <div id="streak-label">STREAK</div>
+      <div id="streak-val">×1</div>
+    </div>
+  </div>
+  <div id="diff-badge" class="easy">EASY</div>
+
+  <!-- TIMER -->
+  <div id="timer-wrap">
+    <div id="timer-track"><div id="timer-fill"></div></div>
+    <div id="timer-text">20s</div>
+  </div>
+
+  <!-- MINER IMAGE -->
+  <div id="pedestal-area">
+    <div id="miner-frame">
+      <img id="miner-img" src="" alt="miner" />
+    </div>
+    <div id="miner-stats-display">
+      <div class="stat-chip" id="stat-hashrate">— MH/s</div>
+      <div class="stat-chip" id="stat-power">— W</div>
+      <div class="stat-chip" id="stat-type">—</div>
+    </div>
+  </div>
+
+  <!-- PILLARS -->
+  <div id="pillars-section">
+    <div class="pillar-wrap" id="pillar-0">
+      <div class="pillar-letter">A</div>
+      <div class="pillar-top"></div>
+      <div class="pillar-body"><div class="pillar-text" id="opt-0">—</div></div>
+      <div class="pillar-base-block"></div>
+      <div style="position:absolute;bottom:-18px;font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(200,150,50,0.3);letter-spacing:2px;" class="key-hint">1</div>
+    </div>
+    <div class="pillar-wrap" id="pillar-1">
+      <div class="pillar-letter">B</div>
+      <div class="pillar-top"></div>
+      <div class="pillar-body"><div class="pillar-text" id="opt-1">—</div></div>
+      <div class="pillar-base-block"></div>
+      <div style="position:absolute;bottom:-18px;font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(200,150,50,0.3);letter-spacing:2px;" class="key-hint">2</div>
+    </div>
+    <div class="pillar-wrap" id="pillar-2">
+      <div class="pillar-letter">C</div>
+      <div class="pillar-top"></div>
+      <div class="pillar-body"><div class="pillar-text" id="opt-2">—</div></div>
+      <div class="pillar-base-block"></div>
+      <div style="position:absolute;bottom:-18px;font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(200,150,50,0.3);letter-spacing:2px;" class="key-hint">3</div>
+    </div>
+  </div>
+
 </div>
 
 <script>
-const API_KEY = "hc_live_C9jUxh9Knr3Qn-ZEo4SSO-ga0SLjFFjX";
-const API_BASE = "https://api.hashcash.club/api/v1/public";
+const API_KEY = 'hc_live_C9jUxh9Knr3Qn-ZEo4SSO-ga0SLjFFjX';
+const API_BASE = 'https://api.hashcash.club/api/v1/public';
 
-// Image Proxy to solve CORS (wsrv.nl is a free, high-performance image proxy)
-const PROXY_URL = "https://wsrv.nl/?url=";
-
-let scene, camera, renderer, clock;
-let pillars = [];
-let targetMiner = null;
-let allMiners = [];
+// ── GAME STATE ─────────────────────────────────────────
+let miners = [];
+let queue = [];
+let currentQ = 0;
+let lives = 3;
 let score = 0;
-let isBusy = false;
-let raycaster = new THREE.Raycaster();
-let mouse = new THREE.Vector2();
+let streak = 0;
+let maxStreak = 0;
+let correctCount = 0;
+let hintUsed = false;
+let timerInterval = null;
+let timeLeft = 20;
+let maxTime = 20;
+let questionLocked = false;
+let roundResults = []; // 'correct','wrong','timeout'
+let bonusRound = false;
 
-async function fetchWithBackoff(url, options = {}, retries = 5, backoff = 1000) {
-    try {
-        const response = await fetch(url, {
-            ...options,
-            headers: { ...options.headers, "x-api-key": API_KEY }
-        });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        return await response.json();
-    } catch (err) {
-        if (retries > 0) {
-            await new Promise(res => setTimeout(res, backoff));
-            return fetchWithBackoff(url, options, retries - 1, backoff * 2);
-        }
-        throw err;
+const TOTAL_ROUNDS = 10;
+const BASE_SCORE = 100;
+const TIME_BONUS_MAX = 50;
+
+// Difficulty tiers
+const DIFF = [
+  { name:'EASY',    time:25, options:3, scoreMult:1.0,  minRound:0  },
+  { name:'MEDIUM',  time:20, options:3, scoreMult:1.3,  minRound:3  },
+  { name:'HARD',    time:15, options:3, scoreMult:1.7,  minRound:6  },
+  { name:'EXTREME', time:10, options:3, scoreMult:2.5,  minRound:8  },
+];
+
+function getDiff() {
+  for (let i = DIFF.length-1; i >= 0; i--) {
+    if (currentQ >= DIFF[i].minRound) return DIFF[i];
+  }
+  return DIFF[0];
+}
+
+// ── LOCAL STORAGE ──────────────────────────────────────
+function getBest() { return parseInt(localStorage.getItem('grotto_best')||'0'); }
+function setBest(s) { localStorage.setItem('grotto_best', s); }
+function getHS() { try { return JSON.parse(localStorage.getItem('grotto_hs')||'[]'); } catch{return[];} }
+function addHS(entry) {
+  let hs = getHS();
+  hs.push(entry);
+  hs.sort((a,b)=>b.score-a.score);
+  hs = hs.slice(0,5);
+  localStorage.setItem('grotto_hs', JSON.stringify(hs));
+}
+
+// ── FETCH MINERS ───────────────────────────────────────
+async function fetchMiners() {
+  const res = await fetch(`${API_BASE}/contracts`, {
+    headers: { 'x-api-key': API_KEY }
+  });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  const data = await res.json();
+  return data.contracts.filter(c => c.category === 'miner_nft' && c.imageUrl);
+}
+
+// ── CAVE DUST PARTICLES ────────────────────────────────
+function spawnDust() {
+  const container = document.getElementById('cave-dust');
+  for (let i = 0; i < 25; i++) {
+    const d = document.createElement('div');
+    d.className = 'dust';
+    d.style.left = Math.random()*100+'%';
+    d.style.animationDuration = (6+Math.random()*10)+'s';
+    d.style.animationDelay = (Math.random()*10)+'s';
+    d.style.opacity = Math.random()*0.4;
+    container.appendChild(d);
+  }
+}
+
+// ── INIT GAME ──────────────────────────────────────────
+async function init() {
+  showScreen('loading-screen');
+  spawnDust();
+  try {
+    miners = await fetchMiners();
+    if (miners.length < 3) throw new Error('Not enough miners');
+    document.getElementById('loading-screen').style.display = 'none';
+    const best = getBest();
+    if (best > 0) {
+      document.getElementById('best-score-intro').textContent = `BEST: ${best.toLocaleString()}`;
     }
+    showScreen('intro-screen');
+  } catch(e) {
+    document.getElementById('loading-text').textContent = 'ERROR FETCHING MINERS — CHECK CONNECTION';
+    console.error(e);
+  }
 }
 
-function init3D() {
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x010505);
-    scene.fog = new THREE.FogExp2(0x010505, 0.08);
-
-    camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 2.5, 7);
-    camera.lookAt(0, 2, 0);
-
-    renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.outputEncoding = THREE.sRGBEncoding;
-    document.body.appendChild(renderer.domElement);
-
-    // Dynamic Lights
-    const ambientLight = new THREE.AmbientLight(0x4040ff, 0.1);
-    scene.add(ambientLight);
-
-    const mainSpot = new THREE.SpotLight(0xffcc00, 2, 20, 0.5, 0.5, 1);
-    mainSpot.position.set(0, 10, 5);
-    scene.add(mainSpot);
-
-    const backGlow = new THREE.PointLight(0x00ffff, 0.5, 15);
-    backGlow.position.set(0, 5, -5);
-    scene.add(backGlow);
-
-    // Floor with Grid
-    const floorGeo = new THREE.PlaneGeometry(100, 100);
-    const floorMat = new THREE.MeshStandardMaterial({ 
-        color: 0x050505, 
-        roughness: 0.1, 
-        metalness: 0.8 
-    });
-    const floor = new THREE.Mesh(floorGeo, floorMat);
-    floor.rotation.x = -Math.PI / 2;
-    scene.add(floor);
-
-    const grid = new THREE.GridHelper(60, 40, 0xffcc00, 0x222222);
-    grid.position.y = 0.01;
-    scene.add(grid);
-
-    // High Jumbotron Screen
-    createElevatedScreen();
-
-    // Interaction Pillars
-    for (let i = 0; i < 3; i++) {
-        const pillar = createTechPillar(i - 1);
-        pillars.push(pillar);
-        scene.add(pillar);
-    }
-
-    clock = new THREE.Clock();
-    animate();
-
-    window.addEventListener('resize', onWindowResize);
-    window.addEventListener('mousedown', onPointerEvent);
-    window.addEventListener('touchstart', (e) => onPointerEvent(e.touches[0]));
+function showScreen(id) {
+  ['loading-screen','intro-screen','gameover-screen','win-screen'].forEach(s => {
+    const el = document.getElementById(s);
+    if (el) el.style.display = (s===id) ? 'flex' : 'none';
+  });
+  document.getElementById('game-wrap').style.display = (id==='game') ? 'flex' : 'none';
 }
 
-function createElevatedScreen() {
-    const group = new THREE.Group();
-    
-    // The Screen (higher up)
-    const geometry = new THREE.PlaneGeometry(6, 3.5);
-    const material = new THREE.MeshStandardMaterial({ 
-        color: 0x000000, 
-        emissive: 0x111111,
-        side: THREE.DoubleSide 
-    });
-    const screen = new THREE.Mesh(geometry, material);
-    screen.name = "ScreenMesh";
-    group.add(screen);
-
-    // Frame
-    const frameGeo = new THREE.BoxGeometry(6.4, 3.9, 0.2);
-    const frameMat = new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 1, roughness: 0.2 });
-    const frame = new THREE.Mesh(frameGeo, frameMat);
-    frame.position.z = -0.15;
-    group.add(frame);
-
-    // Under-light
-    const light = new THREE.RectAreaLight(0xfbbf24, 5, 6, 0.1);
-    light.position.set(0, -1.8, 0.1);
-    light.rotation.x = Math.PI / 2;
-    group.add(light);
-
-    group.position.set(0, 5, -3); // Moved up to Y=5
-    group.rotation.x = 0.2; // Tilted down slightly
-    scene.add(group);
+function showGame() {
+  ['loading-screen','intro-screen','gameover-screen','win-screen'].forEach(s => {
+    const el = document.getElementById(s);
+    if (el) el.style.display = 'none';
+  });
+  document.getElementById('game-wrap').style.display = 'flex';
 }
 
-function createTechPillar(offsetX) {
-    const group = new THREE.Group();
-    
-    // Bottom Base
-    const baseGeo = new THREE.BoxGeometry(0.8, 0.1, 0.8);
-    const baseMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
-    const base = new THREE.Mesh(baseGeo, baseMat);
-    group.add(base);
+// ── START GAME ─────────────────────────────────────────
+function startGame() {
+  lives = 3;
+  score = 0;
+  streak = 0;
+  maxStreak = 0;
+  correctCount = 0;
+  hintUsed = false;
+  currentQ = 0;
+  roundResults = [];
+  bonusRound = false;
 
-    // Inner Glowing Core
-    const coreGeo = new THREE.CylinderGeometry(0.2, 0.2, 1.2, 16);
-    const coreMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.2 });
-    const core = new THREE.Mesh(coreGeo, coreMat);
-    core.position.y = 0.6;
-    group.add(core);
+  // Shuffle and pick queue
+  const shuffled = [...miners].sort(()=>Math.random()-0.5);
+  queue = shuffled.slice(0, TOTAL_ROUNDS);
 
-    // Floating Ring
-    const ringGeo = new THREE.TorusGeometry(0.4, 0.02, 8, 32);
-    const ringMat = new THREE.MeshBasicMaterial({ color: 0xfbbf24 });
-    const ring = new THREE.Mesh(ringGeo, ringMat);
-    ring.rotation.x = Math.PI/2;
-    ring.position.y = 1.2;
-    ring.name = "Ring";
-    group.add(ring);
+  updateHUD();
+  updateHearts();
+  buildProgressDots();
+  document.getElementById('hint-btn').disabled = false;
+  document.getElementById('bonus-banner').classList.remove('show');
 
-    group.position.set(offsetX * 2.5, 0, 3);
-    group.userData = { id: offsetX + 1 };
-    
-    return group;
+  showGame();
+  loadQuestion();
 }
 
-async function loadGameData() {
-    try {
-        updateStatus("Fetching Asset Registry...", 30);
-        const data = await fetchWithBackoff(`${API_BASE}/contracts`);
-        allMiners = data.contracts.filter(c => c.category === 'miner_nft' && c.imageUrl);
-        
-        if (allMiners.length < 3) throw new Error("Registry Insufficient");
-        
-        updateStatus("Synchronizing Data...", 90);
-        document.getElementById('load-bar').style.width = '100%';
-        
-        setTimeout(() => {
-            document.getElementById('loading-screen').style.opacity = '0';
-            setTimeout(() => document.getElementById('loading-screen').remove(), 800);
-            nextRound();
-        }, 500);
-    } catch (err) {
-        document.getElementById('load-status').innerHTML = `<span class="text-red-500">CRITICAL ERROR: ${err.message}</span>`;
-    }
+// ── BUILD PROGRESS DOTS ────────────────────────────────
+function buildProgressDots() {
+  const wrap = document.getElementById('progress-dots');
+  wrap.innerHTML = '';
+  for (let i = 0; i < TOTAL_ROUNDS; i++) {
+    const d = document.createElement('div');
+    d.className = 'pdot' + (i===0?' current':'');
+    d.id = `pdot-${i}`;
+    wrap.appendChild(d);
+  }
 }
 
-function updateStatus(txt, pct) {
-    document.getElementById('load-status').innerText = txt;
-    document.getElementById('load-bar').style.width = pct + '%';
+function updateProgressDot(idx, result) {
+  const d = document.getElementById(`pdot-${idx}`);
+  if (!d) return;
+  d.classList.remove('current');
+  d.classList.add(`done-${result}`);
+  const next = document.getElementById(`pdot-${idx+1}`);
+  if (next) next.classList.add('current');
 }
 
-function nextRound() {
-    isBusy = false;
-    const shuffled = [...allMiners].sort(() => 0.5 - Math.random());
-    const options = shuffled.slice(0, 3);
-    targetMiner = options[Math.floor(Math.random() * 3)];
-
-    updateScreen(targetMiner.imageUrl);
-
-    options.forEach((opt, i) => {
-        pillars[i].userData.isCorrect = (opt.id === targetMiner.id);
-        const oldLabel = pillars[i].getObjectByName("Label");
-        if (oldLabel) pillars[i].remove(oldLabel);
-
-        const label = createTextLabel(opt.name);
-        label.name = "Label";
-        label.position.set(0, 1.8, 0);
-        pillars[i].add(label);
-    });
-}
-
-function updateScreen(url) {
-    const loader = new THREE.TextureLoader();
-    loader.setCrossOrigin('anonymous');
-    
-    // Wrap original URL in proxy to bypass CORS
-    // wsrv.nl automatically adds Access-Control-Allow-Origin: *
-    const proxiedUrl = url.startsWith('http') ? `${PROXY_URL}${encodeURIComponent(url)}` : url;
-    
-    const screen = scene.getObjectByName("ScreenMesh");
-    
-    // Loading visual
-    screen.material.emissive = new THREE.Color(0x222200);
-    
-    loader.load(proxiedUrl, 
-        (tex) => {
-            screen.material.map = tex;
-            screen.material.emissive = new THREE.Color(0x000000);
-            screen.material.needsUpdate = true;
-        },
-        undefined,
-        (err) => {
-            console.warn("Asset Load Failed, applying diagnostic fallback.");
-            // Fallback: Generate "Asset Restricted" procedural canvas
-            const canvas = document.createElement('canvas');
-            canvas.width = 512; canvas.height = 512;
-            const ctx = canvas.getContext('2d');
-            
-            // Background
-            ctx.fillStyle = '#0a0a0a'; ctx.fillRect(0,0,512,512);
-            
-            // Grid Background
-            ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 1;
-            for(let i=0; i<512; i+=40) {
-                ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,512); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(512,i); ctx.stroke();
-            }
-
-            // Warning Box
-            ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 4;
-            ctx.strokeRect(40,40,432,432);
-            
-            // Text
-            ctx.fillStyle = '#ef4444'; ctx.font = 'bold 36px "JetBrains Mono"';
-            ctx.textAlign = 'center';
-            ctx.fillText("NETWORK ERROR", 256, 180);
-            
-            ctx.fillStyle = '#ffffff'; ctx.font = '16px "JetBrains Mono"';
-            ctx.fillText("CORS / 404 DETECTED", 256, 230);
-            ctx.fillText("RESOURCE: " + url.split('/').pop(), 256, 260);
-            
-            ctx.fillStyle = '#fbbf24'; ctx.font = 'bold 14px "Orbitron"';
-            ctx.fillText("CORE SECURITY OVERRIDE ACTIVE", 256, 380);
-            
-            const tex = new THREE.CanvasTexture(canvas);
-            screen.material.map = tex;
-            screen.material.emissive = new THREE.Color(0x000000);
-            screen.material.needsUpdate = true;
-        }
-    );
-}
-
-function createTextLabel(text) {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    canvas.width = 512;
-    canvas.height = 128;
-    
-    ctx.fillStyle = 'rgba(0,0,0,0.6)';
-    ctx.roundRect(50, 20, 412, 88, 20);
-    ctx.fill();
-    
-    ctx.strokeStyle = '#00ffff';
-    ctx.lineWidth = 4;
-    ctx.stroke();
-
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 32px "JetBrains Mono"';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(text.toUpperCase(), 256, 64);
-    
-    const tex = new THREE.CanvasTexture(canvas);
-    const spriteMat = new THREE.SpriteMaterial({ map: tex, transparent: true });
-    const sprite = new THREE.Sprite(spriteMat);
-    sprite.scale.set(2.5, 0.6, 1);
-    return sprite;
-}
-
-function onPointerEvent(event) {
-    if (isBusy) return;
-
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-    raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects(scene.children, true);
-    
-    for (let intersect of intersects) {
-        let obj = intersect.object;
-        while (obj.parent && !pillars.includes(obj)) obj = obj.parent;
-
-        if (pillars.includes(obj)) {
-            checkAnswer(obj);
-            break;
-        }
-    }
-}
-
-function checkAnswer(pillar) {
-    isBusy = true;
-    const correct = pillar.userData.isCorrect;
-    const feedbackEl = document.getElementById('feedback');
-    const feedbackText = document.getElementById('feedback-text');
-
-    if (correct) {
-        score += 100;
-        feedbackText.innerText = "AUTHENTICATED";
-        feedbackText.style.color = "#4ade80";
-        document.getElementById('score-val').innerText = score;
-        pillar.getObjectByName("Ring").material.color.set(0x4ade80);
+// ── TIMER ──────────────────────────────────────────────
+function startTimer(seconds) {
+  clearInterval(timerInterval);
+  timeLeft = seconds;
+  updateTimerUI();
+  timerInterval = setInterval(() => {
+    timeLeft -= 0.1;
+    if (timeLeft <= 0) {
+      timeLeft = 0;
+      updateTimerUI();
+      clearInterval(timerInterval);
+      onTimeout();
     } else {
-        feedbackText.innerText = "ACCESS DENIED";
-        feedbackText.style.color = "#ef4444";
-        pillar.getObjectByName("Ring").material.color.set(0xef4444);
+      updateTimerUI();
     }
-
-    feedbackEl.style.opacity = '1';
-    feedbackEl.style.transform = 'translate(-50%, -50%) scale(1.1)';
-
-    setTimeout(() => {
-        feedbackEl.style.opacity = '0';
-        pillars.forEach(p => p.getObjectByName("Ring").material.color.set(0xfbbf24));
-        nextRound();
-    }, 1200);
+  }, 100);
 }
 
-function onWindowResize() {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+function updateTimerUI() {
+  const pct = Math.max(0, timeLeft / maxTime) * 100;
+  const fill = document.getElementById('timer-fill');
+  fill.style.width = pct + '%';
+  // Color shift
+  if (pct > 50) fill.style.background = 'linear-gradient(to right, var(--gold), var(--fire), var(--ember))';
+  else if (pct > 25) fill.style.background = 'linear-gradient(to right, var(--fire), var(--ember))';
+  else fill.style.background = 'linear-gradient(to right, #cc0000, var(--wrong-red))';
+  document.getElementById('timer-text').textContent = Math.ceil(timeLeft) + 's';
 }
 
-function animate() {
-    requestAnimationFrame(animate);
-    const time = clock.getElapsedTime();
+function onTimeout() {
+  if (questionLocked) return;
+  questionLocked = true;
 
-    pillars.forEach((p, i) => {
-        const ring = p.getObjectByName("Ring");
-        ring.rotation.z += 0.02;
-        ring.position.y = 1.2 + Math.sin(time * 2 + i) * 0.1;
-        
-        const label = p.getObjectByName("Label");
-        if (label) {
-            label.position.y = 1.9 + Math.sin(time * 1.5 + i) * 0.05;
-        }
-    });
+  // Show timeout message
+  const msg = document.getElementById('timeout-msg');
+  msg.classList.add('show');
+  setTimeout(()=>msg.classList.remove('show'), 1200);
 
-    const screen = scene.getObjectByName("ScreenMesh");
-    if (screen) {
-        screen.parent.position.y = 5 + Math.sin(time * 0.5) * 0.1;
+  loseLife();
+  streak = 0;
+  updateHUD();
+  roundResults.push('timeout');
+  updateProgressDot(currentQ, 'timeout');
+
+  setTimeout(() => {
+    currentQ++;
+    loadQuestion();
+  }, 1600);
+}
+
+// ── ANSWER ─────────────────────────────────────────────
+function answer(chosen, correct, options, diff) {
+  if (questionLocked) return;
+  questionLocked = true;
+  clearInterval(timerInterval);
+
+  const isCorrect = chosen === correct;
+  const pillarCorrect = document.getElementById(`pillar-${correct}`);
+  const pillarChosen = document.getElementById(`pillar-${chosen}`);
+
+  // Disable all pillars
+  [0,1,2].forEach(i => document.getElementById(`pillar-${i}`).classList.add('disabled'));
+
+  if (isCorrect) {
+    pillarCorrect.classList.add('correct');
+    flashFeedback('correct');
+    correctCount++;
+    streak++;
+    if (streak > maxStreak) maxStreak = streak;
+
+    // Score calc
+    const timeBonus = Math.floor((timeLeft / maxTime) * TIME_BONUS_MAX);
+    const streakMult = Math.min(streak, 5);
+    const diffMult = diff.scoreMult * (bonusRound ? 2 : 1);
+    const pts = Math.floor((BASE_SCORE + timeBonus) * streakMult * diffMult);
+    score += pts;
+
+    showAnswerReveal('correct', `+${pts}`, streakMult > 1 ? `×${streakMult} STREAK BONUS` : `TIME BONUS +${timeBonus}`);
+    showStreakPopup(streak);
+    roundResults.push('correct');
+    updateProgressDot(currentQ, 'correct');
+  } else {
+    pillarChosen.classList.add('wrong');
+    pillarCorrect.classList.add('correct');
+    flashFeedback('wrong');
+    streak = 0;
+    loseLife();
+    showAnswerReveal('wrong', 'WRONG', `IT WAS: ${options[correct].name}`);
+    roundResults.push('wrong');
+    updateProgressDot(currentQ, 'wrong');
+  }
+
+  updateHUD();
+
+  // Check death
+  if (lives <= 0) {
+    setTimeout(() => endGame(false), 2200);
+    return;
+  }
+
+  setTimeout(() => {
+    hideAnswerReveal();
+    currentQ++;
+    loadQuestion();
+  }, 2000);
+}
+
+// ── HINT ───────────────────────────────────────────────
+document.getElementById('hint-btn').addEventListener('click', useHint);
+function useHint() {
+  if (questionLocked || hintUsed) return;
+  hintUsed = true;
+  document.getElementById('hint-btn').disabled = true;
+
+  // Find a wrong pillar and hide it
+  const pillars = [0,1,2].map(i=>({i,el:document.getElementById(`pillar-${i}`)}));
+  // Find wrong ones (not correct)
+  // We need to know which is correct — store it
+  // Actually we stored correctIdx in closure — let's use a global
+  const wrongPillars = pillars.filter(p => p.el.classList.contains('disabled') === false && p.i !== window._correctIdx);
+  if (wrongPillars.length === 0) return;
+  const toHide = wrongPillars[Math.floor(Math.random()*wrongPillars.length)];
+  toHide.el.style.opacity = '0.2';
+  toHide.el.style.pointerEvents = 'none';
+  toHide.el.classList.add('disabled');
+
+  // Small score penalty
+  score = Math.max(0, score - 30);
+  updateHUD();
+}
+
+// ── HEARTS ─────────────────────────────────────────────
+function loseLife() {
+  lives--;
+  updateHearts();
+}
+
+function updateHearts() {
+  for (let i = 0; i < 3; i++) {
+    const h = document.querySelector(`.heart[data-h="${i}"]`);
+    if (i >= lives) {
+      if (!h.classList.contains('lost')) {
+        h.classList.add('lost','shake');
+        setTimeout(()=>h.classList.remove('shake'), 500);
+      }
+    } else {
+      h.classList.remove('lost');
     }
-
-    renderer.render(scene, camera);
+  }
 }
 
-window.onload = () => {
-    init3D();
-    loadGameData();
-};
+// ── HUD ────────────────────────────────────────────────
+function updateHUD() {
+  document.getElementById('score-val').textContent = score.toLocaleString();
+  document.getElementById('streak-val').textContent = `×${Math.min(streak,5)||1}`;
+  if (streak >= 5) document.getElementById('streak-val').style.color = 'var(--gold)';
+  else if (streak >= 3) document.getElementById('streak-val').style.color = 'var(--fire)';
+  else document.getElementById('streak-val').style.color = 'var(--fire)';
+}
+
+// ── FEEDBACK ───────────────────────────────────────────
+function flashFeedback(type) {
+  const f = document.getElementById('feedback-flash');
+  f.className = type+'-flash';
+  setTimeout(()=>f.className='',500);
+}
+
+function showAnswerReveal(type, main, sub) {
+  const el = document.getElementById('answer-reveal');
+  const txt = document.getElementById('answer-reveal-text');
+  const sub2 = document.getElementById('answer-reveal-sub');
+  txt.textContent = main;
+  txt.className = (type === 'correct') ? 'correct-txt' : 'wrong-txt';
+  sub2.textContent = sub;
+  el.classList.add('show');
+}
+function hideAnswerReveal() {
+  document.getElementById('answer-reveal').classList.remove('show');
+}
+
+function showStreakPopup(n) {
+  if (n < 2) return;
+  const p = document.getElementById('streak-popup');
+  const msgs = {2:'DOUBLE STRIKE!',3:'TRIPLE FLAME!',4:'QUAD INFERNO!',5:'UNSTOPPABLE!'};
+  p.textContent = msgs[Math.min(n,5)] || `${n}× RAMPAGE!`;
+  p.classList.add('show');
+  setTimeout(()=>p.classList.remove('show'), 1200);
+}
+
+// ── END GAME ───────────────────────────────────────────
+function endGame(won) {
+  clearInterval(timerInterval);
+
+  const best = getBest();
+  const isNew = score > best;
+  if (isNew) setBest(score);
+
+  addHS({ score, correct:correctCount, streak:maxStreak, date:new Date().toLocaleDateString() });
+
+  const statsText = `CORRECT: ${correctCount}/${TOTAL_ROUNDS}   MAX STREAK: ×${maxStreak}   ACCURACY: ${Math.round(correctCount/TOTAL_ROUNDS*100)}%`;
+  const noteText = isNew ? '🏆 NEW BEST SCORE!' : `BEST: ${Math.max(best,score).toLocaleString()}`;
+
+  if (won) {
+    showScreen('win-screen');
+    document.getElementById('final-score-win').textContent = score.toLocaleString();
+    document.getElementById('final-stats-win').innerHTML = statsText;
+    document.getElementById('highscore-note-win').textContent = noteText;
+    spawnWinParticles();
+  } else {
+    showScreen('gameover-screen');
+    document.getElementById('final-score').textContent = score.toLocaleString();
+    document.getElementById('final-stats').innerHTML = statsText;
+    document.getElementById('highscore-note').textContent = noteText;
+  }
+}
+
+// ── WIN PARTICLES ─────────────────────────────────────
+function spawnWinParticles() {
+  const container = document.getElementById('win-particles');
+  container.innerHTML = '';
+  const colors = ['#ffd700','#ff8800','#ff4400','#ffcc00','#ff6600','#fff700'];
+  for (let i = 0; i < 60; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = Math.random()*100+'%';
+    p.style.background = colors[Math.floor(Math.random()*colors.length)];
+    p.style.animationDuration = (3+Math.random()*4)+'s';
+    p.style.animationDelay = (Math.random()*3)+'s';
+    p.style.width = (4+Math.random()*8)+'px';
+    p.style.height = (4+Math.random()*8)+'px';
+    container.appendChild(p);
+  }
+}
+
+// ── KEYBOARD CONTROLS ──────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === '1') document.getElementById('pillar-0')?.click();
+  if (e.key === '2') document.getElementById('pillar-1')?.click();
+  if (e.key === '3') document.getElementById('pillar-2')?.click();
+  if (e.key === 'h' || e.key === 'H') useHint();
+  if (e.key === 'Enter' && document.getElementById('intro-screen').style.display !== 'none') startGame();
+});
+
+// ── BUTTON WIRING ──────────────────────────────────────
+document.getElementById('start-btn').addEventListener('click', startGame);
+document.getElementById('retry-btn').addEventListener('click', startGame);
+document.getElementById('retry-intro-btn').addEventListener('click', ()=>showScreen('intro-screen'));
+document.getElementById('win-retry-btn').addEventListener('click', startGame);
+
+function loadQuestion() {
+  if (currentQ >= TOTAL_ROUNDS) { endGame(true); return; }
+
+  questionLocked = false;
+  hintUsed = false;
+  document.getElementById('hint-btn').disabled = false;
+
+  const diff = getDiff();
+  const correct = queue[currentQ];
+
+  const wrongPool = miners.filter(m => m.id !== correct.id);
+  const shuffledWrong = wrongPool.sort(()=>Math.random()-0.5);
+  const wrongs = shuffledWrong.slice(0, diff.options - 1);
+  const options = [correct, ...wrongs].sort(()=>Math.random()-0.5);
+  const correctIdx = options.findIndex(o => o.id === correct.id);
+  window._correctIdx = correctIdx;
+
+  bonusRound = (currentQ > 0 && currentQ % 5 === 0);
+  if (bonusRound) {
+    document.getElementById('bonus-banner').classList.add('show');
+    setTimeout(()=>document.getElementById('bonus-banner').classList.remove('show'), 3000);
+  } else {
+    document.getElementById('bonus-banner').classList.remove('show');
+  }
+
+  const badge = document.getElementById('diff-badge');
+  badge.textContent = diff.name;
+  badge.className = diff.name.toLowerCase();
+  badge.id = 'diff-badge';
+
+  document.getElementById('round-type').textContent =
+    bonusRound ? '⚡ SPEED BONUS ROUND' : 'IDENTIFICATION TRIAL';
+  document.getElementById('question-num').textContent = `ROUND ${currentQ+1} / ${TOTAL_ROUNDS}`;
+  updateHUD();
+
+  // Reset pillar opacity for hint
+  [0,1,2].forEach(i => {
+    const p = document.getElementById(`pillar-${i}`);
+    p.style.opacity = '';
+    p.style.pointerEvents = '';
+  });
+
+  const img = document.getElementById('miner-img');
+  img.classList.remove('reveal');
+  void img.offsetWidth;
+  img.src = correct.imageUrl + '?t=' + Date.now();
+  img.onload = () => img.classList.add('reveal');
+  img.onerror = () => {
+    img.src = 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect fill="#251c15" width="200" height="200"/><text x="100" y="120" text-anchor="middle" fill="#ff6a00" font-size="60">⛏</text></svg>`);
+    img.classList.add('reveal');
+  };
+
+  const stats = correct.minerStats;
+  const showStats = diff.name !== 'EXTREME';
+  document.getElementById('stat-hashrate').textContent = (showStats && stats) ? stats.hashrateFormatted : '???';
+  document.getElementById('stat-power').textContent = (showStats && stats) ? stats.powerFormatted : '???';
+  document.getElementById('stat-type').textContent = showStats ? correct.category.replace('_nft','').replace('_',' ').toUpperCase() : '???';
+
+  options.forEach((opt, i) => {
+    document.getElementById(`opt-${i}`).textContent = opt.name;
+    const pillar = document.getElementById(`pillar-${i}`);
+    pillar.className = 'pillar-wrap';
+    pillar.onclick = () => answer(i, correctIdx, options, diff);
+  });
+
+  maxTime = diff.time;
+  if (bonusRound) maxTime = Math.floor(maxTime * 0.7);
+  startTimer(maxTime);
+}
+
+// Start
+init();
 </script>
 </body>
 </html>
