@@ -1046,7 +1046,7 @@ function renderPillars(){
       <div class="pillar-card">
         <div class="pillar-letter">${letters[i]}</div>
         <div class="miner-img-wrap">
-          <img src="${imgSrc}" alt="${miner.name}" onerror="this.src='${getPlaceholderSVG(miner.type,i)}'">
+          <img src="${imgSrc}" alt="${miner.name}" onerror="this.onerror=null;this.src='${getPlaceholderSVG(miner.type,i)}'">
         </div>
         <div class="miner-info">
           <div class="miner-name">${miner.name}</div>
@@ -1087,7 +1087,7 @@ function getPlaceholderSVG(type, idx){
     <rect width="200" height="200" fill="url(#g${idx})"/>
     <text x="100" y="120" text-anchor="middle" font-size="80">${icon}</text>
   </svg>`;
-  return 'data:image/svg+xml;base64,'+btoa(svg);
+  return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
 }
 
 // ═══════════════════════════════════════
