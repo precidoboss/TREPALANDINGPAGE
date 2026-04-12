@@ -3,1534 +3,1180 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>THE GROTTO — HashCash Miner Quiz</title>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<title>HASHLIP — The Grotto</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --fire: #ff6a00;
-    --ember: #ff3d00;
-    --gold: #ffd700;
-    --dim-gold: #a88a00;
-    --lava: #ff4500;
-    --stone: #1a1410;
-    --deep: #0a0806;
-    --mid-stone: #2a201a;
-    --light-stone: #3d2f25;
-    --crack-glow: rgba(255,100,0,0.4);
-    --health-red: #cc0000;
-    --correct-green: #00ff88;
-    --wrong-red: #ff1744;
-    --pillar-base: #251c15;
-    --pillar-face: #2f2318;
-    --pillar-highlight: #4a3628;
-  }
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --amber:#e8922a;
+  --gold:#f5c842;
+  --ember:#ff4400;
+  --stone:#2a1f14;
+  --cave:#0d0905;
+  --moss:#1a3320;
+  --water:#0a2a3a;
+  --health-full:#4ade80;
+  --health-warn:#f59e0b;
+  --health-crit:#ef4444;
+}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;cursor:crosshair;font-family:'Share Tech Mono',monospace}
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+/* ─── CANVAS ─── */
+#c{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0}
 
-  body {
-    background: var(--deep);
-    color: #e8d5b0;
-    font-family: 'Cinzel', serif;
-    overflow: hidden;
-    height: 100vh;
-    width: 100vw;
-    cursor: crosshair;
-  }
+/* ─── LOADING ─── */
+#loading{
+  position:fixed;inset:0;background:#000;z-index:200;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  transition:opacity 1s;
+}
+#loading h1{font-family:'Cinzel Decorative',serif;font-size:clamp(2rem,6vw,4.5rem);color:var(--gold);text-shadow:0 0 40px var(--amber),0 0 80px #ff440055;letter-spacing:0.1em;margin-bottom:0.3em}
+#loading .sub{color:#6b5a3a;font-size:0.75rem;letter-spacing:0.4em;text-transform:uppercase;margin-bottom:2rem}
+#load-bar-wrap{width:300px;height:3px;background:#1a1208;border:1px solid #3a2a10}
+#load-bar{height:100%;background:linear-gradient(90deg,var(--ember),var(--gold));width:0;transition:width 0.4s}
+#load-msg{margin-top:1rem;color:#6b5a3a;font-size:0.7rem;letter-spacing:0.3em}
 
-  /* ── GROTTO BACKGROUND ─────────────────────────────── */
-  #grotto-bg {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    background:
-      radial-gradient(ellipse 80% 60% at 50% 100%, rgba(255,80,0,0.18) 0%, transparent 70%),
-      radial-gradient(ellipse 40% 30% at 20% 80%, rgba(255,60,0,0.12) 0%, transparent 60%),
-      radial-gradient(ellipse 40% 30% at 80% 80%, rgba(255,60,0,0.12) 0%, transparent 60%),
-      radial-gradient(ellipse 100% 100% at 50% 50%, #0e0a06 0%, #050302 100%);
-  }
+/* ─── UI LAYER ─── */
+#ui{position:fixed;inset:0;z-index:10;pointer-events:none}
+.p-on{pointer-events:auto}
 
-  /* Stalactites */
-  .stalactite {
-    position: absolute;
-    top: 0;
-    background: linear-gradient(to bottom, #1a1208, #0d0a05);
-    clip-path: polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%);
-    opacity: 0.9;
-  }
+/* ─── TOP BAR ─── */
+#topbar{
+  position:absolute;top:0;left:0;right:0;
+  display:flex;justify-content:space-between;align-items:flex-start;
+  padding:1.2rem 1.5rem;gap:1rem;
+}
+.hud-box{
+  background:linear-gradient(135deg,rgba(13,9,5,0.92),rgba(20,14,8,0.92));
+  border:1px solid #3a2a10;box-shadow:inset 0 0 20px rgba(232,146,42,0.05),0 4px 20px rgba(0,0,0,0.6);
+  padding:0.7rem 1.2rem;border-radius:2px;
+}
+.hud-label{color:#6b5a3a;font-size:0.6rem;letter-spacing:0.4em;text-transform:uppercase;margin-bottom:0.2rem}
+.hud-val{color:var(--gold);font-size:1.4rem;font-family:'Cinzel Decorative',serif}
 
-  /* Lava cracks on floor */
-  #floor-cracks {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 120px;
-    z-index: 1;
-    background: linear-gradient(to top, rgba(255,69,0,0.15), transparent);
-  }
+/* ─── SCORE ─── */
+#score-box .hud-val{text-shadow:0 0 15px var(--amber)}
 
-  /* Torch flames */
-  .torch {
-    position: fixed;
-    z-index: 2;
-    width: 40px;
-  }
-  .torch-left { left: 40px; top: 30%; }
-  .torch-right { right: 40px; top: 30%; }
+/* ─── TIMER ─── */
+#timer-wrap{display:flex;flex-direction:column;align-items:center}
+#timer-ring{width:80px;height:80px;position:relative}
+#timer-ring svg{position:absolute;top:0;left:0;transform:rotate(-90deg)}
+#timer-ring circle{transition:stroke-dashoffset 0.1s linear;stroke-linecap:round}
+#timer-num{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-family:'Cinzel Decorative',serif;font-size:1.5rem;color:var(--gold);
+}
 
-  .torch-body {
-    width: 14px;
-    height: 40px;
-    background: linear-gradient(to bottom, #5a3a1a, #3a2010);
-    margin: 0 auto;
-    border-radius: 2px;
-  }
+/* ─── HEALTH / LIVES ─── */
+#health-wrap{display:flex;align-items:center;gap:0.5rem}
+.heart{font-size:1.4rem;transition:all 0.3s;filter:drop-shadow(0 0 6px #ef444488)}
+.heart.dead{opacity:0.15;filter:none}
 
-  .torch-flame {
-    width: 28px;
-    height: 50px;
-    margin: 0 auto -5px;
-    position: relative;
-    animation: flicker 0.15s infinite alternate;
-    transform-origin: bottom center;
-  }
-  .torch-flame::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(ellipse at 50% 100%, #fff700 0%, #ff8c00 40%, #ff3300 70%, transparent 100%);
-    border-radius: 50% 50% 40% 40%;
-    animation: flicker2 0.2s infinite alternate;
-  }
-  .torch-flame::after {
-    content: '';
-    position: absolute;
-    left: 5px; right: 5px; top: 10px; bottom: 0;
-    background: radial-gradient(ellipse at 50% 100%, rgba(255,255,100,0.8) 0%, transparent 70%);
-    border-radius: 50%;
-  }
-  .torch-glow {
-    position: absolute;
-    top: -30px; left: 50%;
-    transform: translateX(-50%);
-    width: 120px;
-    height: 120px;
-    background: radial-gradient(ellipse, rgba(255,140,0,0.3) 0%, transparent 70%);
-    animation: glow-pulse 0.3s infinite alternate;
-    pointer-events: none;
-  }
+/* ─── STREAK ─── */
+#streak-box{text-align:right}
+#streak-fire{font-size:1.6rem;line-height:1}
 
-  @keyframes flicker { 0%{transform:skewX(-3deg) scaleY(0.95)} 100%{transform:skewX(3deg) scaleY(1.05)} }
-  @keyframes flicker2 { 0%{opacity:0.9;transform:scaleX(0.9)} 100%{opacity:1;transform:scaleX(1.1)} }
-  @keyframes glow-pulse { 0%{opacity:0.6;transform:translateX(-50%) scale(0.9)} 100%{opacity:1;transform:translateX(-50%) scale(1.1)} }
+/* ─── CENTER QUESTION ─── */
+#question-area{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:min(600px,90vw);text-align:center;pointer-events:none;
+}
+#q-label{
+  font-family:'Cinzel Decorative',serif;font-size:clamp(0.55rem,1.5vw,0.75rem);
+  color:#9a7a4a;letter-spacing:0.5em;text-transform:uppercase;margin-bottom:0.5rem;
+}
+#q-title{
+  font-family:'Cinzel Decorative',serif;font-size:clamp(1rem,3vw,1.8rem);
+  color:#f0d080;text-shadow:0 0 30px var(--amber),0 0 60px #ff440033;
+  line-height:1.2;opacity:0;transition:opacity 0.5s,transform 0.5s;
+  transform:translateY(10px);
+}
+#q-title.show{opacity:1;transform:translateY(0)}
+#q-hint{
+  margin-top:0.5rem;color:#6b5a3a;font-size:0.65rem;letter-spacing:0.3em;
+  opacity:0;transition:opacity 0.5s 0.2s;
+}
+#q-hint.show{opacity:1}
 
-  /* ── MAIN GAME CONTAINER ───────────────────────────── */
-  #game-wrap {
-    position: relative;
-    z-index: 10;
-    width: 100vw;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    perspective: 1200px;
-  }
+/* ─── FEEDBACK ─── */
+#feedback{
+  position:absolute;top:40%;left:50%;transform:translate(-50%,-50%) scale(0.8);
+  font-family:'Cinzel Decorative',serif;font-size:clamp(2rem,7vw,5rem);
+  font-weight:900;text-align:center;pointer-events:none;
+  opacity:0;transition:opacity 0.2s,transform 0.2s;letter-spacing:0.05em;
+}
+#feedback.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+#feedback.correct{color:#4ade80;text-shadow:0 0 40px #4ade8099,0 0 80px #4ade8044}
+#feedback.wrong{color:#ef4444;text-shadow:0 0 40px #ef444499,0 0 80px #ef444444}
 
-  /* ── TOP HUD ───────────────────────────────────────── */
-  #hud {
-    width: 100%;
-    max-width: 900px;
-    padding: 14px 30px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: relative;
-    z-index: 20;
-  }
+/* ─── COMBO POPUP ─── */
+#combo-pop{
+  position:absolute;top:30%;left:50%;transform:translate(-50%,-50%);
+  font-family:'Cinzel Decorative',serif;font-size:1.2rem;color:var(--gold);
+  opacity:0;transition:opacity 0.2s,transform 0.3s;pointer-events:none;
+  text-shadow:0 0 20px var(--amber);
+}
+#combo-pop.show{opacity:1;transform:translate(-50%,-70%)}
 
-  #hearts-wrap {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-  }
+/* ─── BOTTOM CHOICES ─── */
+#choices{
+  position:absolute;bottom:0;left:0;right:0;
+  display:flex;justify-content:center;gap:clamp(0.5rem,2vw,1.5rem);
+  padding:1.5rem;pointer-events:none;
+}
+.choice-btn{
+  pointer-events:auto;cursor:pointer;
+  background:linear-gradient(180deg,rgba(30,20,10,0.95),rgba(15,10,5,0.98));
+  border:1px solid #3a2a10;
+  box-shadow:0 -2px 20px rgba(232,146,42,0.1),inset 0 1px 0 rgba(255,200,100,0.08);
+  padding:0.8rem 1rem;border-radius:2px;
+  min-width:clamp(80px,25vw,200px);max-width:220px;
+  transition:all 0.15s;position:relative;overflow:hidden;
+  opacity:0;transform:translateY(20px);
+}
+.choice-btn.visible{opacity:1;transform:translateY(0);transition:opacity 0.4s var(--delay),transform 0.4s var(--delay)}
+.choice-btn::before{
+  content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(232,146,42,0.08),transparent);
+  transition:left 0.4s;
+}
+.choice-btn:hover::before{left:100%}
+.choice-btn:hover{border-color:#8a5a20;box-shadow:0 -2px 30px rgba(232,146,42,0.2),inset 0 0 20px rgba(232,146,42,0.05);transform:translateY(-3px)}
+.choice-btn .choice-num{color:#4a3a20;font-size:0.6rem;letter-spacing:0.3em;margin-bottom:0.3rem}
+.choice-btn .choice-name{color:#d4a855;font-size:clamp(0.55rem,1.5vw,0.75rem);letter-spacing:0.1em;line-height:1.3;word-break:break-word}
+.choice-btn .choice-stat{color:#6b5a3a;font-size:0.6rem;margin-top:0.3rem}
+.choice-btn.correct-anim{border-color:#4ade80!important;box-shadow:0 0 30px #4ade8066!important;background:rgba(20,50,20,0.95)!important}
+.choice-btn.wrong-anim{border-color:#ef4444!important;box-shadow:0 0 30px #ef444466!important;background:rgba(50,10,10,0.95)!important;animation:shake 0.4s}
+@keyframes shake{0%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}100%{transform:translateX(0)}}
 
-  .heart {
-    font-size: 26px;
-    filter: drop-shadow(0 0 8px #ff1744);
-    transition: all 0.3s;
-    transform-origin: center;
-  }
-  .heart.lost {
-    filter: grayscale(1) brightness(0.3);
-    transform: scale(0.85);
-  }
-  .heart.shake {
-    animation: heart-shake 0.4s ease;
-  }
-  @keyframes heart-shake {
-    0%{transform:scale(1)} 25%{transform:scale(1.4) rotate(-10deg)} 50%{transform:scale(0.7) rotate(5deg)} 75%{transform:scale(1.1)} 100%{transform:scale(0.85)}
-  }
+/* ─── WATER LEVEL OVERLAY ─── */
+#water-overlay{
+  position:fixed;bottom:0;left:0;right:0;height:0;
+  background:linear-gradient(180deg,transparent 0%,rgba(10,42,58,0.4) 40%,rgba(5,20,35,0.8) 100%);
+  transition:height 1.5s cubic-bezier(0.25,1,0.5,1);pointer-events:none;z-index:5;
+}
+#water-surface{
+  position:absolute;top:0;left:0;right:0;height:4px;
+  background:linear-gradient(90deg,transparent,rgba(0,150,200,0.3),rgba(0,200,255,0.15),transparent);
+  animation:waterShimmer 3s infinite;
+  box-shadow:0 0 20px rgba(0,150,255,0.2);
+}
+@keyframes waterShimmer{0%,100%{opacity:0.4;transform:scaleX(1)}50%{opacity:0.7;transform:scaleX(1.02)}}
 
-  #score-wrap {
-    text-align: center;
-  }
-  #score-label {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 3px;
-    color: var(--dim-gold);
-    text-transform: uppercase;
-  }
-  #score-val {
-    font-family: 'Cinzel Decorative', serif;
-    font-size: 28px;
-    color: var(--gold);
-    text-shadow: 0 0 20px rgba(255,215,0,0.7);
-    line-height: 1;
-  }
+/* ─── CRACK OVERLAY ─── */
+#crack-overlay{
+  position:fixed;inset:0;pointer-events:none;z-index:6;opacity:0;transition:opacity 0.3s;
+}
+#crack-overlay.show{opacity:1}
+#crack-overlay svg{width:100%;height:100%}
 
-  #streak-wrap {
-    text-align: right;
-  }
-  #streak-label {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 3px;
-    color: var(--dim-gold);
-  }
-  #streak-val {
-    font-family: 'Cinzel Decorative', serif;
-    font-size: 22px;
-    color: var(--fire);
-    text-shadow: 0 0 15px rgba(255,106,0,0.8);
-    line-height: 1;
-  }
+/* ─── GAME OVER ─── */
+#game-over{
+  position:fixed;inset:0;z-index:100;background:rgba(0,0,0,0);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  pointer-events:none;transition:background 1s;
+}
+#game-over.show{background:rgba(0,0,0,0.92);pointer-events:auto}
+#game-over .go-title{
+  font-family:'Cinzel Decorative',serif;font-size:clamp(2rem,8vw,5rem);
+  color:#ef4444;text-shadow:0 0 60px #ef444488;opacity:0;transform:scale(0.8);
+  transition:opacity 0.5s 0.3s,transform 0.5s 0.3s;letter-spacing:0.1em;
+}
+#game-over.show .go-title{opacity:1;transform:scale(1)}
+#game-over .go-score{
+  font-family:'Cinzel Decorative',serif;font-size:clamp(1rem,3vw,1.5rem);
+  color:var(--gold);margin:1rem 0;opacity:0;transition:opacity 0.5s 0.6s;
+}
+#game-over.show .go-score{opacity:1}
+#restart-btn{
+  margin-top:1.5rem;padding:0.9rem 3rem;
+  font-family:'Cinzel Decorative',serif;font-size:1rem;letter-spacing:0.2em;
+  background:linear-gradient(135deg,#3a2010,#1a1008);
+  border:1px solid var(--amber);color:var(--gold);cursor:pointer;
+  box-shadow:0 0 30px rgba(232,146,42,0.2);
+  opacity:0;transition:opacity 0.5s 0.9s,box-shadow 0.2s;
+}
+#game-over.show #restart-btn{opacity:1}
+#restart-btn:hover{box-shadow:0 0 50px rgba(232,146,42,0.4)}
 
-  /* ── TIMER BAR ─────────────────────────────────────── */
-  #timer-wrap {
-    width: 100%;
-    max-width: 900px;
-    padding: 0 30px;
-    position: relative;
-    z-index: 20;
-  }
-  #timer-track {
-    height: 8px;
-    background: rgba(255,255,255,0.08);
-    border-radius: 4px;
-    overflow: hidden;
-    border: 1px solid rgba(255,150,50,0.2);
-  }
-  #timer-fill {
-    height: 100%;
-    background: linear-gradient(to right, var(--gold), var(--fire), var(--ember));
-    border-radius: 4px;
-    transition: width 0.1s linear;
-    box-shadow: 0 0 12px rgba(255,100,0,0.6);
-  }
-  #timer-text {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 12px;
-    color: var(--fire);
-    text-align: right;
-    margin-top: 3px;
-    letter-spacing: 2px;
-  }
+/* ─── BONUS ROUND BANNER ─── */
+#bonus-banner{
+  position:fixed;inset:0;z-index:50;pointer-events:none;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;transition:opacity 0.3s;
+}
+#bonus-banner.show{opacity:1}
+#bonus-inner{
+  font-family:'Cinzel Decorative',serif;font-size:clamp(1.5rem,6vw,4rem);
+  color:var(--gold);text-shadow:0 0 60px var(--amber),0 0 120px #ff440055;
+  text-align:center;animation:bonusPulse 0.5s infinite alternate;
+}
+@keyframes bonusPulse{from{transform:scale(1)}to{transform:scale(1.05)}}
 
-  /* ── QUESTION NUMBER ──────────────────────────────── */
-  #question-num {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 13px;
-    letter-spacing: 4px;
-    color: rgba(255,200,100,0.5);
-    margin: 6px 0 0;
-  }
+/* ─── PARTICLE HUD ─── */
+#particle-canvas{position:fixed;inset:0;z-index:8;pointer-events:none}
 
-  /* ── MINER DISPLAY PEDESTAL ───────────────────────── */
-  #pedestal-area {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    width: 100%;
-    margin-top: -10px;
-  }
+/* ─── TORCH FLICKER ─── */
+@keyframes torchFlicker{
+  0%,100%{filter:brightness(1) contrast(1)}
+  10%{filter:brightness(0.95) contrast(1.02)}
+  30%{filter:brightness(1.05) contrast(0.98)}
+  50%{filter:brightness(0.93) contrast(1.03)}
+  70%{filter:brightness(1.02) contrast(1)}
+  90%{filter:brightness(0.97) contrast(1.01)}
+}
+body{animation:torchFlicker 4s infinite}
 
-  #miner-frame {
-    position: relative;
-    width: 280px;
-    height: 280px;
-    transform-style: preserve-3d;
-  }
+/* ─── DRIP PARTICLES ─── */
+.drip{
+  position:fixed;top:0;width:2px;border-radius:0 0 2px 2px;
+  background:linear-gradient(180deg,rgba(0,150,200,0),rgba(0,180,230,0.6));
+  animation:drip linear infinite;pointer-events:none;z-index:7;
+}
+@keyframes drip{from{top:-20px;opacity:0}10%{opacity:1}90%{opacity:0.6}to{top:100vh;opacity:0}}
 
-  /* Stone frame around miner */
-  #miner-frame::before {
-    content: '';
-    position: absolute;
-    inset: -16px;
-    background:
-      linear-gradient(135deg, #4a3020 0%, #2a1c10 50%, #3a2618 100%);
-    border-radius: 8px;
-    box-shadow:
-      0 0 0 3px #1a1008,
-      0 0 0 6px rgba(255,140,0,0.2),
-      0 0 40px rgba(255,100,0,0.3),
-      inset 0 0 20px rgba(0,0,0,0.8);
-  }
+/* ─── ROUND TYPE BADGE ─── */
+#round-badge{
+  position:absolute;top:1.5rem;left:50%;transform:translateX(-50%);
+  font-family:'Cinzel Decorative',serif;font-size:0.65rem;letter-spacing:0.4em;
+  color:#9a7a4a;text-transform:uppercase;padding:0.3rem 1rem;
+  border:1px solid #3a2a10;background:rgba(13,9,5,0.8);
+  opacity:0;transition:opacity 0.3s;
+}
+#round-badge.show{opacity:1}
 
-  /* Rune decorations on corners */
-  #miner-frame::after {
-    content: '✦ IDENTIFY THE MINER ✦';
-    position: absolute;
-    bottom: -46px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 4px;
-    color: var(--dim-gold);
-    white-space: nowrap;
-  }
-
-  #miner-img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    position: relative;
-    z-index: 2;
-    border-radius: 4px;
-    filter: drop-shadow(0 0 20px rgba(255,140,0,0.5));
-    transition: transform 0.6s ease;
-    image-rendering: pixelated;
-    background: radial-gradient(ellipse at center, rgba(255,100,0,0.05) 0%, transparent 80%);
-  }
-
-  #miner-img.reveal {
-    animation: miner-reveal 0.6s cubic-bezier(0.175,0.885,0.32,1.275);
-  }
-  @keyframes miner-reveal {
-    0%{transform:scale(0.5) rotateY(90deg);opacity:0}
-    100%{transform:scale(1) rotateY(0);opacity:1}
-  }
-
-  /* Stat tags */
-  #miner-stats-display {
-    display: flex;
-    gap: 12px;
-    margin-top: 54px;
-    justify-content: center;
-  }
-  .stat-chip {
-    background: rgba(255,100,0,0.12);
-    border: 1px solid rgba(255,100,0,0.25);
-    padding: 5px 14px;
-    border-radius: 20px;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 13px;
-    color: rgba(255,200,100,0.8);
-    letter-spacing: 1px;
-    backdrop-filter: blur(4px);
-  }
-
-  /* ── DIFFICULTY BADGE ─────────────────────────────── */
-  #diff-badge {
-    position: absolute;
-    top: 10px;
-    right: 30px;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 3px;
-    padding: 4px 12px;
-    border-radius: 3px;
-    border: 1px solid currentColor;
-    text-transform: uppercase;
-  }
-  #diff-badge.easy { color: var(--correct-green); border-color: rgba(0,255,136,0.4); }
-  #diff-badge.medium { color: var(--gold); border-color: rgba(255,215,0,0.4); }
-  #diff-badge.hard { color: var(--fire); border-color: rgba(255,106,0,0.4); }
-  #diff-badge.extreme { color: var(--wrong-red); border-color: rgba(255,23,68,0.4); animation: pulse-red 0.8s infinite alternate; }
-  @keyframes pulse-red { 0%{box-shadow:0 0 0 rgba(255,23,68,0)} 100%{box-shadow:0 0 12px rgba(255,23,68,0.5)} }
-
-  /* ── 3D PILLARS / ANSWER CHOICES ─────────────────── */
-  #pillars-section {
-    width: 100%;
-    max-width: 940px;
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    padding: 0 20px 20px;
-    position: relative;
-    z-index: 20;
-  }
-
-  .pillar-wrap {
-    flex: 1;
-    max-width: 280px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    cursor: pointer;
-    position: relative;
-    transform-style: preserve-3d;
-    transition: transform 0.15s ease;
-  }
-  .pillar-wrap:hover { transform: translateY(-6px); }
-  .pillar-wrap:active { transform: translateY(-2px); }
-
-  /* Pillar sides for 3D illusion */
-  .pillar-top {
-    width: 100%;
-    height: 16px;
-    background: linear-gradient(to bottom, #5a4030, #3a2820);
-    border-radius: 4px 4px 0 0;
-    box-shadow: 0 -4px 12px rgba(255,100,0,0.2);
-    position: relative;
-    border-top: 2px solid rgba(255,180,80,0.3);
-  }
-  .pillar-top::before {
-    content: '';
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
-    height: 3px;
-    background: rgba(0,0,0,0.4);
-  }
-
-  .pillar-body {
-    width: 100%;
-    padding: 16px 14px;
-    background:
-      linear-gradient(180deg, var(--pillar-face) 0%, var(--pillar-base) 100%);
-    border-left: 3px solid var(--pillar-highlight);
-    border-right: 3px solid rgba(0,0,0,0.5);
-    position: relative;
-    text-align: center;
-    min-height: 70px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  /* Rune lines on pillar */
-  .pillar-body::before {
-    content: '';
-    position: absolute;
-    left: 10px; top: 6px; bottom: 6px;
-    width: 1px;
-    background: linear-gradient(to bottom, transparent, rgba(255,180,80,0.15), transparent);
-  }
-  .pillar-body::after {
-    content: '';
-    position: absolute;
-    right: 10px; top: 6px; bottom: 6px;
-    width: 1px;
-    background: linear-gradient(to bottom, transparent, rgba(255,180,80,0.15), transparent);
-  }
-
-  .pillar-text {
-    font-family: 'Cinzel', serif;
-    font-size: 13.5px;
-    font-weight: 600;
-    color: #d4b87a;
-    line-height: 1.3;
-    position: relative;
-    z-index: 2;
-    letter-spacing: 0.5px;
-  }
-
-  .pillar-base-block {
-    width: 100%;
-    height: 12px;
-    background: linear-gradient(to bottom, #2a1c10, #1a1008);
-    border-radius: 0 0 3px 3px;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.6), 0 2px 0 rgba(255,140,0,0.1);
-  }
-
-  /* Pillar letter badge */
-  .pillar-letter {
-    position: absolute;
-    top: -22px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-family: 'Cinzel Decorative', serif;
-    font-size: 14px;
-    color: var(--dim-gold);
-    background: var(--pillar-base);
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid rgba(255,180,80,0.3);
-    z-index: 5;
-  }
-
-  /* Pillar states */
-  .pillar-wrap.correct .pillar-body {
-    background: linear-gradient(180deg, rgba(0,100,50,0.4) 0%, rgba(0,60,30,0.4) 100%);
-    border-left-color: var(--correct-green);
-    box-shadow: 0 0 30px rgba(0,255,136,0.4);
-  }
-  .pillar-wrap.correct .pillar-text { color: var(--correct-green); text-shadow: 0 0 15px rgba(0,255,136,0.8); }
-
-  .pillar-wrap.wrong .pillar-body {
-    background: linear-gradient(180deg, rgba(120,0,0,0.5) 0%, rgba(80,0,0,0.5) 100%);
-    border-left-color: var(--wrong-red);
-    box-shadow: 0 0 30px rgba(255,23,68,0.4);
-    animation: wrong-shake 0.4s ease;
-  }
-  .pillar-wrap.wrong .pillar-text { color: var(--wrong-red); }
-
-  @keyframes wrong-shake {
-    0%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} 100%{transform:translateX(0)}
-  }
-
-  .pillar-wrap.disabled { pointer-events: none; }
-
-  /* Glow on hover */
-  .pillar-wrap:not(.correct):not(.wrong):not(.disabled):hover .pillar-body {
-    background: linear-gradient(180deg, #3d2d1f 0%, #2a1e14 100%);
-    border-left-color: rgba(255,180,80,0.6);
-    box-shadow: 0 0 20px rgba(255,140,0,0.25);
-  }
-  .pillar-wrap:not(.correct):not(.wrong):not(.disabled):hover .pillar-text { color: #ffcc66; }
-
-  /* ── FEEDBACK FLASH ───────────────────────────────── */
-  #feedback-flash {
-    position: fixed;
-    inset: 0;
-    z-index: 100;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.1s;
-  }
-  #feedback-flash.correct-flash {
-    background: rgba(0,255,136,0.1);
-    opacity: 1;
-  }
-  #feedback-flash.wrong-flash {
-    background: rgba(255,23,68,0.15);
-    opacity: 1;
-  }
-
-  /* ── CORRECT LABEL POPUP ──────────────────────────── */
-  #answer-reveal {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%,-50%) scale(0);
-    z-index: 200;
-    text-align: center;
-    pointer-events: none;
-    transition: transform 0.3s cubic-bezier(0.175,0.885,0.32,1.275);
-  }
-  #answer-reveal.show { transform: translate(-50%,-50%) scale(1); }
-  #answer-reveal-text {
-    font-family: 'Cinzel Decorative', serif;
-    font-size: 36px;
-    text-shadow: 0 0 40px currentColor;
-    padding: 12px 32px;
-    border-radius: 6px;
-    backdrop-filter: blur(4px);
-  }
-  #answer-reveal-text.correct-txt {
-    color: var(--correct-green);
-    background: rgba(0,80,40,0.7);
-    border: 2px solid var(--correct-green);
-  }
-  #answer-reveal-text.wrong-txt {
-    color: var(--wrong-red);
-    background: rgba(80,0,0,0.7);
-    border: 2px solid var(--wrong-red);
-  }
-  #answer-reveal-sub {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 13px;
-    margin-top: 6px;
-    color: rgba(255,220,100,0.8);
-    letter-spacing: 2px;
-  }
-
-  /* ── TIMEOUT OVERLAY ──────────────────────────────── */
-  #timeout-msg {
-    position: fixed;
-    top: 45%;
-    left: 50%;
-    transform: translate(-50%,-50%) scale(0);
-    z-index: 200;
-    font-family: 'Cinzel Decorative', serif;
-    font-size: 30px;
-    color: #ff8800;
-    text-shadow: 0 0 30px #ff4400;
-    background: rgba(30,10,0,0.85);
-    border: 2px solid #ff4400;
-    padding: 12px 30px;
-    border-radius: 6px;
-    pointer-events: none;
-    transition: transform 0.3s ease;
-  }
-  #timeout-msg.show { transform: translate(-50%,-50%) scale(1); }
-
-  /* ── SCREENS ──────────────────────────────────────── */
-  .screen {
-    position: fixed;
-    inset: 0;
-    z-index: 300;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: rgba(5,3,2,0.97);
-    text-align: center;
-    padding: 30px;
-  }
-
-  /* INTRO */
-  #intro-screen {
-    background:
-      radial-gradient(ellipse 60% 40% at 50% 100%, rgba(255,80,0,0.2) 0%, transparent 70%),
-      rgba(5,3,2,0.98);
-  }
-
-  .screen-title {
-    font-family: 'Cinzel Decorative', serif;
-    font-size: clamp(28px, 6vw, 60px);
-    color: var(--gold);
-    text-shadow: 0 0 40px rgba(255,215,0,0.6), 0 0 80px rgba(255,100,0,0.3);
-    line-height: 1.1;
-    margin-bottom: 8px;
-  }
-  .screen-sub {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 13px;
-    letter-spacing: 4px;
-    color: rgba(255,150,50,0.7);
-    margin-bottom: 30px;
-    text-transform: uppercase;
-  }
-
-  .stone-divider {
-    width: 200px;
-    height: 2px;
-    background: linear-gradient(to right, transparent, var(--dim-gold), transparent);
-    margin: 16px auto;
-    opacity: 0.6;
-  }
-
-  .rules-box {
-    max-width: 500px;
-    background: rgba(255,100,0,0.05);
-    border: 1px solid rgba(255,150,50,0.2);
-    border-radius: 6px;
-    padding: 20px 30px;
-    margin: 16px 0 28px;
-    text-align: left;
-  }
-  .rules-box li {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 13px;
-    color: rgba(220,180,100,0.8);
-    margin-bottom: 8px;
-    list-style: none;
-    padding-left: 16px;
-    position: relative;
-    line-height: 1.5;
-  }
-  .rules-box li::before {
-    content: '⛏';
-    position: absolute;
-    left: -4px;
-    font-size: 11px;
-  }
-
-  .btn-primary {
-    font-family: 'Cinzel Decorative', serif;
-    font-size: 18px;
-    color: var(--deep);
-    background: linear-gradient(135deg, #ffcc00, #ff8800);
-    border: none;
-    padding: 16px 48px;
-    border-radius: 4px;
-    cursor: pointer;
-    letter-spacing: 2px;
-    box-shadow: 0 0 30px rgba(255,150,0,0.5), inset 0 1px 0 rgba(255,255,200,0.3);
-    transition: all 0.2s;
-    text-shadow: 0 1px 0 rgba(0,0,0,0.3);
-  }
-  .btn-primary:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 0 50px rgba(255,150,0,0.7), inset 0 1px 0 rgba(255,255,200,0.3);
-    background: linear-gradient(135deg, #ffe040, #ffaa00);
-  }
-  .btn-primary:active { transform: translateY(0); }
-
-  .btn-secondary {
-    font-family: 'Cinzel', serif;
-    font-size: 14px;
-    color: var(--dim-gold);
-    background: transparent;
-    border: 1px solid rgba(255,180,80,0.3);
-    padding: 10px 28px;
-    border-radius: 4px;
-    cursor: pointer;
-    letter-spacing: 2px;
-    margin-top: 14px;
-    transition: all 0.2s;
-  }
-  .btn-secondary:hover { border-color: var(--dim-gold); color: var(--gold); background: rgba(255,180,0,0.06); }
-
-  /* GAME OVER */
-  #gameover-screen .screen-title { color: var(--wrong-red); text-shadow: 0 0 40px rgba(255,23,68,0.6); }
-
-  #final-score {
-    font-family: 'Cinzel Decorative', serif;
-    font-size: 64px;
-    color: var(--gold);
-    text-shadow: 0 0 30px rgba(255,215,0,0.7);
-    line-height: 1;
-    margin: 10px 0;
-  }
-  #final-stats {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 13px;
-    color: rgba(220,180,100,0.7);
-    letter-spacing: 2px;
-    margin-bottom: 6px;
-    line-height: 2;
-  }
-  #highscore-note {
-    font-family: 'Cinzel Decorative', serif;
-    font-size: 16px;
-    color: var(--fire);
-    text-shadow: 0 0 20px rgba(255,106,0,0.8);
-    margin-bottom: 24px;
-    min-height: 24px;
-  }
-
-  /* WIN */
-  #win-screen {
-    background:
-      radial-gradient(ellipse 60% 40% at 50% 50%, rgba(255,215,0,0.12) 0%, transparent 70%),
-      rgba(5,3,2,0.97);
-  }
-  #win-screen .screen-title { color: var(--gold); animation: golden-pulse 1.5s infinite alternate; }
-  @keyframes golden-pulse {
-    0%{text-shadow:0 0 30px rgba(255,215,0,0.5)} 100%{text-shadow:0 0 80px rgba(255,215,0,0.9),0 0 120px rgba(255,100,0,0.5)}
-  }
-
-  #win-particles {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    overflow: hidden;
-  }
-  .particle {
-    position: absolute;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    animation: particle-rise linear infinite;
-  }
-  @keyframes particle-rise {
-    0%{transform:translateY(100vh) rotate(0);opacity:1}
-    100%{transform:translateY(-10vh) rotate(720deg);opacity:0}
-  }
-
-  /* ── LOADING ─────────────────────────────────────── */
-  #loading-screen {
-    background: rgba(5,3,2,0.99);
-  }
-  #loading-text {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 14px;
-    letter-spacing: 4px;
-    color: rgba(255,150,50,0.7);
-    margin-top: 16px;
-    animation: loading-dots 1.2s infinite;
-  }
-  @keyframes loading-dots {
-    0%{opacity:0.3} 50%{opacity:1} 100%{opacity:0.3}
-  }
-  .pick-icon {
-    font-size: 48px;
-    animation: spin-pick 2s linear infinite;
-    display: inline-block;
-  }
-  @keyframes spin-pick { 0%{transform:rotate(-15deg)} 50%{transform:rotate(15deg)} 100%{transform:rotate(-15deg)} }
-
-  /* ── STREAK POPUP ─────────────────────────────────── */
-  #streak-popup {
-    position: fixed;
-    top: 30%;
-    left: 50%;
-    transform: translate(-50%,-50%) scale(0);
-    z-index: 250;
-    font-family: 'Cinzel Decorative', serif;
-    font-size: 22px;
-    color: var(--fire);
-    text-shadow: 0 0 20px rgba(255,100,0,0.9);
-    pointer-events: none;
-    transition: transform 0.25s cubic-bezier(0.175,0.885,0.32,1.275), opacity 0.25s;
-    opacity: 0;
-    white-space: nowrap;
-  }
-  #streak-popup.show { transform: translate(-50%,-50%) scale(1); opacity: 1; }
-
-  /* ── BONUS ROUND BANNER ───────────────────────────── */
-  #bonus-banner {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    z-index: 290;
-    background: linear-gradient(to right, transparent, rgba(255,215,0,0.15), transparent);
-    border-bottom: 1px solid rgba(255,215,0,0.3);
-    padding: 8px;
-    text-align: center;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 12px;
-    letter-spacing: 4px;
-    color: var(--gold);
-    transform: translateY(-100%);
-    transition: transform 0.3s ease;
-  }
-  #bonus-banner.show { transform: translateY(0); }
-
-  /* ── HINT SYSTEM ──────────────────────────────────── */
-  #hint-btn {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 3px;
-    color: rgba(200,150,50,0.5);
-    background: rgba(255,100,0,0.06);
-    border: 1px solid rgba(255,100,0,0.2);
-    padding: 6px 18px;
-    border-radius: 20px;
-    cursor: pointer;
-    transition: all 0.2s;
-    z-index: 30;
-  }
-  #hint-btn:hover:not(:disabled) { color: var(--fire); border-color: var(--fire); background: rgba(255,100,0,0.1); }
-  #hint-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-
-  /* Progress bar between questions */
-  #progress-dots {
-    display: flex;
-    gap: 6px;
-    margin: 4px 0 8px;
-  }
-  .pdot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: rgba(255,150,50,0.2);
-    border: 1px solid rgba(255,150,50,0.3);
-    transition: all 0.3s;
-  }
-  .pdot.done-correct { background: var(--correct-green); border-color: var(--correct-green); box-shadow: 0 0 6px rgba(0,255,136,0.6); }
-  .pdot.done-wrong { background: var(--wrong-red); border-color: var(--wrong-red); }
-  .pdot.done-timeout { background: #ff8800; border-color: #ff8800; }
-  .pdot.current { background: var(--gold); border-color: var(--gold); box-shadow: 0 0 8px rgba(255,215,0,0.6); animation: dot-pulse 0.6s infinite alternate; }
-  @keyframes dot-pulse { 0%{transform:scale(1)} 100%{transform:scale(1.3)} }
-
-  /* Cave ambient particles */
-  #cave-dust { position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden; }
-  .dust { position:absolute;width:2px;height:2px;background:rgba(255,180,80,0.3);border-radius:50%;animation:dust-fall linear infinite; }
-  @keyframes dust-fall { 0%{transform:translateY(-10px) translateX(0);opacity:0} 20%{opacity:0.5} 80%{opacity:0.3} 100%{transform:translateY(100vh) translateX(20px);opacity:0} }
-
-  /* Keyboard shortcut hints */
-  .key-hint {
-    display: inline-block;
-    background: rgba(255,100,0,0.1);
-    border: 1px solid rgba(255,100,0,0.3);
-    border-radius: 3px;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 10px;
-    padding: 1px 5px;
-    color: rgba(255,150,50,0.6);
-    margin-left: 4px;
-    vertical-align: middle;
-  }
-
-  /* Highscore table */
-  #hs-table {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 12px;
-    color: rgba(200,160,80,0.7);
-    letter-spacing: 2px;
-    margin: 10px 0 20px;
-    width: 100%;
-    max-width: 380px;
-  }
-  #hs-table tr:first-child { color: var(--gold); }
-  #hs-table td { padding: 4px 12px; }
-  #hs-table td:last-child { text-align: right; }
-
-  /* Category round display */
-  #round-type {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 3px;
-    color: rgba(255,150,50,0.5);
-    margin-bottom: 4px;
-  }
+/* ─── SCROLLING ORE TICKER ─── */
+#ore-ticker{
+  position:absolute;bottom:0;left:0;right:0;height:24px;
+  background:rgba(10,8,5,0.9);border-top:1px solid #2a1a08;
+  overflow:hidden;display:flex;align-items:center;
+}
+#ore-ticker-inner{
+  white-space:nowrap;color:#4a3a20;font-size:0.6rem;letter-spacing:0.2em;
+  animation:tickerScroll 30s linear infinite;
+}
+@keyframes tickerScroll{from{transform:translateX(100vw)}to{transform:translateX(-100%)}}
 </style>
 </head>
 <body>
 
-<!-- CAVE ATMOSPHERE -->
-<div id="grotto-bg"></div>
-<div id="cave-dust"></div>
-<div id="floor-cracks"></div>
+<!-- CANVAS -->
+<canvas id="c"></canvas>
 
-<!-- Stalactites -->
-<div style="position:fixed;top:0;left:0;right:0;height:120px;z-index:1;display:flex;justify-content:space-between;pointer-events:none;">
-  <div class="stalactite" style="width:80px;height:100px;left:5%;"></div>
-  <div class="stalactite" style="width:55px;height:70px;left:18%;"></div>
-  <div class="stalactite" style="width:100px;height:120px;left:32%;"></div>
-  <div class="stalactite" style="width:65px;height:85px;left:48%;"></div>
-  <div class="stalactite" style="width:90px;height:110px;left:62%;"></div>
-  <div class="stalactite" style="width:50px;height:65px;left:78%;"></div>
-  <div class="stalactite" style="width:75px;height:95px;left:90%;"></div>
+<!-- WATER FLOOD OVERLAY -->
+<div id="water-overlay"><div id="water-surface"></div></div>
+
+<!-- CRACK OVERLAY -->
+<div id="crack-overlay">
+  <svg id="crack-svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" fill="none"></svg>
 </div>
 
-<!-- TORCHES -->
-<div class="torch torch-left">
-  <div class="torch-glow"></div>
-  <div class="torch-flame"></div>
-  <div class="torch-body"></div>
-</div>
-<div class="torch torch-right">
-  <div class="torch-glow"></div>
-  <div class="torch-flame"></div>
-  <div class="torch-body"></div>
-</div>
+<!-- PARTICLE CANVAS -->
+<canvas id="particle-canvas"></canvas>
 
-<!-- FEEDBACK FLASH -->
-<div id="feedback-flash"></div>
-
-<!-- STREAK POPUP -->
-<div id="streak-popup"></div>
-
-<!-- ANSWER REVEAL -->
-<div id="answer-reveal">
-  <div id="answer-reveal-text"></div>
-  <div id="answer-reveal-sub"></div>
+<!-- LOADING -->
+<div id="loading">
+  <h1>HASHLIP</h1>
+  <div class="sub">The Grotto</div>
+  <div id="load-bar-wrap"><div id="load-bar"></div></div>
+  <div id="load-msg">Lighting the torches...</div>
 </div>
 
-<!-- TIMEOUT MSG -->
-<div id="timeout-msg">⏳ TIME'S UP!</div>
+<!-- GAME OVER -->
+<div id="game-over">
+  <div class="go-title">THE GROTTO CLAIMS YOU</div>
+  <div class="go-score" id="go-score-text"></div>
+  <button id="restart-btn" class="p-on">DESCEND AGAIN</button>
+</div>
 
 <!-- BONUS BANNER -->
-<div id="bonus-banner">⚡ SPEED BONUS ROUND — DOUBLE POINTS ⚡</div>
+<div id="bonus-banner"><div id="bonus-inner"></div></div>
 
-<!-- HINT BUTTON -->
-<button id="hint-btn" disabled>⛏ USE HINT <span class="key-hint">H</span></button>
+<!-- UI LAYER -->
+<div id="ui">
+  <div id="round-badge">⚔ ROUND <span id="round-num">1</span></div>
 
-<!-- ══════════════════════════════════════════════ -->
-<!-- LOADING SCREEN -->
-<div class="screen" id="loading-screen">
-  <div class="pick-icon">⛏</div>
-  <div class="screen-title" style="font-size:32px;margin-top:16px;">DELVING DEEP...</div>
-  <div id="loading-text">FETCHING MINERS FROM THE CHAIN</div>
-</div>
-
-<!-- INTRO SCREEN -->
-<div class="screen" id="intro-screen" style="display:none;">
-  <div class="screen-title">THE GROTTO</div>
-  <div class="screen-sub">⛏ HashCash Miner Trials ⛏</div>
-  <div class="stone-divider"></div>
-  <ul class="rules-box">
-    <li>Identify each miner NFT from its image — 10 rounds per run</li>
-    <li>You have 3 lives — a wrong answer costs you one</li>
-    <li>Timer shortens as you go deeper — speed earns bonus points</li>
-    <li>Build streaks for massive score multipliers</li>
-    <li>Use your one hint wisely — it removes a wrong option</li>
-    <li>Lose all lives and the grotto claims you</li>
-  </ul>
-  <button class="btn-primary" id="start-btn">ENTER THE GROTTO</button>
-  <div id="best-score-intro" style="margin-top:16px;font-family:'Share Tech Mono',monospace;font-size:12px;color:rgba(255,180,50,0.5);letter-spacing:3px;"></div>
-</div>
-
-<!-- GAME OVER SCREEN -->
-<div class="screen" id="gameover-screen" style="display:none;">
-  <div class="screen-title">CONSUMED BY DARKNESS</div>
-  <div class="screen-sub">You fell in the grotto</div>
-  <div class="stone-divider"></div>
-  <div id="final-score">0</div>
-  <div id="final-stats"></div>
-  <div id="highscore-note"></div>
-  <button class="btn-primary" id="retry-btn">DESCEND AGAIN</button>
-  <button class="btn-secondary" id="retry-intro-btn">VIEW RULES</button>
-</div>
-
-<!-- WIN SCREEN -->
-<div class="screen" id="win-screen" style="display:none;">
-  <div id="win-particles"></div>
-  <div class="screen-title">MASTERY ACHIEVED</div>
-  <div class="screen-sub">The grotto bows before you</div>
-  <div class="stone-divider"></div>
-  <div id="final-score-win" style="font-family:'Cinzel Decorative',serif;font-size:64px;color:var(--gold);text-shadow:0 0 30px rgba(255,215,0,0.7);line-height:1;margin:10px 0;"></div>
-  <div id="final-stats-win" style="font-family:'Share Tech Mono',monospace;font-size:13px;color:rgba(220,180,100,0.7);letter-spacing:2px;margin-bottom:6px;line-height:2;"></div>
-  <div id="highscore-note-win" style="font-family:'Cinzel Decorative',serif;font-size:16px;color:var(--gold);text-shadow:0 0 20px rgba(255,215,0,0.8);margin-bottom:24px;min-height:24px;"></div>
-  <button class="btn-primary" id="win-retry-btn">CHALLENGE AGAIN</button>
-</div>
-
-<!-- ══════════════════════════════════════════════ -->
-<!-- MAIN GAME UI -->
-<div id="game-wrap">
-
-  <!-- HUD -->
-  <div id="hud">
-    <div id="hearts-wrap">
-      <span class="heart" data-h="0">❤️</span>
-      <span class="heart" data-h="1">❤️</span>
-      <span class="heart" data-h="2">❤️</span>
+  <!-- TOP BAR -->
+  <div id="topbar">
+    <!-- Score -->
+    <div class="hud-box" id="score-box">
+      <div class="hud-label">hCASH Mined</div>
+      <div class="hud-val" id="score-val">0</div>
     </div>
-    <div>
-      <div id="round-type">IDENTIFICATION TRIAL</div>
-      <div id="question-num">ROUND 1 / 10</div>
-      <div id="progress-dots"></div>
-    </div>
-    <div id="score-wrap">
-      <div id="score-label">SCORE</div>
-      <div id="score-val">0</div>
-    </div>
-    <div id="streak-wrap">
-      <div id="streak-label">STREAK</div>
-      <div id="streak-val">×1</div>
-    </div>
-  </div>
-  <div id="diff-badge" class="easy">EASY</div>
 
-  <!-- TIMER -->
-  <div id="timer-wrap">
-    <div id="timer-track"><div id="timer-fill"></div></div>
-    <div id="timer-text">20s</div>
-  </div>
-
-  <!-- MINER IMAGE -->
-  <div id="pedestal-area">
-    <div id="miner-frame">
-      <img id="miner-img" src="" alt="miner" />
+    <!-- Timer Ring -->
+    <div id="timer-wrap">
+      <div id="timer-ring">
+        <svg width="80" height="80" viewBox="0 0 80 80">
+          <circle cx="40" cy="40" r="34" stroke="#1a1208" stroke-width="6" fill="none"/>
+          <circle id="timer-arc" cx="40" cy="40" r="34" stroke="var(--amber)" stroke-width="6" fill="none"
+            stroke-dasharray="213.6" stroke-dashoffset="0"/>
+        </svg>
+        <div id="timer-num">15</div>
+      </div>
+      <div class="hud-label" style="text-align:center;margin-top:0.3rem">TIME</div>
     </div>
-    <div id="miner-stats-display">
-      <div class="stat-chip" id="stat-hashrate">— MH/s</div>
-      <div class="stat-chip" id="stat-power">— W</div>
-      <div class="stat-chip" id="stat-type">—</div>
+
+    <!-- Health + Streak -->
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.5rem">
+      <div class="hud-box">
+        <div class="hud-label">Integrity</div>
+        <div id="health-wrap">
+          <span class="heart" id="h1">🔥</span>
+          <span class="heart" id="h2">🔥</span>
+          <span class="heart" id="h3">🔥</span>
+        </div>
+      </div>
+      <div class="hud-box" id="streak-box">
+        <div class="hud-label">Streak</div>
+        <div style="display:flex;align-items:center;gap:0.4rem">
+          <span id="streak-fire">⚡</span>
+          <span class="hud-val" id="streak-val" style="font-size:1rem">x0</span>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- PILLARS -->
-  <div id="pillars-section">
-    <div class="pillar-wrap" id="pillar-0">
-      <div class="pillar-letter">A</div>
-      <div class="pillar-top"></div>
-      <div class="pillar-body"><div class="pillar-text" id="opt-0">—</div></div>
-      <div class="pillar-base-block"></div>
-      <div style="position:absolute;bottom:-18px;font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(200,150,50,0.3);letter-spacing:2px;" class="key-hint">1</div>
-    </div>
-    <div class="pillar-wrap" id="pillar-1">
-      <div class="pillar-letter">B</div>
-      <div class="pillar-top"></div>
-      <div class="pillar-body"><div class="pillar-text" id="opt-1">—</div></div>
-      <div class="pillar-base-block"></div>
-      <div style="position:absolute;bottom:-18px;font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(200,150,50,0.3);letter-spacing:2px;" class="key-hint">2</div>
-    </div>
-    <div class="pillar-wrap" id="pillar-2">
-      <div class="pillar-letter">C</div>
-      <div class="pillar-top"></div>
-      <div class="pillar-body"><div class="pillar-text" id="opt-2">—</div></div>
-      <div class="pillar-base-block"></div>
-      <div style="position:absolute;bottom:-18px;font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(200,150,50,0.3);letter-spacing:2px;" class="key-hint">3</div>
-    </div>
+  <!-- Question -->
+  <div id="question-area">
+    <div id="q-label">Identify the Miner</div>
+    <div id="q-title"></div>
+    <div id="q-hint"></div>
   </div>
 
+  <!-- Feedback -->
+  <div id="feedback"></div>
+  <div id="combo-pop"></div>
+
+  <!-- Choices -->
+  <div id="choices"></div>
+
+  <!-- Ore Ticker -->
+  <div id="ore-ticker">
+    <div id="ore-ticker-inner">⛏ HASHRATE NETWORK ACTIVE &nbsp;&nbsp;•&nbsp;&nbsp; hCASH MINING IN PROGRESS &nbsp;&nbsp;•&nbsp;&nbsp; AVALANCHE CHAIN CONFIRMED &nbsp;&nbsp;•&nbsp;&nbsp; FACILITY ONLINE &nbsp;&nbsp;•&nbsp;&nbsp; MINER NFT REGISTRY SYNCED &nbsp;&nbsp;•&nbsp;&nbsp; GROTTO DEPTH: LEVEL 1 &nbsp;&nbsp;•&nbsp;&nbsp; WARNING: CAVE INTEGRITY COMPROMISED &nbsp;&nbsp;•&nbsp;&nbsp;</div>
+  </div>
 </div>
 
 <script>
-const API_KEY = 'hc_live_C9jUxh9Knr3Qn-ZEo4SSO-ga0SLjFFjX';
-const API_BASE = 'https://api.hashcash.club/api/v1/public';
-
-// ── GAME STATE ─────────────────────────────────────────
-let miners = [];
-let queue = [];
-let currentQ = 0;
-let lives = 3;
-let score = 0;
-let streak = 0;
-let maxStreak = 0;
-let correctCount = 0;
-let hintUsed = false;
-let timerInterval = null;
-let timeLeft = 20;
-let maxTime = 20;
-let questionLocked = false;
-let roundResults = []; // 'correct','wrong','timeout'
-let bonusRound = false;
-
-const TOTAL_ROUNDS = 10;
-const BASE_SCORE = 100;
-const TIME_BONUS_MAX = 50;
-
-// Difficulty tiers
-const DIFF = [
-  { name:'EASY',    time:25, options:3, scoreMult:1.0,  minRound:0  },
-  { name:'MEDIUM',  time:20, options:3, scoreMult:1.3,  minRound:3  },
-  { name:'HARD',    time:15, options:3, scoreMult:1.7,  minRound:6  },
-  { name:'EXTREME', time:10, options:3, scoreMult:2.5,  minRound:8  },
+// ═══════════════════════════════════════════════════════
+// CONSTANTS & STATE
+// ═══════════════════════════════════════════════════════
+const API_KEY = "hc_live_C9jUxh9Knr3Qn-ZEo4SSO-ga0SLjFFjX";
+const API_BASE = "https://api.hashcash.club/api/v1/public";
+const PROXY = "https://wsrv.nl/?url=";
+const ROUND_TIME = 15;
+const MAX_LIVES = 3;
+const CRACK_PATHS = [
+  "M960 540 L800 200 L750 180 M800 200 L820 350 L780 400 M820 350 L900 500",
+  "M100 200 L300 600 L280 650 M300 600 L350 580 L400 700",
+  "M1800 300 L1600 700 L1580 720 M1600 700 L1650 690 L1700 800",
+  "M400 100 L500 400 L480 420 M500 400 L520 420 L490 600",
+  "M1500 900 L1400 500 L1410 480 M1400 500 L1380 510 L1350 400",
 ];
 
-function getDiff() {
-  for (let i = DIFF.length-1; i >= 0; i--) {
-    if (currentQ >= DIFF[i].minRound) return DIFF[i];
-  }
-  return DIFF[0];
+let allMiners = [], score = 0, lives = MAX_LIVES, streak = 0, round = 0;
+let isBusy = false, timerVal = ROUND_TIME, timerInterval = null;
+let crackCount = 0, waterLevel = 0;
+let bestScore = parseInt(localStorage.getItem('hashlip_best') || '0');
+let bonusRound = false;
+
+// ═══════════════════════════════════════════════════════
+// AUDIO ENGINE
+// ═══════════════════════════════════════════════════════
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let actx;
+function getCtx(){if(!actx) actx=new AudioCtx();return actx}
+
+function playTone(freq, type='sine', duration=0.15, vol=0.3, decay=0.1){
+  try{
+    const a=getCtx(), o=a.createOscillator(), g=a.createGain();
+    o.connect(g);g.connect(a.destination);
+    o.type=type;o.frequency.setValueAtTime(freq,a.currentTime);
+    g.gain.setValueAtTime(vol,a.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,a.currentTime+duration);
+    o.start();o.stop(a.currentTime+duration+decay);
+  }catch(e){}
 }
 
-// ── LOCAL STORAGE ──────────────────────────────────────
-function getBest() { return parseInt(localStorage.getItem('grotto_best')||'0'); }
-function setBest(s) { localStorage.setItem('grotto_best', s); }
-function getHS() { try { return JSON.parse(localStorage.getItem('grotto_hs')||'[]'); } catch{return[];} }
-function addHS(entry) {
-  let hs = getHS();
-  hs.push(entry);
-  hs.sort((a,b)=>b.score-a.score);
-  hs = hs.slice(0,5);
-  localStorage.setItem('grotto_hs', JSON.stringify(hs));
+function playChord(freqs,type='sine',duration=0.2,vol=0.2){
+  freqs.forEach((f,i)=>setTimeout(()=>playTone(f,type,duration,vol),i*30));
 }
 
-// ── FETCH MINERS ───────────────────────────────────────
-async function fetchMiners() {
-  const res = await fetch(`${API_BASE}/contracts`, {
-    headers: { 'x-api-key': API_KEY }
+function playCorrect(){
+  playChord([523,659,784],'sine',0.3,0.25);
+  setTimeout(()=>playTone(1047,'sine',0.4,0.15),150);
+}
+
+function playWrong(){
+  playChord([200,180,160],'sawtooth',0.4,0.2);
+  setTimeout(()=>playTone(100,'sawtooth',0.5,0.25),100);
+}
+
+function playDrip(){
+  try{
+    const a=getCtx(), o=a.createOscillator(), g=a.createGain();
+    o.connect(g);g.connect(a.destination);
+    o.type='sine';
+    o.frequency.setValueAtTime(800+Math.random()*400,a.currentTime);
+    o.frequency.exponentialRampToValueAtTime(200,a.currentTime+0.15);
+    g.gain.setValueAtTime(0.08,a.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,a.currentTime+0.2);
+    o.start();o.stop(a.currentTime+0.25);
+  }catch(e){}
+}
+
+function playCrack(){
+  try{
+    const a=getCtx();
+    const buf=a.createBuffer(1,a.sampleRate*0.5,a.sampleRate);
+    const data=buf.getChannelData(0);
+    for(let i=0;i<data.length;i++) data[i]=(Math.random()*2-1)*Math.exp(-i/3000);
+    const src=a.createBufferSource(), g=a.createGain();
+    src.buffer=buf;
+    const filt=a.createBiquadFilter();filt.type='bandpass';filt.frequency.value=400;
+    src.connect(filt);filt.connect(g);g.connect(a.destination);
+    g.gain.setValueAtTime(0.5,a.currentTime);
+    src.start();
+  }catch(e){}
+}
+
+function playGameOver(){
+  [200,190,180,160,140,100].forEach((f,i)=>setTimeout(()=>playTone(f,'sawtooth',0.6,0.3),i*120));
+}
+
+function playCountdownBeep(n){
+  const f = n<=3 ? 880 : 440;
+  playTone(f,'square',0.05,0.15);
+}
+
+function playBonus(){
+  [784,880,988,1047,1175,1319].forEach((f,i)=>setTimeout(()=>playTone(f,'square',0.15,0.2),i*80));
+}
+
+// ═══════════════════════════════════════════════════════
+// THREE.JS GROTTO SCENE
+// ═══════════════════════════════════════════════════════
+let scene, camera, renderer, clock;
+let torchLights=[], stalactites=[], ambientGroup;
+let caveWalls=[], stalagmites=[];
+
+function initThree(){
+  const canvas=document.getElementById('c');
+  renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.setSize(innerWidth,innerHeight);
+  renderer.shadowMap.enabled=true;
+  renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure=0.8;
+
+  scene=new THREE.Scene();
+  scene.background=new THREE.Color(0x030201);
+  scene.fog=new THREE.FogExp2(0x050302,0.07);
+
+  camera=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,0.1,100);
+  camera.position.set(0,3.5,9);
+  camera.lookAt(0,2.5,0);
+
+  clock=new THREE.Clock();
+
+  buildGrotte();
+  window.addEventListener('resize',()=>{
+    camera.aspect=innerWidth/innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth,innerHeight);
   });
-  if (!res.ok) throw new Error(`API ${res.status}`);
-  const data = await res.json();
-  return data.contracts.filter(c => c.category === 'miner_nft' && c.imageUrl);
+  animate3D();
 }
 
-// ── CAVE DUST PARTICLES ────────────────────────────────
-function spawnDust() {
-  const container = document.getElementById('cave-dust');
-  for (let i = 0; i < 25; i++) {
-    const d = document.createElement('div');
-    d.className = 'dust';
-    d.style.left = Math.random()*100+'%';
-    d.style.animationDuration = (6+Math.random()*10)+'s';
-    d.style.animationDelay = (Math.random()*10)+'s';
-    d.style.opacity = Math.random()*0.4;
-    container.appendChild(d);
+function buildGrotte(){
+  // ── AMBIENT ──
+  scene.add(new THREE.AmbientLight(0x100805,0.4));
+
+  // ── GROUND — rough stone ──
+  const floorGeo=new THREE.PlaneGeometry(30,30,20,20);
+  const floorPos=floorGeo.attributes.position;
+  for(let i=0;i<floorPos.count;i++){
+    floorPos.setZ(i,floorPos.getZ(i)+(Math.random()-0.5)*0.15);
   }
+  floorGeo.computeVertexNormals();
+  const floorMat=new THREE.MeshStandardMaterial({color:0x1a1208,roughness:1,metalness:0});
+  const floor=new THREE.Mesh(floorGeo,floorMat);
+  floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;
+  scene.add(floor);
+
+  // ── CAVE CEILING ──
+  const ceilGeo=new THREE.PlaneGeometry(30,20,15,10);
+  const ceilPos=ceilGeo.attributes.position;
+  for(let i=0;i<ceilPos.count;i++){
+    ceilPos.setZ(i,ceilPos.getZ(i)+(Math.random()-0.5)*0.4);
+  }
+  ceilGeo.computeVertexNormals();
+  const ceilMat=new THREE.MeshStandardMaterial({color:0x0d0905,roughness:1,metalness:0,side:THREE.DoubleSide});
+  const ceil=new THREE.Mesh(ceilGeo,ceilMat);
+  ceil.rotation.x=Math.PI/2;ceil.position.y=9;
+  scene.add(ceil);
+
+  // ── BACK CAVE WALL ──
+  const wallGeo=new THREE.PlaneGeometry(30,12,20,8);
+  const wallPos=wallGeo.attributes.position;
+  for(let i=0;i<wallPos.count;i++){
+    wallPos.setX(i,wallPos.getX(i)+(Math.random()-0.5)*0.2);
+    wallPos.setY(i,wallPos.getY(i)+(Math.random()-0.5)*0.15);
+  }
+  wallGeo.computeVertexNormals();
+  const wallMat=new THREE.MeshStandardMaterial({color:0x120e08,roughness:1,metalness:0});
+  const wall=new THREE.Mesh(wallGeo,wallMat);
+  wall.position.set(0,4,-5);wall.receiveShadow=true;
+  scene.add(wall);
+
+  // ── SIDE WALLS ──
+  [-7,7].forEach((x,i)=>{
+    const sg=new THREE.PlaneGeometry(14,12,10,8);
+    const sp=sg.attributes.position;
+    for(let j=0;j<sp.count;j++) sp.setX(j,sp.getX(j)+(Math.random()-0.5)*0.3);
+    sg.computeVertexNormals();
+    const sm=new THREE.MeshStandardMaterial({color:0x110d07,roughness:1,metalness:0});
+    const sw=new THREE.Mesh(sg,sm);
+    sw.rotation.y=(i===0?1:-1)*Math.PI/2;
+    sw.position.set(x,4,0);sw.receiveShadow=true;
+    scene.add(sw);
+    caveWalls.push(sw);
+  });
+
+  // ── STALACTITES ──
+  for(let i=0;i<18;i++){
+    const h=0.5+Math.random()*2;
+    const geo=new THREE.CylinderGeometry(0,0.08+Math.random()*0.12,h,6);
+    const mat=new THREE.MeshStandardMaterial({color:0x1a1408,roughness:0.9,metalness:0.1});
+    const m=new THREE.Mesh(geo,mat);
+    m.position.set((Math.random()-0.5)*12, 9-(Math.random()*0.5), (Math.random()-0.5)*8-1);
+    m.castShadow=true;
+    scene.add(m);
+    stalactites.push({mesh:m,baseY:m.position.y,speed:0.5+Math.random()*0.5});
+  }
+
+  // ── STALAGMITES ──
+  for(let i=0;i<10;i++){
+    const h=0.3+Math.random()*1;
+    const geo=new THREE.CylinderGeometry(0,0.06+Math.random()*0.1,h,6);
+    const mat=new THREE.MeshStandardMaterial({color:0x160f07,roughness:1});
+    const m=new THREE.Mesh(geo,mat);
+    m.position.set((Math.random()-0.5)*14, h/2, (Math.random()-0.5)*10-2);
+    // keep away from center
+    if(Math.abs(m.position.x)<3 && m.position.z>2) m.position.x+=5*(Math.random()>0.5?1:-1);
+    scene.add(m);
+    stalagmites.push(m);
+  }
+
+  // ── TORCH SCONCES — left & right ──
+  [-3.5, 3.5].forEach((x,i)=>{
+    const torchGroup=new THREE.Group();
+
+    // Wall mount
+    const mountGeo=new THREE.BoxGeometry(0.15,0.4,0.15);
+    const mountMat=new THREE.MeshStandardMaterial({color:0x2a1a08,roughness:0.8,metalness:0.6});
+    const mount=new THREE.Mesh(mountGeo,mountMat);
+    torchGroup.add(mount);
+
+    // Torch stick
+    const stickGeo=new THREE.CylinderGeometry(0.03,0.03,0.6,8);
+    const stickMat=new THREE.MeshStandardMaterial({color:0x3a2010,roughness:1});
+    const stick=new THREE.Mesh(stickGeo,stickMat);
+    stick.position.y=0.5;torchGroup.add(stick);
+
+    // Flame glow
+    const flameSphere=new THREE.Mesh(
+      new THREE.SphereGeometry(0.12,8,8),
+      new THREE.MeshBasicMaterial({color:0xff8800,transparent:true,opacity:0.8})
+    );
+    flameSphere.position.y=0.85;torchGroup.add(flameSphere);
+
+    torchGroup.position.set(x,3.5,-2);
+    scene.add(torchGroup);
+
+    // Point light for torch
+    const pl=new THREE.PointLight(0xff7722,2,8,2);
+    pl.position.set(x,3.7,-2);
+    scene.add(pl);
+    torchLights.push({light:pl, base:2, flameMesh:flameSphere});
+  });
+
+  // ── ALTAR / DISPLAY PEDESTAL ──
+  buildAltar();
 }
 
-// ── INIT GAME ──────────────────────────────────────────
-async function init() {
-  showScreen('loading-screen');
-  spawnDust();
-  try {
-    miners = await fetchMiners();
-    if (miners.length < 3) throw new Error('Not enough miners');
-    document.getElementById('loading-screen').style.display = 'none';
-    const best = getBest();
-    if (best > 0) {
-      document.getElementById('best-score-intro').textContent = `BEST: ${best.toLocaleString()}`;
+function buildAltar(){
+  // Base slab
+  const slabGeo=new THREE.BoxGeometry(5,0.3,2.5);
+  const slabMat=new THREE.MeshStandardMaterial({color:0x1a1208,roughness:0.9,metalness:0.1});
+  const slab=new THREE.Mesh(slabGeo,slabMat);
+  slab.position.set(0,0.15,-1);slab.receiveShadow=true;slab.castShadow=true;
+  scene.add(slab);
+
+  // Pillars
+  [-1.8,1.8].forEach(x=>{
+    const pGeo=new THREE.CylinderGeometry(0.18,0.22,4,8);
+    const pMat=new THREE.MeshStandardMaterial({color:0x16100a,roughness:1,metalness:0});
+    const p=new THREE.Mesh(pGeo,pMat);p.castShadow=true;
+    p.position.set(x,2,-2.5);scene.add(p);
+
+    // Cap
+    const cGeo=new THREE.CylinderGeometry(0.28,0.18,0.2,8);
+    const cap=new THREE.Mesh(cGeo,pMat);
+    cap.position.set(x,4.1,-2.5);scene.add(cap);
+  });
+
+  // Screen plane (for miner image)
+  const scrGeo=new THREE.PlaneGeometry(3.5,2.5);
+  const scrMat=new THREE.MeshStandardMaterial({
+    color:0x080605, emissive:0x0a0806,
+    roughness:0.3, metalness:0.4, side:THREE.DoubleSide
+  });
+  const scr=new THREE.Mesh(scrGeo,scrMat);
+  scr.name="DisplayScreen";
+  scr.position.set(0,2.8,-2.6);
+  scene.add(scr);
+
+  // Frame
+  const fMat=new THREE.MeshStandardMaterial({color:0x2a1a08,roughness:0.5,metalness:0.8});
+  [[3.7,0.1,0],[0.1,2.7,0]].forEach(([w,h,z])=>{}); // skip, use edgeboxes
+  const edges=[
+    [3.8,0.08,0.08,0,3.9,-2.55],
+    [3.8,0.08,0.08,0,1.7,-2.55],
+    [0.08,2.3,0.08,-1.9,2.8,-2.55],
+    [0.08,2.3,0.08,1.9,2.8,-2.55],
+  ];
+  edges.forEach(([w,h,d,x,y,z])=>{
+    const eg=new THREE.BoxGeometry(w,h,d);
+    const em=new THREE.Mesh(eg,fMat);em.position.set(x,y,z);scene.add(em);
+  });
+
+  // Amber glow under screen
+  const glowLight=new THREE.PointLight(0xf5a020,1,4,2);
+  glowLight.position.set(0,1.5,-2);
+  scene.add(glowLight);
+  torchLights.push({light:glowLight,base:1,flameMesh:null});
+}
+
+function updateScreen(url){
+  const scr=scene.getObjectByName("DisplayScreen");
+  if(!scr) return;
+  const proxied=url && url.startsWith('http')? PROXY+encodeURIComponent(url):url;
+  const loader=new THREE.TextureLoader();
+  loader.setCrossOrigin('anonymous');
+  scr.material.emissive=new THREE.Color(0x201408);
+  loader.load(proxied,
+    tex=>{scr.material.map=tex;scr.material.emissive=new THREE.Color(0x060402);scr.material.needsUpdate=true},
+    undefined,
+    ()=>{
+      const cv=document.createElement('canvas');cv.width=512;cv.height=360;
+      const ctx=cv.getContext('2d');
+      ctx.fillStyle='#0a0705';ctx.fillRect(0,0,512,360);
+      ctx.strokeStyle='#3a2a10';ctx.lineWidth=2;
+      for(let i=0;i<512;i+=32){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,360);ctx.stroke()}
+      for(let i=0;i<360;i+=32){ctx.beginPath();ctx.moveTo(0,i);ctx.lineTo(512,i);ctx.stroke()}
+      ctx.fillStyle='#f5a020';ctx.font='bold 24px monospace';ctx.textAlign='center';
+      ctx.fillText('⛏ MINER NFT',256,160);ctx.fillStyle='#6b5a3a';
+      ctx.font='14px monospace';ctx.fillText('IMAGE RESTRICTED',256,190);
+      const t=new THREE.CanvasTexture(cv);
+      scr.material.map=t;scr.material.emissive=new THREE.Color(0x060402);scr.material.needsUpdate=true;
     }
-    showScreen('intro-screen');
-  } catch(e) {
-    document.getElementById('loading-text').textContent = 'ERROR FETCHING MINERS — CHECK CONNECTION';
-    console.error(e);
+  );
+}
+
+function animate3D(){
+  requestAnimationFrame(animate3D);
+  const t=clock.getElapsedTime();
+
+  // Torch flicker
+  torchLights.forEach((tl,i)=>{
+    const flicker=tl.base*(0.8+0.4*Math.sin(t*7+i*2.3)*Math.sin(t*13+i));
+    tl.light.intensity=flicker;
+    if(tl.flameMesh){
+      const s=0.9+0.2*Math.sin(t*12+i);
+      tl.flameMesh.scale.setScalar(s);
+    }
+  });
+
+  // Stalactite drip sway
+  stalactites.forEach((s,i)=>{
+    s.mesh.position.x+=Math.sin(t*0.3+i)*0.0005;
+  });
+
+  // Camera gentle bob
+  camera.position.y=3.5+Math.sin(t*0.4)*0.06;
+  camera.position.x=Math.sin(t*0.2)*0.12;
+
+  renderer.render(scene,camera);
+}
+
+// ═══════════════════════════════════════════════════════
+// PARTICLE SYSTEM (2D canvas overlay)
+// ═══════════════════════════════════════════════════════
+const pc=document.getElementById('particle-canvas');
+const pctx=pc.getContext('2d');
+let particles=[];
+
+function resizeParticleCanvas(){pc.width=innerWidth;pc.height=innerHeight}
+resizeParticleCanvas();
+window.addEventListener('resize',resizeParticleCanvas);
+
+function spawnParticles(x,y,color,count=20,type='burst'){
+  for(let i=0;i<count;i++){
+    const angle=Math.random()*Math.PI*2;
+    const speed=type==='burst'? 2+Math.random()*4 : 0.5+Math.random()*2;
+    particles.push({
+      x,y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed-(type==='burst'?2:0),
+      life:1,decay:0.015+Math.random()*0.02,
+      size:2+Math.random()*4,color,type
+    });
   }
 }
 
-function showScreen(id) {
-  ['loading-screen','intro-screen','gameover-screen','win-screen'].forEach(s => {
-    const el = document.getElementById(s);
-    if (el) el.style.display = (s===id) ? 'flex' : 'none';
+function spawnScorePopup(x,y,text,color){
+  particles.push({
+    x,y,vx:(Math.random()-0.5)*1,vy:-2,
+    life:1,decay:0.012,size:0,
+    color,text,isText:true
   });
-  document.getElementById('game-wrap').style.display = (id==='game') ? 'flex' : 'none';
 }
 
-function showGame() {
-  ['loading-screen','intro-screen','gameover-screen','win-screen'].forEach(s => {
-    const el = document.getElementById(s);
-    if (el) el.style.display = 'none';
+function animParticles(){
+  requestAnimationFrame(animParticles);
+  pctx.clearRect(0,0,pc.width,pc.height);
+  particles=particles.filter(p=>{
+    p.x+=p.vx;p.y+=p.vy;p.vy+=0.08;p.life-=p.decay;
+    if(p.life<=0) return false;
+    pctx.globalAlpha=p.life;
+    if(p.isText){
+      pctx.fillStyle=p.color;
+      pctx.font=`bold ${Math.floor(20*p.life+12)}px 'Cinzel Decorative',serif`;
+      pctx.textAlign='center';
+      pctx.fillText(p.text,p.x,p.y);
+    } else {
+      pctx.fillStyle=p.color;
+      pctx.beginPath();pctx.arc(p.x,p.y,p.size*p.life,0,Math.PI*2);pctx.fill();
+    }
+    pctx.globalAlpha=1;
+    return true;
   });
-  document.getElementById('game-wrap').style.display = 'flex';
+}
+animParticles();
+
+// ═══════════════════════════════════════════════════════
+// DRIP EFFECT
+// ═══════════════════════════════════════════════════════
+function spawnDrip(){
+  const d=document.createElement('div');d.className='drip';
+  const x=Math.random()*innerWidth;
+  const h=20+Math.random()*60;
+  const dur=1+Math.random()*2;
+  d.style.cssText=`left:${x}px;height:${h}px;animation-duration:${dur}s;animation-delay:${Math.random()}s`;
+  document.body.appendChild(d);
+  setTimeout(()=>{d.remove();if(Math.random()<0.3)playDrip()},dur*1000+500);
+}
+setInterval(()=>spawnDrip(),600);
+// Occasional drip sound independent
+setInterval(()=>{if(Math.random()<0.4)playDrip()},2500);
+
+// ═══════════════════════════════════════════════════════
+// CRACK SYSTEM
+// ═══════════════════════════════════════════════════════
+function addCrack(){
+  crackCount++;
+  const svg=document.getElementById('crack-svg');
+  const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+  const template=CRACK_PATHS[Math.min(crackCount-1, CRACK_PATHS.length-1)];
+  path.setAttribute('d',template);
+  path.setAttribute('stroke',`rgba(${180+crackCount*20},${80-crackCount*15},${30-crackCount*5},${0.4+crackCount*0.1})`);
+  path.setAttribute('stroke-width','2');
+  svg.appendChild(path);
+  document.getElementById('crack-overlay').classList.add('show');
+  playCrack();
+
+  // Flood water
+  waterLevel=Math.min(crackCount*(100/MAX_LIVES), 95);
+  document.getElementById('water-overlay').style.height=waterLevel+'%';
 }
 
-// ── START GAME ─────────────────────────────────────────
-function startGame() {
-  lives = 3;
-  score = 0;
-  streak = 0;
-  maxStreak = 0;
-  correctCount = 0;
-  hintUsed = false;
-  currentQ = 0;
-  roundResults = [];
-  bonusRound = false;
-
-  // Shuffle and pick queue
-  const shuffled = [...miners].sort(()=>Math.random()-0.5);
-  queue = shuffled.slice(0, TOTAL_ROUNDS);
-
-  updateHUD();
-  updateHearts();
-  buildProgressDots();
-  document.getElementById('hint-btn').disabled = false;
-  document.getElementById('bonus-banner').classList.remove('show');
-
-  showGame();
-  loadQuestion();
+function clearCracks(){
+  document.getElementById('crack-svg').innerHTML='';
+  document.getElementById('crack-overlay').classList.remove('show');
+  crackCount=0; waterLevel=0;
+  document.getElementById('water-overlay').style.height='0';
 }
 
-// ── BUILD PROGRESS DOTS ────────────────────────────────
-function buildProgressDots() {
-  const wrap = document.getElementById('progress-dots');
-  wrap.innerHTML = '';
-  for (let i = 0; i < TOTAL_ROUNDS; i++) {
-    const d = document.createElement('div');
-    d.className = 'pdot' + (i===0?' current':'');
-    d.id = `pdot-${i}`;
-    wrap.appendChild(d);
-  }
-}
+// ═══════════════════════════════════════════════════════
+// TIMER
+// ═══════════════════════════════════════════════════════
+const circumference=213.6;
 
-function updateProgressDot(idx, result) {
-  const d = document.getElementById(`pdot-${idx}`);
-  if (!d) return;
-  d.classList.remove('current');
-  d.classList.add(`done-${result}`);
-  const next = document.getElementById(`pdot-${idx+1}`);
-  if (next) next.classList.add('current');
-}
-
-// ── TIMER ──────────────────────────────────────────────
-function startTimer(seconds) {
+function startTimer(){
   clearInterval(timerInterval);
-  timeLeft = seconds;
+  timerVal=bonusRound? Math.max(8, ROUND_TIME-Math.floor(round/5)) : ROUND_TIME;
   updateTimerUI();
-  timerInterval = setInterval(() => {
-    timeLeft -= 0.1;
-    if (timeLeft <= 0) {
-      timeLeft = 0;
-      updateTimerUI();
+  timerInterval=setInterval(()=>{
+    timerVal--;
+    updateTimerUI();
+    if(timerVal<=3) playCountdownBeep(timerVal);
+    if(timerVal<=0){
       clearInterval(timerInterval);
       onTimeout();
-    } else {
-      updateTimerUI();
     }
-  }, 100);
+  },1000);
 }
 
-function updateTimerUI() {
-  const pct = Math.max(0, timeLeft / maxTime) * 100;
-  const fill = document.getElementById('timer-fill');
-  fill.style.width = pct + '%';
-  // Color shift
-  if (pct > 50) fill.style.background = 'linear-gradient(to right, var(--gold), var(--fire), var(--ember))';
-  else if (pct > 25) fill.style.background = 'linear-gradient(to right, var(--fire), var(--ember))';
-  else fill.style.background = 'linear-gradient(to right, #cc0000, var(--wrong-red))';
-  document.getElementById('timer-text').textContent = Math.ceil(timeLeft) + 's';
+function updateTimerUI(){
+  const el=document.getElementById('timer-num');
+  const arc=document.getElementById('timer-arc');
+  const max=bonusRound? Math.max(8, ROUND_TIME-Math.floor(round/5)) : ROUND_TIME;
+  const pct=timerVal/max;
+  el.textContent=timerVal;
+  arc.style.strokeDashoffset=(circumference*(1-pct)).toString();
+  // Color gradient
+  const color=pct>0.5?'var(--amber)':pct>0.25?'var(--gold)':'var(--health-crit)';
+  arc.style.stroke=color;
+  if(timerVal<=3){
+    el.style.color='var(--health-crit)';
+    el.style.transform=`scale(${1+0.1*Math.sin(Date.now()*0.01)})`;
+  } else {
+    el.style.color='var(--gold)';
+    el.style.transform='scale(1)';
+  }
 }
 
-function onTimeout() {
-  if (questionLocked) return;
-  questionLocked = true;
-
-  // Show timeout message
-  const msg = document.getElementById('timeout-msg');
-  msg.classList.add('show');
-  setTimeout(()=>msg.classList.remove('show'), 1200);
-
+function onTimeout(){
+  if(isBusy) return;
+  isBusy=true;
+  spawnScorePopup(innerWidth/2,innerHeight/2,'TIME!','#ef4444');
   loseLife();
-  streak = 0;
-  updateHUD();
-  roundResults.push('timeout');
-  updateProgressDot(currentQ, 'timeout');
-
-  setTimeout(() => {
-    currentQ++;
-    loadQuestion();
-  }, 1600);
 }
 
-// ── ANSWER ─────────────────────────────────────────────
-function answer(chosen, correct, options, diff) {
-  if (questionLocked) return;
-  questionLocked = true;
-  clearInterval(timerInterval);
-
-  const isCorrect = chosen === correct;
-  const pillarCorrect = document.getElementById(`pillar-${correct}`);
-  const pillarChosen = document.getElementById(`pillar-${chosen}`);
-
-  // Disable all pillars
-  [0,1,2].forEach(i => document.getElementById(`pillar-${i}`).classList.add('disabled'));
-
-  if (isCorrect) {
-    pillarCorrect.classList.add('correct');
-    flashFeedback('correct');
-    correctCount++;
-    streak++;
-    if (streak > maxStreak) maxStreak = streak;
-
-    // Score calc
-    const timeBonus = Math.floor((timeLeft / maxTime) * TIME_BONUS_MAX);
-    const streakMult = Math.min(streak, 5);
-    const diffMult = diff.scoreMult * (bonusRound ? 2 : 1);
-    const pts = Math.floor((BASE_SCORE + timeBonus) * streakMult * diffMult);
-    score += pts;
-
-    showAnswerReveal('correct', `+${pts}`, streakMult > 1 ? `×${streakMult} STREAK BONUS` : `TIME BONUS +${timeBonus}`);
-    showStreakPopup(streak);
-    roundResults.push('correct');
-    updateProgressDot(currentQ, 'correct');
-  } else {
-    pillarChosen.classList.add('wrong');
-    pillarCorrect.classList.add('correct');
-    flashFeedback('wrong');
-    streak = 0;
-    loseLife();
-    showAnswerReveal('wrong', 'WRONG', `IT WAS: ${options[correct].name}`);
-    roundResults.push('wrong');
-    updateProgressDot(currentQ, 'wrong');
-  }
-
-  updateHUD();
-
-  // Check death
-  if (lives <= 0) {
-    setTimeout(() => endGame(false), 2200);
-    return;
-  }
-
-  setTimeout(() => {
-    hideAnswerReveal();
-    currentQ++;
-    loadQuestion();
-  }, 2000);
-}
-
-// ── HINT ───────────────────────────────────────────────
-document.getElementById('hint-btn').addEventListener('click', useHint);
-function useHint() {
-  if (questionLocked || hintUsed) return;
-  hintUsed = true;
-  document.getElementById('hint-btn').disabled = true;
-
-  // Find a wrong pillar and hide it
-  const pillars = [0,1,2].map(i=>({i,el:document.getElementById(`pillar-${i}`)}));
-  // Find wrong ones (not correct)
-  // We need to know which is correct — store it
-  // Actually we stored correctIdx in closure — let's use a global
-  const wrongPillars = pillars.filter(p => p.el.classList.contains('disabled') === false && p.i !== window._correctIdx);
-  if (wrongPillars.length === 0) return;
-  const toHide = wrongPillars[Math.floor(Math.random()*wrongPillars.length)];
-  toHide.el.style.opacity = '0.2';
-  toHide.el.style.pointerEvents = 'none';
-  toHide.el.classList.add('disabled');
-
-  // Small score penalty
-  score = Math.max(0, score - 30);
-  updateHUD();
-}
-
-// ── HEARTS ─────────────────────────────────────────────
-function loseLife() {
+// ═══════════════════════════════════════════════════════
+// GAME LOGIC
+// ═══════════════════════════════════════════════════════
+function loseLife(){
+  if(lives<=0) return;
   lives--;
-  updateHearts();
-}
-
-function updateHearts() {
-  for (let i = 0; i < 3; i++) {
-    const h = document.querySelector(`.heart[data-h="${i}"]`);
-    if (i >= lives) {
-      if (!h.classList.contains('lost')) {
-        h.classList.add('lost','shake');
-        setTimeout(()=>h.classList.remove('shake'), 500);
-      }
-    } else {
-      h.classList.remove('lost');
-    }
-  }
-}
-
-// ── HUD ────────────────────────────────────────────────
-function updateHUD() {
-  document.getElementById('score-val').textContent = score.toLocaleString();
-  document.getElementById('streak-val').textContent = `×${Math.min(streak,5)||1}`;
-  if (streak >= 5) document.getElementById('streak-val').style.color = 'var(--gold)';
-  else if (streak >= 3) document.getElementById('streak-val').style.color = 'var(--fire)';
-  else document.getElementById('streak-val').style.color = 'var(--fire)';
-}
-
-// ── FEEDBACK ───────────────────────────────────────────
-function flashFeedback(type) {
-  const f = document.getElementById('feedback-flash');
-  f.className = type+'-flash';
-  setTimeout(()=>f.className='',500);
-}
-
-function showAnswerReveal(type, main, sub) {
-  const el = document.getElementById('answer-reveal');
-  const txt = document.getElementById('answer-reveal-text');
-  const sub2 = document.getElementById('answer-reveal-sub');
-  txt.textContent = main;
-  txt.className = (type === 'correct') ? 'correct-txt' : 'wrong-txt';
-  sub2.textContent = sub;
-  el.classList.add('show');
-}
-function hideAnswerReveal() {
-  document.getElementById('answer-reveal').classList.remove('show');
-}
-
-function showStreakPopup(n) {
-  if (n < 2) return;
-  const p = document.getElementById('streak-popup');
-  const msgs = {2:'DOUBLE STRIKE!',3:'TRIPLE FLAME!',4:'QUAD INFERNO!',5:'UNSTOPPABLE!'};
-  p.textContent = msgs[Math.min(n,5)] || `${n}× RAMPAGE!`;
-  p.classList.add('show');
-  setTimeout(()=>p.classList.remove('show'), 1200);
-}
-
-// ── END GAME ───────────────────────────────────────────
-function endGame(won) {
-  clearInterval(timerInterval);
-
-  const best = getBest();
-  const isNew = score > best;
-  if (isNew) setBest(score);
-
-  addHS({ score, correct:correctCount, streak:maxStreak, date:new Date().toLocaleDateString() });
-
-  const statsText = `CORRECT: ${correctCount}/${TOTAL_ROUNDS}   MAX STREAK: ×${maxStreak}   ACCURACY: ${Math.round(correctCount/TOTAL_ROUNDS*100)}%`;
-  const noteText = isNew ? '🏆 NEW BEST SCORE!' : `BEST: ${Math.max(best,score).toLocaleString()}`;
-
-  if (won) {
-    showScreen('win-screen');
-    document.getElementById('final-score-win').textContent = score.toLocaleString();
-    document.getElementById('final-stats-win').innerHTML = statsText;
-    document.getElementById('highscore-note-win').textContent = noteText;
-    spawnWinParticles();
+  streak=0;
+  updateStreakUI();
+  addCrack();
+  playWrong();
+  spawnParticles(innerWidth/2, innerHeight/2,'#ef4444',30,'burst');
+  updateLivesUI();
+  showFeedback('WRONG VEIN','wrong');
+  if(lives<=0){
+    setTimeout(gameOver,900);
   } else {
-    showScreen('gameover-screen');
-    document.getElementById('final-score').textContent = score.toLocaleString();
-    document.getElementById('final-stats').innerHTML = statsText;
-    document.getElementById('highscore-note').textContent = noteText;
+    setTimeout(nextRound,1200);
   }
 }
 
-// ── WIN PARTICLES ─────────────────────────────────────
-function spawnWinParticles() {
-  const container = document.getElementById('win-particles');
-  container.innerHTML = '';
-  const colors = ['#ffd700','#ff8800','#ff4400','#ffcc00','#ff6600','#fff700'];
-  for (let i = 0; i < 60; i++) {
-    const p = document.createElement('div');
-    p.className = 'particle';
-    p.style.left = Math.random()*100+'%';
-    p.style.background = colors[Math.floor(Math.random()*colors.length)];
-    p.style.animationDuration = (3+Math.random()*4)+'s';
-    p.style.animationDelay = (Math.random()*3)+'s';
-    p.style.width = (4+Math.random()*8)+'px';
-    p.style.height = (4+Math.random()*8)+'px';
-    container.appendChild(p);
+function updateLivesUI(){
+  for(let i=1;i<=MAX_LIVES;i++){
+    const h=document.getElementById('h'+i);
+    if(h) h.classList.toggle('dead',i>lives);
   }
 }
 
-// ── KEYBOARD CONTROLS ──────────────────────────────────
-document.addEventListener('keydown', e => {
-  if (e.key === '1') document.getElementById('pillar-0')?.click();
-  if (e.key === '2') document.getElementById('pillar-1')?.click();
-  if (e.key === '3') document.getElementById('pillar-2')?.click();
-  if (e.key === 'h' || e.key === 'H') useHint();
-  if (e.key === 'Enter' && document.getElementById('intro-screen').style.display !== 'none') startGame();
+function updateStreakUI(){
+  document.getElementById('streak-val').textContent='x'+streak;
+  const fire=document.getElementById('streak-fire');
+  if(streak>=10) fire.textContent='💥';
+  else if(streak>=5) fire.textContent='🔥';
+  else if(streak>=3) fire.textContent='⚡';
+  else fire.textContent='·';
+}
+
+function showFeedback(text,type){
+  const el=document.getElementById('feedback');
+  el.textContent=text;el.className='';
+  void el.offsetWidth;
+  el.classList.add(type,'show');
+  setTimeout(()=>el.classList.remove('show'),900);
+}
+
+function scoreForRound(){
+  const base=100+round*10;
+  const timeBonus=timerVal*5;
+  const streakMult=1+streak*0.1;
+  const bonus=bonusRound? 3:1;
+  return Math.floor((base+timeBonus)*streakMult*bonus);
+}
+
+// ═══════════════════════════════════════════════════════
+// ROUND MANAGEMENT
+// ═══════════════════════════════════════════════════════
+const QUESTION_TYPES=[
+  {label:'Identify the Miner', hint:'Which NFT matches the image?', display:'image', ask:'name'},
+  {label:'By Hashrate', hint:'Which miner has this hashrate?', display:'stat_hashrate', ask:'name'},
+  {label:'By Power Draw', hint:'Which miner uses this power?', display:'stat_power', ask:'name'},
+  {label:'Miner Category', hint:'What type of miner is this?', display:'image', ask:'category'},
+];
+
+let currentType=null, currentTarget=null, currentOptions=[];
+
+function nextRound(){
+  if(lives<=0) return;
+  isBusy=false;
+  round++;
+
+  // Bonus round every 5 correct
+  if(round>1 && round%6===0 && !bonusRound){
+    showBonusRound(); return;
+  }
+  bonusRound=false;
+
+  document.getElementById('round-num').textContent=round;
+  document.getElementById('round-badge').classList.add('show');
+
+  // Pick question type (more variety as rounds increase)
+  const typePool=round<5? [QUESTION_TYPES[0]] : QUESTION_TYPES;
+  currentType=typePool[Math.floor(Math.random()*typePool.length)];
+
+  // Pick miners
+  const pool=[...allMiners].sort(()=>Math.random()-0.5);
+  currentOptions=pool.slice(0,Math.min(3,pool.length));
+  currentTarget=currentOptions[Math.floor(Math.random()*currentOptions.length)];
+
+  // Update screen
+  if(currentType.display==='image'){
+    updateScreen(currentTarget.imageUrl||'');
+  } else {
+    const stat=currentType.display==='stat_hashrate'?
+      (currentTarget.minerStats?.hashrateFormatted||'??'):
+      (currentTarget.minerStats?.powerFormatted||'??');
+    showStatScreen(stat, currentType.display==='stat_hashrate'? 'HASHRATE':'POWER DRAW');
+  }
+
+  // Question text
+  const qt=document.getElementById('q-title');
+  const qh=document.getElementById('q-hint');
+  const ql=document.getElementById('q-label');
+  ql.textContent=currentType.label;
+  qt.classList.remove('show');qh.classList.remove('show');
+  setTimeout(()=>{
+    qt.textContent=currentType.label.toUpperCase();
+    qh.textContent=currentType.hint;
+    qt.classList.add('show');qh.classList.add('show');
+  },100);
+
+  // Build choice buttons
+  buildChoices();
+  startTimer();
+}
+
+function showStatScreen(value, label){
+  const scr=scene.getObjectByName("DisplayScreen");
+  if(!scr) return;
+  const cv=document.createElement('canvas');cv.width=512;cv.height=360;
+  const ctx=cv.getContext('2d');
+  ctx.fillStyle='#050302';ctx.fillRect(0,0,512,360);
+  // Grid
+  ctx.strokeStyle='#1a1208';ctx.lineWidth=1;
+  for(let i=0;i<512;i+=32){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,360);ctx.stroke()}
+  for(let i=0;i<360;i+=32){ctx.beginPath();ctx.moveTo(0,i);ctx.lineTo(512,i);ctx.stroke()}
+  // Value
+  ctx.fillStyle='#f5c842';ctx.font='bold 64px "Share Tech Mono"';ctx.textAlign='center';
+  ctx.fillText(value,256,190);
+  ctx.fillStyle='#6b5a3a';ctx.font='18px "Share Tech Mono"';
+  ctx.fillText(label,256,230);
+  ctx.strokeStyle='#3a2a10';ctx.lineWidth=3;ctx.strokeRect(40,40,432,280);
+  const t=new THREE.CanvasTexture(cv);
+  scr.material.map=t;scr.material.emissive=new THREE.Color(0x080604);scr.material.needsUpdate=true;
+}
+
+function buildChoices(){
+  const container=document.getElementById('choices');
+  container.innerHTML='';
+  currentOptions.forEach((opt,i)=>{
+    const btn=document.createElement('button');
+    btn.className='choice-btn p-on';
+    btn.style.setProperty('--delay', (i*0.1)+'s');
+    const stats=opt.minerStats;
+    const displayName=currentType.ask==='category'? 
+      (opt.minerKey||opt.id).split(':')[0].toUpperCase() :
+      opt.name||opt.id;
+    btn.innerHTML=`
+      <div class="choice-num">0${i+1}</div>
+      <div class="choice-name">${displayName}</div>
+      ${stats?`<div class="choice-stat">⚡ ${stats.hashrateFormatted||'?'} · ${stats.powerFormatted||'?'}</div>`:''}
+    `;
+    btn.addEventListener('click',()=>handleChoice(btn,opt));
+    container.appendChild(btn);
+    requestAnimationFrame(()=>btn.classList.add('visible'));
+  });
+}
+
+function handleChoice(btn,chosen){
+  if(isBusy) return;
+  clearInterval(timerInterval);
+  isBusy=true;
+
+  const correct = currentType.ask==='category'?
+    (chosen.minerKey||chosen.id).split(':')[0]===(currentTarget.minerKey||currentTarget.id).split(':')[0] :
+    chosen.id===currentTarget.id;
+
+  // Animate all buttons
+  document.querySelectorAll('.choice-btn').forEach(b=>{
+    const isThis=b===btn;
+    const isCorrect=b===getCorrectButton();
+    if(isCorrect) b.classList.add('correct-anim');
+    if(isThis && !correct) b.classList.add('wrong-anim');
+    b.style.pointerEvents='none';
+  });
+
+  if(correct){
+    streak++;
+    const earned=scoreForRound();
+    score+=earned;
+    updateStreakUI();
+    document.getElementById('score-val').textContent=score.toLocaleString();
+    showFeedback(streak>=5? 'ON FIRE!':'AUTHENTICATED','correct');
+    playCorrect();
+    spawnParticles(btn.getBoundingClientRect().left+btn.offsetWidth/2,
+      btn.getBoundingClientRect().top,'#f5c842',25,'burst');
+    spawnScorePopup(btn.getBoundingClientRect().left+btn.offsetWidth/2,
+      btn.getBoundingClientRect().top-20, '+'+earned, '#f5c842');
+    if(streak>=3){
+      const comboEl=document.getElementById('combo-pop');
+      comboEl.textContent=streak+'x STREAK!';
+      comboEl.classList.add('show');
+      setTimeout(()=>comboEl.classList.remove('show'),800);
+    }
+    setTimeout(nextRound,1100);
+  } else {
+    loseLife();
+  }
+}
+
+function getCorrectButton(){
+  const btns=document.querySelectorAll('.choice-btn');
+  for(let i=0;i<btns.length;i++){
+    if(currentOptions[i]?.id===currentTarget.id) return btns[i];
+  }
+  return null;
+}
+
+// ═══════════════════════════════════════════════════════
+// BONUS ROUND
+// ═══════════════════════════════════════════════════════
+function showBonusRound(){
+  bonusRound=true;
+  const el=document.getElementById('bonus-banner');
+  document.getElementById('bonus-inner').innerHTML='⚡ BONUS ROUND ⚡<br><span style="font-size:0.5em;color:#9a7a4a">3x POINTS · HALF TIME</span>';
+  el.classList.add('show');
+  playBonus();
+  spawnParticles(innerWidth/2,innerHeight/2,'#f5c842',60,'burst');
+  spawnParticles(innerWidth/4,innerHeight/2,'#ff8800',40,'burst');
+  spawnParticles(3*innerWidth/4,innerHeight/2,'#ff8800',40,'burst');
+  setTimeout(()=>{
+    el.classList.remove('show');
+    nextRound();
+  },2200);
+}
+
+// ═══════════════════════════════════════════════════════
+// GAME OVER
+// ═══════════════════════════════════════════════════════
+function gameOver(){
+  clearInterval(timerInterval);
+  playGameOver();
+  if(score>bestScore){
+    bestScore=score;
+    localStorage.setItem('hashlip_best',score);
+  }
+  const go=document.getElementById('game-over');
+  document.getElementById('go-score-text').innerHTML=
+    `MINED: <span style="color:var(--gold)">${score.toLocaleString()} hCASH</span><br>
+     <span style="color:#6b5a3a;font-size:0.8em">BEST: ${bestScore.toLocaleString()} · ROUND ${round}</span>`;
+  go.classList.add('show');
+  // big crack screen
+  for(let i=crackCount;i<5;i++) setTimeout(()=>addCrack(),i*150);
+}
+
+document.getElementById('restart-btn').addEventListener('click',()=>{
+  document.getElementById('game-over').classList.remove('show');
+  clearCracks();
+  score=0;lives=MAX_LIVES;streak=0;round=0;bonusRound=false;
+  document.getElementById('score-val').textContent='0';
+  updateLivesUI();updateStreakUI();
+  setTimeout(nextRound,500);
 });
 
-// ── BUTTON WIRING ──────────────────────────────────────
-document.getElementById('start-btn').addEventListener('click', startGame);
-document.getElementById('retry-btn').addEventListener('click', startGame);
-document.getElementById('retry-intro-btn').addEventListener('click', ()=>showScreen('intro-screen'));
-document.getElementById('win-retry-btn').addEventListener('click', startGame);
-
-function loadQuestion() {
-  if (currentQ >= TOTAL_ROUNDS) { endGame(true); return; }
-
-  questionLocked = false;
-  hintUsed = false;
-  document.getElementById('hint-btn').disabled = false;
-
-  const diff = getDiff();
-  const correct = queue[currentQ];
-
-  const wrongPool = miners.filter(m => m.id !== correct.id);
-  const shuffledWrong = wrongPool.sort(()=>Math.random()-0.5);
-  const wrongs = shuffledWrong.slice(0, diff.options - 1);
-  const options = [correct, ...wrongs].sort(()=>Math.random()-0.5);
-  const correctIdx = options.findIndex(o => o.id === correct.id);
-  window._correctIdx = correctIdx;
-
-  bonusRound = (currentQ > 0 && currentQ % 5 === 0);
-  if (bonusRound) {
-    document.getElementById('bonus-banner').classList.add('show');
-    setTimeout(()=>document.getElementById('bonus-banner').classList.remove('show'), 3000);
-  } else {
-    document.getElementById('bonus-banner').classList.remove('show');
-  }
-
-  const badge = document.getElementById('diff-badge');
-  badge.textContent = diff.name;
-  badge.className = diff.name.toLowerCase();
-  badge.id = 'diff-badge';
-
-  document.getElementById('round-type').textContent =
-    bonusRound ? '⚡ SPEED BONUS ROUND' : 'IDENTIFICATION TRIAL';
-  document.getElementById('question-num').textContent = `ROUND ${currentQ+1} / ${TOTAL_ROUNDS}`;
-  updateHUD();
-
-  // Reset pillar opacity for hint
-  [0,1,2].forEach(i => {
-    const p = document.getElementById(`pillar-${i}`);
-    p.style.opacity = '';
-    p.style.pointerEvents = '';
-  });
-
-  const img = document.getElementById('miner-img');
-  img.classList.remove('reveal');
-  void img.offsetWidth;
-  img.src = correct.imageUrl + '?t=' + Date.now();
-  img.onload = () => img.classList.add('reveal');
-  img.onerror = () => {
-    img.src = 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect fill="#251c15" width="200" height="200"/><text x="100" y="120" text-anchor="middle" fill="#ff6a00" font-size="60">⛏</text></svg>`);
-    img.classList.add('reveal');
-  };
-
-  const stats = correct.minerStats;
-  const showStats = diff.name !== 'EXTREME';
-  document.getElementById('stat-hashrate').textContent = (showStats && stats) ? stats.hashrateFormatted : '???';
-  document.getElementById('stat-power').textContent = (showStats && stats) ? stats.powerFormatted : '???';
-  document.getElementById('stat-type').textContent = showStats ? correct.category.replace('_nft','').replace('_',' ').toUpperCase() : '???';
-
-  options.forEach((opt, i) => {
-    document.getElementById(`opt-${i}`).textContent = opt.name;
-    const pillar = document.getElementById(`pillar-${i}`);
-    pillar.className = 'pillar-wrap';
-    pillar.onclick = () => answer(i, correctIdx, options, diff);
-  });
-
-  maxTime = diff.time;
-  if (bonusRound) maxTime = Math.floor(maxTime * 0.7);
-  startTimer(maxTime);
+// ═══════════════════════════════════════════════════════
+// API LOADING
+// ═══════════════════════════════════════════════════════
+async function fetchJson(url){
+  const r=await fetch(url,{headers:{'x-api-key':API_KEY}});
+  if(!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json();
 }
 
-// Start
-init();
+function setLoadProgress(pct,msg){
+  document.getElementById('load-bar').style.width=pct+'%';
+  document.getElementById('load-msg').textContent=msg;
+}
+
+async function init(){
+  initThree();
+  setLoadProgress(20,'Descending into the grotto...');
+  await new Promise(r=>setTimeout(r,400));
+  setLoadProgress(40,'Consulting the mining registry...');
+  
+  let miners=[];
+  try{
+    const data=await fetchJson(`${API_BASE}/contracts`);
+    miners=data.contracts.filter(c=>c.category==='miner_nft');
+    setLoadProgress(80,'Indexing NFT specimens...');
+  } catch(e){
+    // Fallback demo data
+    miners=generateFallbackMiners();
+    setLoadProgress(80,'Using cached specimen data...');
+  }
+
+  // Filter to ones with imageUrl for best experience, supplement with all
+  const withImage=miners.filter(m=>m.imageUrl);
+  allMiners=withImage.length>=6? withImage : miners;
+  
+  if(allMiners.length<3) allMiners=generateFallbackMiners();
+
+  setLoadProgress(100,'Torches lit. Entering...');
+  await new Promise(r=>setTimeout(r,600));
+
+  // Fade out loading
+  const ls=document.getElementById('loading');
+  ls.style.opacity='0';
+  setTimeout(()=>{ls.remove(); nextRound();},1000);
+}
+
+function generateFallbackMiners(){
+  return [
+    {id:'miner_nft:1',name:'Home Brew CPU Miner',category:'miner_nft',minerKey:'miner_nft:1',
+     minerStats:{hashrateFormatted:'10 MH/s',powerFormatted:'100W'}},
+    {id:'miner_nft:2',name:'DragonTech RedDragon',category:'miner_nft',minerKey:'miner_nft:2',
+     minerStats:{hashrateFormatted:'14 MH/s',powerFormatted:'100W'}},
+    {id:'miner_nft:3',name:'RedDragon Quadro',category:'miner_nft',minerKey:'miner_nft:3',
+     minerStats:{hashrateFormatted:'70 MH/s',powerFormatted:'800W'}},
+    {id:'miner_nft:4',name:'HashTech ASIC',category:'miner_nft',minerKey:'miner_nft:4',
+     minerStats:{hashrateFormatted:'250 MH/s',powerFormatted:'2kW'}},
+    {id:'miner_nft:5',name:'WindHash Red',category:'miner_nft',minerKey:'miner_nft:5',
+     minerStats:{hashrateFormatted:'125 MH/s',powerFormatted:'600W'}},
+    {id:'miner_nft:6',name:'Jvidia JX420',category:'miner_nft',minerKey:'miner_nft:6',
+     minerStats:{hashrateFormatted:'280 MH/s',powerFormatted:'500W'}},
+    {id:'miner_nft:7',name:'Stormcore',category:'miner_nft',minerKey:'miner_nft:7',
+     minerStats:{hashrateFormatted:'1 GH/s',powerFormatted:'0W'}},
+    {id:'miner_nft:8',name:'Plasma Absolute',category:'miner_nft',minerKey:'miner_nft:8',
+     minerStats:{hashrateFormatted:'400 MH/s',powerFormatted:'800W'}},
+  ];
+}
+
+// ═══════════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════════
+window.addEventListener('load', init);
 </script>
 </body>
 </html>
