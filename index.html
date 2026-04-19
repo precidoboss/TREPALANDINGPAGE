@@ -3229,7 +3229,7 @@
         } else {
             resetGame();
         }
-    }
+    };
 
     function togglePause() {
         gamePaused = !gamePaused;
@@ -3238,7 +3238,7 @@
     window.resumeGame = function resumeGame() {
         gamePaused = false;
         document.getElementById('pause-menu').style.display = 'none';
-    }
+    };
     window.goHome = function goHome() {
         gamePaused = false;
         document.getElementById('pause-menu').style.display = 'none';
@@ -3258,7 +3258,7 @@
         resetGame();
         player.dead = false;
         gameOverEl.style.display = 'none';
-    }
+    };
 
     function resetGame() {
         player.maxHp = 180;
@@ -4317,9 +4317,9 @@
         document.querySelectorAll('.home-view').forEach(v => v.classList.remove('active'));
         const el = document.getElementById(id);
         if (el) el.classList.add('active');
-    }
+    };
 
-    (function() {
+    ;(function() {
         const homeCanvas = document.getElementById('home-canvas');
         const homeCtx = homeCanvas.getContext('2d');
 
