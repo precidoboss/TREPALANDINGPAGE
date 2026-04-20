@@ -320,12 +320,182 @@
         }
         #home-screen.fade-out { animation: homeFadeOut 0.6s forwards; }
         @keyframes homeFadeOut { to { opacity:0; pointer-events:none; } }
-                </style>
+                
+        /* ===== AUTH / PROFILE / LEADERBOARD OVERLAYS ===== */
+        .aq-overlay {
+            position: absolute; inset: 0; z-index: 50;
+            background: rgba(0,0,0,0.92);
+            display: flex; align-items: center; justify-content: center;
+            overflow-y: auto;
+        }
+        .aq-panel {
+            background: linear-gradient(160deg,#1a0e06,#0a0806);
+            border: 2px solid #7a4e20;
+            border-radius: 10px;
+            padding: 32px 40px;
+            width: 420px; max-width: 96vw;
+            display: flex; flex-direction: column; align-items: center; gap: 14px;
+            box-shadow: 0 0 60px rgba(180,100,0,0.2);
+        }
+        .aq-panel.wide { width: 680px; }
+        .aq-panel-title {
+            font-family: 'Cinzel Decorative', cursive;
+            font-size: 22px; color: #ffd700;
+            letter-spacing: 4px; text-align: center;
+            text-shadow: 0 0 20px rgba(255,200,0,0.4);
+            margin-bottom: 4px;
+        }
+        .aq-input {
+            width: 100%; padding: 10px 14px;
+            background: #110a04; color: #ffe8b0;
+            border: 1.5px solid #5a3a18; border-radius: 4px;
+            font-family: 'Cinzel', serif; font-size: 14px;
+            outline: none; box-sizing: border-box;
+        }
+        .aq-input:focus { border-color: #c8a040; }
+        .aq-btn {
+            width: 100%; padding: 11px;
+            font-family: 'Cinzel', serif; font-size: 14px;
+            letter-spacing: 2px; text-transform: uppercase;
+            border-radius: 4px; cursor: pointer; border: 1.5px solid;
+            transition: all 0.2s;
+        }
+        .aq-btn.primary {
+            background: linear-gradient(160deg,#3a2810,#1e140a);
+            color: #e8c870; border-color: #8a5828;
+        }
+        .aq-btn.primary:hover { background: linear-gradient(160deg,#5a3818,#2e1e0c); border-color: #ffd700; }
+        .aq-btn.secondary {
+            background: transparent; color: #a08050; border-color: #4a3018;
+        }
+        .aq-btn.secondary:hover { border-color: #8a6030; color: #d4a060; }
+        .aq-btn.ghost {
+            background: transparent; color: #7a6040; border-color: transparent;
+            font-size: 12px; padding: 6px;
+        }
+        .aq-btn.ghost:hover { color: #c0a060; }
+        .aq-divider {
+            width: 100%; height: 1px;
+            background: linear-gradient(90deg,transparent,#5a3a18,transparent);
+        }
+        .aq-err { color: #ff6666; font-family: 'Cinzel', serif; font-size: 12px; text-align: center; }
+        .aq-ok  { color: #66ff88; font-family: 'Cinzel', serif; font-size: 12px; text-align: center; }
+        .aq-label { font-family:'Cinzel',serif; font-size:11px; color:#7a5830; letter-spacing:2px; text-transform:uppercase; align-self:flex-start; }
+        /* Top bar buttons (profile + leaderboard) */
+        #aq-topbar {
+            position: absolute; top: 10px; right: 10px;
+            display: flex; gap: 8px; z-index: 40;
+        }
+        .aq-topbtn {
+            font-family:'Cinzel',serif; font-size:11px; letter-spacing:1px;
+            padding: 7px 14px; border-radius: 4px; cursor: pointer;
+            background: linear-gradient(160deg,#2a1808,#180e04);
+            color: #c8a040; border: 1.5px solid #5a3818;
+            transition: all 0.2s;
+        }
+        .aq-topbtn:hover { border-color:#ffd700; color:#ffe8a0; }
+        /* Auth row buttons on home */
+        #aq-home-auth {
+            display: flex; gap: 10px; margin-top: 6px;
+            opacity:0; animation: fadeSlideUp 0.7s 1.3s forwards;
+        }
+        /* Leaderboard table */
+        .aq-lb-table { width:100%; border-collapse:collapse; }
+        .aq-lb-table th {
+            font-family:'Cinzel',serif; font-size:10px; letter-spacing:2px;
+            color:#8a6030; text-transform:uppercase; text-align:left;
+            border-bottom:1px solid #3a2810; padding:6px 8px;
+        }
+        .aq-lb-table td {
+            font-family:'Cinzel',serif; font-size:12px; color:#c0a870;
+            padding:7px 8px; border-bottom:1px solid rgba(90,56,24,0.3);
+        }
+        .aq-lb-table tr.me td { color:#ffd700; }
+        .aq-lb-rank { color:#8a6030; font-size:11px; }
+        .aq-lb-tabs { display:flex; gap:8px; width:100%; }
+        .aq-lb-tab {
+            flex:1; padding:8px; font-family:'Cinzel',serif; font-size:11px;
+            letter-spacing:2px; text-transform:uppercase; cursor:pointer;
+            border:1px solid #3a2810; border-radius:3px; text-align:center;
+            color:#7a6040; background:transparent; transition:all 0.2s;
+        }
+        .aq-lb-tab.active { border-color:#8a5828; color:#e8c870; background:rgba(90,56,24,0.2); }
+        /* Profile stats grid */
+        .aq-stat-grid {
+            display:grid; grid-template-columns:1fr 1fr;
+            gap:8px; width:100%;
+        }
+        .aq-stat-card {
+            background:rgba(255,255,255,0.03); border:1px solid #3a2810;
+            border-radius:4px; padding:10px 14px;
+        }
+        .aq-stat-lbl { font-family:'Cinzel',serif; font-size:9px; color:#7a5830; letter-spacing:2px; text-transform:uppercase; }
+        .aq-stat-val { font-family:'Cinzel Decorative',cursive; font-size:18px; color:#e8c870; margin-top:2px; }
+        .aq-coin-bank {
+            width:100%; padding:14px; text-align:center;
+            background:rgba(255,200,0,0.06); border:1px solid #7a5020;
+            border-radius:6px;
+        }
+        .aq-coin-bank .big { font-family:'Cinzel Decorative',cursive; font-size:28px; color:#ffd700; }
+        .aq-coin-bank .lbl { font-family:'Cinzel',serif; font-size:11px; color:#8a6030; letter-spacing:3px; text-transform:uppercase; }
+        .aq-achievements { display:flex; flex-wrap:wrap; gap:8px; width:100%; }
+        .aq-ach {
+            display:flex; align-items:center; gap:8px;
+            background:rgba(255,255,255,0.03); border:1px solid #3a2810;
+            border-radius:4px; padding:8px 12px; flex:1; min-width:180px;
+        }
+        .aq-ach.locked { opacity:0.4; }
+        .aq-ach-icon { font-size:20px; }
+        .aq-ach-name { font-family:'Cinzel',serif; font-size:11px; color:#c0a060; }
+        .aq-ach-desc { font-family:'Cinzel',serif; font-size:9px; color:#6a5030; }
+        .aq-section-title {
+            font-family:'Cinzel',serif; font-size:11px; letter-spacing:3px;
+            color:#8a6030; text-transform:uppercase; align-self:flex-start;
+            border-bottom:1px solid #3a2810; padding-bottom:4px; width:100%;
+        }
+        .aq-lb-page { display:flex; gap:8px; align-items:center; margin-top:4px; }
+        .aq-lb-page button {
+            font-family:'Cinzel',serif; font-size:11px; padding:4px 12px;
+            background:#1a0e06; color:#c0a040; border:1px solid #4a2e10;
+            border-radius:3px; cursor:pointer;
+        }
+        .aq-lb-page button:hover { border-color:#8a6030; }
+        .aq-lb-page span { font-family:'Cinzel',serif; font-size:11px; color:#6a5030; }
+        #aq-game-coins-display { display:none !important; }
+</style>
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
 
+<!-- ===== AQ AUTH PANELS ===== -->
+<!-- Auth gate overlay (shown on home) -->
+<div id="aq-auth-overlay" style="display:none;" class="aq-overlay">
+  <div class="aq-panel" id="aq-auth-panel">
+    <!-- toggled by JS between login / register views -->
+  </div>
+</div>
+
+<!-- Profile overlay -->
+<div id="aq-profile-overlay" style="display:none;" class="aq-overlay">
+  <div class="aq-panel wide" id="aq-profile-panel" style="max-height:90vh;overflow-y:auto;"></div>
+</div>
+
+<!-- Leaderboard overlay -->
+<div id="aq-lb-overlay" style="display:none;" class="aq-overlay">
+  <div class="aq-panel wide" id="aq-lb-panel" style="max-height:90vh;overflow-y:auto;"></div>
+</div>
+
+<!-- In-game coin bank display -->
+<div id="aq-game-coins-display">🏦 Bank: <span id="aq-bank-val">0</span></div>
+
 <div id="home-screen">
     <canvas id="home-canvas"></canvas>
+    <!-- Top-right bar: Profile + Leaderboard (only when logged in) -->
+    <div id="aq-topbar" style="display:none;">
+        <button class="aq-topbtn" onclick="AQ.showProfile()">👤 Profile</button>
+        <button class="aq-topbtn" onclick="AQ.showLeaderboard()">🏆 Leaderboard</button>
+    </div>
     <!-- Stone cracks overlay -->
     <div class="stone-cracks"></div>
     <!-- Corner stones -->
@@ -365,6 +535,27 @@
                     <div class="stone-btn-inner">HOW TO PLAY</div>
                 </div>
             </div>
+
+            <div id="aq-home-auth">
+                <div class="stone-btn secondary" onclick="AQ.showAuth('login')">
+                    <div class="stone-btn-inner" style="font-size:11px;padding:10px 20px;">🔑 LOGIN</div>
+                </div>
+                <div class="stone-btn secondary" onclick="AQ.showAuth('register')">
+                    <div class="stone-btn-inner" style="font-size:11px;padding:10px 20px;">📜 SIGN UP</div>
+                </div>
+                <div class="stone-btn secondary" onclick="AQ.guestMode()">
+                    <div class="stone-btn-inner" style="font-size:11px;padding:10px 20px;color:#666;">👤 GUEST</div>
+                </div>
+            </div>
+            <div id="aq-home-user" style="display:none;opacity:0;animation:fadeSlideUp 0.5s forwards;">
+                <div style="font-family:'Cinzel',serif;font-size:12px;color:#8a6030;letter-spacing:2px;text-align:center;">
+                    ⚔ <span id="aq-home-username"></span> &nbsp;·&nbsp;
+                    <span style="color:#ffd700;">🏦 <span id="aq-home-bank">0</span> coins</span>
+                    &nbsp;·&nbsp;
+                    <span style="cursor:pointer;color:#7a5830;text-decoration:underline;" onclick="AQ.logout()">Logout</span>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -446,8 +637,8 @@
                     <div style="margin-top:10px;font-family:'Cinzel',serif;font-size:10px;color:#6a4820;">Artifacts glow and rise from opened chests. Passive ones (1–3) apply instantly on pickup. Active ones (4–5) go to your hotbar — press the matching number key to use.</div>
                 </div>
                 <div class="howto-section span2">
-                    <div class="howto-section-title">Characters</div>
-                    <div class="howto-chars">
+                    <div class="howto-section-title">Characters & Companions</div>
+                    <div class="howto-chars" style="grid-template-columns:1fr 1fr 1fr;">
                         <div class="hc-card">
                             <canvas class="hc-sprite" id="howto-hero-canvas" width="96" height="80"></canvas>
                             <div class="hc-name">The Warrior</div>
@@ -460,16 +651,22 @@
                             <div class="hc-desc">Ancient stone guardian. Chases, feints and lunges. 3 hits to defeat.</div>
                             <div class="hc-stats"><span>❤ 50 HP</span><span>⚔ 5 DMG</span><span>⚡ Smart</span></div>
                         </div>
+                        <div class="hc-card" style="border-color:#ff6600;box-shadow:0 0 10px rgba(255,100,0,0.2);">
+                            <canvas class="hc-sprite" id="howto-dragon-canvas" width="96" height="96" style="background:rgba(20,10,0,0.5);border-radius:4px;"></canvas>
+                            <div class="hc-name" style="color:#ff8800;">🔥 Fire Dragon</div>
+                            <div class="hc-desc">Your loyal companion. Buy from the Marketplace (100g). Auto-aims fireballs at the nearest enemy — even the boss. Follows you into the Boss Arena. Cannot die.</div>
+                            <div class="hc-stats"><span>🔥 2 DMG/shot</span><span>⏱ 10s cooldown</span><span>🏪 100 Gold</span></div>
+                        </div>
                         <div class="hc-card">
                             <canvas class="hc-sprite" id="howto-npc-canvas" width="96" height="96"></canvas>
                             <div class="hc-name">Zephira / Sentinel Kael</div>
                             <div class="hc-desc">Wandering sentinels who hold the secret of the Void-Warden's weakness. Seek them out — speak with both.</div>
                             <div class="hc-stats"><span>✦ Story Mode</span><span>🔑 [F] Talk</span></div>
                         </div>
-                        <div class="hc-card">
+                        <div class="hc-card" style="grid-column:span 2;">
                             <canvas class="hc-sprite" id="howto-boss-canvas" width="96" height="96"></canvas>
                             <div class="hc-name">The Void-Warden</div>
-                            <div class="hc-desc">Ancient terror of the void. Attacks from range and melee. Enrages at 50% HP. Strike from the RIGHT for double damage if you know its secret.</div>
+                            <div class="hc-desc">Ancient terror of the void. Attacks from range and melee. Enrages at 50% HP. Strike from the RIGHT for double damage if you know its secret. Your dragon companion can help wear it down.</div>
                             <div class="hc-stats"><span>❤ 750 HP</span><span>⚔ 12–20 DMG</span><span>⚡ 2 Phases</span></div>
                         </div>
                     </div>
@@ -594,8 +791,17 @@
         arena_bush:     'https://raw.githubusercontent.com/precidoboss/adventurer/main/bush.png',
         arena_tree:     'https://raw.githubusercontent.com/precidoboss/adventurer/main/tree.png',
         arena_palm:     'https://raw.githubusercontent.com/precidoboss/adventurer/main/palm.png',
+        // Marketplace assets
+        market_house:   'https://raw.githubusercontent.com/precidoboss/adventurer/main/wooden-house.png',
+        ui_hlslot:      'https://raw.githubusercontent.com/precidoboss/adventurer/main/HighlightSlot_26x26.png',
+        ui_larrow:      'https://raw.githubusercontent.com/precidoboss/adventurer/main/LeftArrowButton_7x10.png',
+        ui_rarrow:      'https://raw.githubusercontent.com/precidoboss/adventurer/main/RightArrowButton_7x10.png',
+        // Dragon pet assets
+        dragon_idle:    'https://raw.githubusercontent.com/precidoboss/adventurer/main/IDLE22.png',
+        dragon_fly:     'https://raw.githubusercontent.com/precidoboss/adventurer/main/FLYING.png',
+        dragon_attack:  'https://raw.githubusercontent.com/precidoboss/adventurer/main/ATTACK.png',
+        dragon_fire:    'https://raw.githubusercontent.com/precidoboss/adventurer/main/projectile.png',
     };
-
     // Sounds (loaded separately, not counted in asset load)
     const SFX = {};
     function loadSound(key, url) {
@@ -743,6 +949,11 @@
         gameEndStats: null,
         // objective board
         boardOpen: false,
+        // Marketplace
+        marketShown: false,
+        market: null,         // { x, y } world position of the house
+        marketOpen: false,    // UI open flag
+        marketPage: 0,        // current page (0=artifacts 1=dragon)
         // TTS
         ttsSupported: 'speechSynthesis' in window
     };
@@ -834,6 +1045,18 @@
         fireShieldKey: false // to detect key press edge
     };
 
+    // Dragon pet state
+    const dragonPet = {
+        owned: false,
+        x: 0, y: 0,
+        targetX: 0, targetY: 0,
+        state: 'idle',   // idle | fly | attack
+        frame: 0, frameTimer: 0,
+        fireCooldown: 0,
+        fireProjs: [],   // { x, y, vx, frame, frameTimer }
+        attackTimer: 0,
+    };
+
     const anims = {
         idle:   { frames: 8,  speed: 10 },
         run:    { frames: 8,  speed: 7  },
@@ -856,6 +1079,16 @@
         { id: 'crystal', key: '3', file: 'Icon3.png', effect: 'atk',       label: 'Mana Crystal',  desc: '+1 Attack Damage' },
         { id: 'feather', key: '4', file: 'Icon4.png', effect: 'fireshield',label: 'Fire Feather',   desc: 'Fire Shield for 10 sec (press 4)' },
         { id: 'core',    key: '5', file: 'Icon5.png', effect: 'boss',      label: 'Ancient Core',   desc: 'BOSS KEY — reserved' },
+    ];
+
+    // Market items: artifacts + dragon pet
+    const MARKET_ITEMS = [
+        { id: 'helm',    label: 'Iron Helm',      desc: '+1 Max HP per purchase',      cost: 10,  maxBuy: 10,  icon: 'helm',    type: 'artifact' },
+        { id: 'berries', label: 'Shadow Berries',  desc: 'Restores 5 HP instantly',     cost: 30,  maxBuy: null, icon: 'berries', type: 'artifact', dynamicMax: true },
+        { id: 'crystal', label: 'Mana Crystal',   desc: '+1 Attack Damage',            cost: 20,  maxBuy: 10,  icon: 'crystal', type: 'artifact' },
+        { id: 'feather', label: 'Fire Feather',   desc: 'Fire Shield 10s (press 4)',   cost: 25,  maxBuy: 5,   icon: 'feather', type: 'artifact' },
+        { id: 'core',    label: 'Ancient Core',   desc: 'BOSS KEY — weakens Warden',   cost: 100, maxBuy: 1,   icon: 'core',    type: 'artifact' },
+        { id: 'dragon',  label: 'Fire Dragon Pet', desc: 'Companion shoots fire at foes every 10s  (2 dmg)', cost: 100, maxBuy: 1, icon: 'dragon', type: 'pet' },
     ];
     // Map effect => icon index from uploads
     const ARTIFACT_ICONS = {};
@@ -882,6 +1115,7 @@
     function initStoryMode() {
         STORY_MODE.active = true;
         STORY_MODE.timer = 0;
+        if(window.AQ) AQ.startSCRun();
         STORY_MODE.totalKills = 0;
         STORY_MODE.totalChests = 0;
         STORY_MODE.totalArtifacts = 0;
@@ -900,6 +1134,11 @@
         STORY_MODE.cinematic = null;
         STORY_MODE.boardOpen = false;
         STORY_MODE.npc1 = null; STORY_MODE.npc2 = null; STORY_MODE.portal = null;
+        STORY_MODE.marketShown = false; STORY_MODE.market = null;
+        STORY_MODE.marketOpen = false; STORY_MODE.marketPage = 0;
+        // Reset dragon pet
+        dragonPet.owned = false; dragonPet.fireProjs = [];
+        dragonPet.fireCooldown = 0; dragonPet.state = 'idle'; dragonPet.frame = 0;
         STORY_MODE.objectives.forEach(o => { o.current = 0; o.done = false; });
         resetGame();
         // Show cinematic intro
@@ -942,6 +1181,12 @@
 
         const pct = calcObjectivePct();
         SM.objectivePct = pct;
+
+        // Spawn Marketplace at 80%
+        if(pct >= 0.8 && !SM.marketShown) {
+            SM.marketShown = true;
+            spawnMarket();
+        }
 
         // Spawn NPC1 at 50%
         if(pct >= 0.5 && !SM.npc1Shown) {
@@ -1011,6 +1256,98 @@
             frame: 0, frameTimer: 0, pulseT: 0
         };
         dmgNumbers.push({ x: portalX + 48, y: portalY - 40, val: '✦ A dimensional rift has opened!', life: 240, color: '#ff88ff', isText: true });
+    }
+
+    function spawnMarket() {
+        // Find a platform ahead of player to place the wooden house
+        let targetPlat = null;
+        for (let i = 0; i < platforms.length; i++) {
+            const p = platforms[i];
+            if (p.x > player.x + 200 && p.x < player.x + 800 && p.w > 120) {
+                targetPlat = p; break;
+            }
+        }
+        if (!targetPlat) {
+            for (let i = platforms.length - 1; i >= 0; i--) {
+                if (platforms[i].x > player.x + 100) { targetPlat = platforms[i]; break; }
+            }
+        }
+        const mx = targetPlat ? targetPlat.x + targetPlat.w * 0.4 : player.x + 350;
+        const my = targetPlat ? targetPlat.y - 120 : player.y - 130;
+        STORY_MODE.market = { x: mx, y: my, width: 100, height: 120 };
+        STORY_MODE.marketOpen = false;
+        STORY_MODE.marketPage = 0;
+        dmgNumbers.push({ x: mx + 50, y: my - 30, val: '🏪 A marketplace has appeared!', life: 240, color: '#ffdd44', isText: true });
+    }
+
+    function openMarket() {
+        if (!STORY_MODE.market) return;
+        STORY_MODE.marketOpen = true;
+        STORY_MODE.marketPage = 0;
+        STORY_MODE._marketBtns = [];
+        STORY_MODE._marketHover = undefined;
+        // Freeze only player input, not the whole game loop
+        STORY_MODE._marketFreezePlayer = true;
+    }
+
+    function closeMarket() {
+        STORY_MODE.marketOpen = false;
+        STORY_MODE._marketFreezePlayer = false;
+        STORY_MODE._marketBtns = [];
+        STORY_MODE._marketHover = undefined;
+    }
+
+    function buyMarketItem(item) {
+        if (player.coins < item.cost) return; // not enough coins
+        // Calc max buy
+        let maxBuy = item.maxBuy;
+        if (item.dynamicMax) {
+            // berries: max buys = how many 5-HP heals we can use (don't overheal)
+            maxBuy = Math.floor((player.maxHp - player.hp) / 5);
+            if (maxBuy <= 0) { dmgNumbers.push({x:player.x,y:player.y-30,val:'Already full HP!',life:80,color:'#ff8888',isText:true}); return; }
+        }
+        // Count how many of this item already purchased this market session
+        const bought = STORY_MODE.market['bought_' + item.id] || 0;
+        if (maxBuy !== null && bought >= maxBuy) {
+            dmgNumbers.push({x:player.x,y:player.y-30,val:'Maximum reached!',life:80,color:'#ff8888',isText:true});
+            return;
+        }
+        // Deduct coins
+        player.coins -= item.cost;
+        uiCoins = player.coins;
+        if(window.AQ) AQ.trackSCSpend(item.cost);
+        STORY_MODE.market['bought_' + item.id] = bought + 1;
+
+        if (item.type === 'artifact') {
+            // Apply effect
+            const def = ARTIFACT_DEFS.find(d => d.id === item.id);
+            if (def) {
+                if (def.effect === 'maxhp') {
+                    player.maxHp = Math.min(player.maxHp + 1, 250);
+                    player.hp = Math.min(player.hp + 1, player.maxHp);
+                    uiHp = player.hp; uiMaxHp = player.maxHp;
+                    dmgNumbers.push({x:player.x,y:player.y-30,val:'+1 MAX HP',life:80,color:'#44ff88',isText:true});
+                } else if (def.effect === 'heal') {
+                    player.hp = Math.min(player.maxHp, player.hp + 5);
+                    uiHp = player.hp;
+                    dmgNumbers.push({x:player.x,y:player.y-30,val:'+5 HP',life:80,color:'#44ff88',isText:true});
+                } else if (def.effect === 'atk') {
+                    player.attackDmg = (player.attackDmg || 20) + 1;
+                    dmgNumbers.push({x:player.x,y:player.y-30,val:'+1 ATK',life:80,color:'#ffaa00',isText:true});
+                } else if (def.effect === 'fireshield' || def.effect === 'boss') {
+                    if (player.artifacts.length < 5) player.artifacts.push(item.id);
+                    dmgNumbers.push({x:player.x,y:player.y-30,val:'Acquired: '+item.label,life:80,color:'#cc88ff',isText:true});
+                }
+            }
+        } else if (item.type === 'pet') {
+            // Unlock dragon
+            dragonPet.owned = true;
+            dragonPet.x = player.x - 60;
+            dragonPet.y = player.y - 40;
+            dragonPet.state = 'fly';
+            dmgNumbers.push({x:player.x,y:player.y-50,val:'🐉 Fire Dragon joined you!',life:120,color:'#ff6600',isText:true});
+        }
+        playSound('chest'); // purchase sound
     }
 
     function tryInteractNPC(which) {
@@ -2280,6 +2617,7 @@
                     dmgNumbers.push({x:b.x+20,y:b.y-30,val:'WEAKNESS!',life:70,color:'#ff44ff',isText:true});
                 }
                 b.hp -= dmg;
+                if(window.AQ) AQ.trackSCDamageDealt(dmg);
                 b.hurtTimer = 20; b.state='hurt'; b.frame=0; b.frameTimer=0;
                 dmgNumbers.push({x:b.x+30,y:b.y-10,val:dmg,life:50,color:'#ff4444'});
                 shakeTimer=10; shakeMag=6;
@@ -2644,6 +2982,7 @@
             rating
         };
         // Play victory cinematic FIRST, then show stats after it finishes
+        if(window.AQ) AQ.finishSCRun(true);
         startCinematic('victory', SM.gameEndStats);
     }
 
@@ -2693,8 +3032,7 @@
             drawUI_img('ui_titlebox', objX, objY, objW, objH);
             ctx.save();
             ctx.globalAlpha = 0.75;
-            const objGrad = ctx.createLinearGradient(objX + 8, 0, objX + objW - 8, 0);
-            objGrad.addColorStop(0, '#8822cc'); objGrad.addColorStop(1, '#ff44ff');
+            const objGrad = SM.objectivePct > 0.5 ? '#cc44ff' : '#8822cc';
             ctx.fillStyle = objGrad;
             ctx.fillRect(objX + 8, objY + objH - 8, (objW - 16) * pct, 5);
             ctx.restore();
@@ -2706,7 +3044,7 @@
         if(SM.boardOpen) drawObjectiveBoard();
 
         // Portal enter hint (NPC hints are drawn in drawNPCs)
-        if(SM.portal && Math.abs(SM.portal.x + 48 - player.x) < 130) {
+        if(SM.portal && !SM.bossArena && Math.abs(SM.portal.x + 48 - player.x) < 130) {
             ctx.save();
             ctx.fillStyle = 'rgba(80,0,120,0.75)';
             roundRect2(ctx, SM.portal.x - 10, SM.portal.y - 32, 116, 20, 4);
@@ -2721,6 +3059,9 @@
         if(SM.bossArena && SM.boss && !SM.boss.dying) {
             drawBossHP();
         }
+
+        // Market UI (fullscreen overlay when open)
+        if(SM.marketOpen) drawMarketUI();
     }
 
     function drawDialogueBox(d) {
@@ -2733,8 +3074,8 @@
         ctx.save();
         // Animated border glow
         const t = Date.now()/1000;
-        const glowColor = bossStyle ? `rgba(200,0,50,${0.4+0.2*Math.sin(t*3)})` : heroStyle ? `rgba(80,200,255,${0.4+0.2*Math.sin(t*3)})` : `rgba(150,80,255,${0.4+0.2*Math.sin(t*2)})`;
-        ctx.fillStyle=`rgba(0,0,0,0.85)`;
+        const glowColor = bossStyle ? 'rgba(200,0,50,0.5)' : heroStyle ? 'rgba(80,200,255,0.5)' : 'rgba(150,80,255,0.5)';
+        ctx.fillStyle='rgba(0,0,0,0.85)';
         roundRect2(ctx,20,boxY,GAME_WIDTH-40,boxH,8);
         ctx.fill();
         ctx.strokeStyle=glowColor; ctx.lineWidth=3;
@@ -2756,7 +3097,8 @@
         wrapText(ctx, shown, 36, boxY+36, GAME_WIDTH-72, 22);
         // Continue prompt
         if(d._lineComplete) {
-            ctx.fillStyle=`rgba(255,220,100,${0.5+0.5*Math.sin(t*4)})`;
+            const blinkOn = Math.floor(Date.now()/500)%2===0;
+            ctx.fillStyle= blinkOn ? 'rgba(255,220,100,0.9)' : 'rgba(255,220,100,0.4)';
             ctx.textAlign='right'; ctx.font='12px Arial';
             ctx.fillText('▶ Click or Space to continue', GAME_WIDTH-36, boxY+boxH-16);
         }
@@ -2835,17 +3177,14 @@
         ctx.fillStyle='rgba(0,0,0,0.7)';
         roundRect2(ctx, bx-10, by-5, bw+20, bh+10, 6);
         ctx.fill();
-        // HP bar
-        const t=Date.now()/1000;
-        const pct = Math.max(0,b.hp/b.maxHp);
+        const pct = Math.max(0, b.hp/b.maxHp);
         ctx.fillStyle='#111'; ctx.fillRect(bx, by+16, bw, 14);
-        const hpGrad=ctx.createLinearGradient(bx,0,bx+bw*pct,0);
-        hpGrad.addColorStop(0,'#cc0022'); hpGrad.addColorStop(1,'#ff3366');
-        ctx.fillStyle=hpGrad;
+        // Solid color bar — no gradient per frame
+        ctx.fillStyle = pct > 0.5 ? '#cc0022' : '#ff3366';
         ctx.fillRect(bx, by+16, bw*pct, 14);
-        // Enrage flash phase 2
+        // Phase 2 border — static stroke, no sin
         if(b.phase===2) {
-            ctx.strokeStyle=`rgba(255,100,0,${0.5+0.5*Math.sin(t*8)})`;
+            ctx.strokeStyle='rgba(255,100,0,0.7)';
             ctx.lineWidth=2; ctx.strokeRect(bx, by+16, bw, 14);
         }
         ctx.fillStyle='#ff8888'; ctx.font='bold 13px "Cinzel", serif';
@@ -2865,11 +3204,9 @@
         const cx=GAME_WIDTH/2;
         // Animated glow
         const t=Date.now()/1000;
-        ctx.shadowColor='#aa44ff'; ctx.shadowBlur=40+20*Math.sin(t);
         ctx.fillStyle='#cc88ff'; ctx.font='bold 42px "Cinzel Decorative", cursive';
         ctx.textAlign='center'; ctx.textBaseline='middle';
         ctx.fillText('VOID-WARDEN DEFEATED', cx, 100);
-        ctx.shadowBlur=0;
         const ratingColors = {S:'#ffd700',A:'#ff8800',B:'#88ff44',C:'#aaaaaa'};
         ctx.font='bold 90px "Cinzel Decorative", cursive';
         ctx.fillStyle=ratingColors[stats.rating]||'#fff';
@@ -2933,16 +3270,8 @@
 
             ctx.save();
             ctx.imageSmoothingEnabled = false;
-
-            // NPC aura glow — purple for NPC1, teal for NPC2
-            const glowColor = npcNum === 1 ? '#aa44ff' : '#44ffcc';
-            ctx.shadowColor = glowColor;
-            ctx.shadowBlur = nearPlayer ? 20 + 8 * Math.sin(t * 3) : 10;
-
-            // NPC2 gets a blue-tint filter to visually differentiate
+            // No shadowBlur — too expensive every frame. Use a color tint border instead.
             if (npcNum === 2) ctx.filter = 'hue-rotate(160deg) brightness(1.3) saturate(1.4)';
-
-            // Draw sprite frame
             ctx.drawImage(img, npc.frame * fw, 0, fw, fh, drawX, drawY, dw, dh);
             ctx.filter = 'none';
             ctx.restore();
@@ -2950,6 +3279,7 @@
             // Floating name tag
             const nameY = drawY - 6;
             const name = npcNum === 1 ? 'Zephira' : 'Sentinel Kael';
+            const glowColor = npcNum === 1 ? '#aa44ff' : '#44ffcc';
             ctx.save();
             ctx.font = 'bold 11px "Cinzel",serif';
             const tw = ctx.measureText(name).width + 16;
@@ -2958,22 +3288,18 @@
             ctx.fill();
             ctx.fillStyle = glowColor;
             ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.shadowColor = glowColor; ctx.shadowBlur = 6;
             ctx.fillText(name, npc.x, nameY - 7);
             ctx.restore();
 
-            // Bobbing "!" interact marker when player is nearby and NPC not talked
             if (nearPlayer && !talked) {
-                const bob = Math.sin(t * 4) * 4;
                 ctx.save();
                 ctx.font = 'bold 18px Arial';
                 ctx.fillStyle = '#ffff00';
-                ctx.shadowColor = '#ff8800'; ctx.shadowBlur = 10;
                 ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                ctx.fillText('!', npc.x, drawY - 22 + bob);
+                ctx.fillText('!', npc.x, drawY - 22);
                 ctx.font = '10px Arial';
-                ctx.fillStyle = '#ffe066'; ctx.shadowBlur = 0;
-                ctx.fillText('[F] Talk', npc.x, drawY - 36 + bob);
+                ctx.fillStyle = '#ffe066';
+                ctx.fillText('[F] Talk', npc.x, drawY - 36);
                 ctx.restore();
             }
 
@@ -3006,14 +3332,11 @@
         ctx.globalAlpha = b.dying ? b.alpha : 1;
         if(b.hurtTimer>0&&!b.dying) ctx.filter='brightness(3) saturate(0)';
         if(b.phase===2 && !b.dying) {
-            // Red glow aura
-            const t=Date.now()/1000;
-            ctx.shadowColor=`rgba(255,0,50,${0.5+0.3*Math.sin(t*4)})`;
-            ctx.shadowBlur=20+10*Math.sin(t*4);
+            // Simple red tint instead of shadowBlur for phase 2
+            ctx.filter = 'saturate(2) brightness(1.1)';
         }
         drawSprite(img, totalF, b.frame, b.facing==='left', destX, destY, b.drawWidth, b.drawHeight);
         ctx.filter='none'; ctx.restore();
-
         // Draw projectiles using Moving.png (boss_proj)
         const projImg = images['boss_proj'];
         if(projImg&&projImg.complete&&projImg.naturalWidth) {
@@ -3029,7 +3352,6 @@
     }
 
     function drawPortal() {
-        // Never draw the portal once inside the boss arena
         if(STORY_MODE.bossArena) return;
         const p = STORY_MODE.portal;
         if(!p) return;
@@ -3037,34 +3359,350 @@
         p.frameTimer=(p.frameTimer||0)+1;
         if(p.frameTimer>=5){ p.frame=(p.frame+1); p.frameTimer=0; }
         if(img&&img.complete&&img.naturalWidth){
-            // Dimensional_Portal.png is 96x64 — 3 columns x 2 rows, each frame 32x32
             const COLS=3, ROWS=2, FW=32, FH=32;
-            const TOTAL_FRAMES=COLS*ROWS; // 6
+            const TOTAL_FRAMES=COLS*ROWS;
             const frame = p.frame % TOTAL_FRAMES;
             const col = frame % COLS;
             const row = Math.floor(frame / COLS);
             const sx = col * FW, sy = row * FH;
-            // Draw portal scaled up to 96x110 on screen
             const DRAW_W=96, DRAW_H=110;
             ctx.save();
             ctx.imageSmoothingEnabled=false;
-            const t=Date.now()/1000;
-            ctx.shadowColor=`rgba(180,50,255,${0.6+0.3*Math.sin(t*3)})`;
-            ctx.shadowBlur=30+10*Math.sin(t*2);
+            // No shadowBlur — draw a simple tinted rect behind for glow effect
+            ctx.globalAlpha = 0.3;
+            ctx.fillStyle = '#aa00ff';
+            ctx.fillRect(p.x - 8, p.y - 8, DRAW_W + 16, DRAW_H + 16);
+            ctx.globalAlpha = 1;
             ctx.drawImage(img, sx, sy, FW, FH, p.x, p.y, DRAW_W, DRAW_H);
             ctx.restore();
         } else {
-            // Fallback: draw glowing oval
-            const t=Date.now()/1000;
             ctx.save();
-            ctx.shadowColor='#aa00ff'; ctx.shadowBlur=30+15*Math.sin(t*2);
-            const grad=ctx.createRadialGradient(p.x+48,p.y+55,5,p.x+48,p.y+55,50);
-            grad.addColorStop(0,'rgba(180,50,255,0.9)');
-            grad.addColorStop(1,'rgba(80,0,140,0.1)');
-            ctx.fillStyle=grad;
+            ctx.fillStyle = 'rgba(150,30,220,0.7)';
             ctx.beginPath(); ctx.ellipse(p.x+48,p.y+55,40,60,0,0,Math.PI*2); ctx.fill();
             ctx.restore();
         }
+    }
+
+    function drawMarketHouse() {
+        const m = STORY_MODE.market;
+        if (!m) return;
+        const img = images['market_house'];
+        const W = 110, H = 130;
+        ctx.save();
+        ctx.imageSmoothingEnabled = false;
+        const near = Math.abs(m.x + W/2 - player.x) < 140;
+        // No shadowBlur — use a simple border highlight when near
+        if (near) {
+            ctx.globalAlpha = 0.4;
+            ctx.fillStyle = '#ffcc00';
+            ctx.fillRect(m.x - 4, m.y - 4, W + 8, H + 8);
+            ctx.globalAlpha = 1;
+        }
+        if (img && img.complete && img.naturalWidth) {
+            ctx.drawImage(img, m.x, m.y, W, H);
+        } else {
+            ctx.fillStyle = '#6b3a1f'; ctx.fillRect(m.x, m.y+40, W, H-40);
+            ctx.fillStyle = '#8b2500';
+            ctx.beginPath();
+            ctx.moveTo(m.x, m.y+40); ctx.lineTo(m.x+W/2, m.y); ctx.lineTo(m.x+W, m.y+40);
+            ctx.closePath(); ctx.fill();
+        }
+        ctx.restore();
+        // Floating sign
+        const signY = m.y - 28;
+        ctx.save();
+        ctx.fillStyle='rgba(0,0,0,0.78)';
+        roundRect2(ctx, m.x-8, signY, W+16, 22, 5); ctx.fill();
+        ctx.strokeStyle='#ffcc44'; ctx.lineWidth=1.5;
+        roundRect2(ctx, m.x-8, signY, W+16, 22, 5); ctx.stroke();
+        ctx.font='bold 11px "Cinzel",serif'; ctx.fillStyle='#ffee88';
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText('\uD83C\uDFEA Artifact Market', m.x+W/2, signY+11);
+        ctx.restore();
+        if (near) {
+            ctx.save();
+            ctx.font='bold 12px Arial'; ctx.fillStyle='#ffcc44';
+            ctx.textAlign='center'; ctx.textBaseline='middle';
+            ctx.fillText('[F] Open Shop', m.x+W/2, m.y-44);
+            ctx.restore();
+        }
+    }
+
+    // ===== DRAW DRAGON PET =====
+    function drawDragonPet() {
+        const d = dragonPet;
+        const stateMap  = { idle:'dragon_idle', fly:'dragon_fly', attack:'dragon_attack' };
+        const framesMap = { idle:4, fly:4, attack:8 };
+        const key    = stateMap[d.state] || 'dragon_idle';
+        const img    = images[key];
+        const totalF = framesMap[d.state] || 4;
+        const DW = 64, DH = 64;
+        const t = Date.now() / 1000;
+
+        ctx.save();
+        ctx.imageSmoothingEnabled = false;
+        // No shadowBlur on dragon — too expensive per frame
+
+        if (img && img.complete && img.naturalWidth) {
+            const fw    = img.naturalWidth / totalF;
+            const fh    = img.naturalHeight;
+            const frame = Math.min(d.frame, totalF - 1);
+            const flip  = !d.facingRight; // flip when facing left
+            if (flip) {
+                ctx.save();
+                ctx.translate(d.x + DW, d.y);
+                ctx.scale(-1, 1);
+                ctx.drawImage(img, frame*fw, 0, fw, fh, 0, 0, DW, DH);
+                ctx.restore();
+            } else {
+                ctx.drawImage(img, frame*fw, 0, fw, fh, d.x, d.y, DW, DH);
+            }
+        } else {
+            ctx.font = '36px Arial';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText('\uD83D\uDC09', d.x + DW/2, d.y + DH/2);
+        }
+        ctx.restore();
+
+        // ---- Draw fire projectiles — cheap, no createRadialGradient per frame ----
+        d.fireProjs.forEach(fp => {
+            const goingRight = fp.vx > 0;
+            ctx.save();
+            ctx.imageSmoothingEnabled = false;
+            // Simple orange circle core
+            ctx.fillStyle = '#ff8800';
+            ctx.beginPath(); ctx.arc(fp.x, fp.y, 10, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#ffee44';
+            ctx.beginPath(); ctx.arc(fp.x - 2, fp.y - 2, 5, 0, Math.PI*2); ctx.fill();
+            // 3-blob tail — batch drawn, no per-blob save/restore
+            const tailDir = goingRight ? -1 : 1;
+            ctx.globalAlpha = 0.45;
+            ctx.fillStyle = '#ff5500';
+            for (let i = 1; i <= 3; i++) {
+                const r = Math.max(1, 7 - i * 2);
+                ctx.beginPath(); ctx.arc(fp.x + tailDir * i * 8, fp.y, r, 0, Math.PI*2); ctx.fill();
+            }
+            ctx.restore();
+        });
+
+        // Fire cooldown bar just below dragon
+        if (d.fireCooldown > 0) {
+            const bx = d.x, by = d.y + DH + 4, bw = DW, bh = 4;
+            ctx.save();
+            ctx.fillStyle='rgba(0,0,0,0.55)'; ctx.fillRect(bx,by,bw,bh);
+            ctx.fillStyle='#ff6600';
+            ctx.fillRect(bx, by, bw*(d.fireCooldown/600), bh);
+            ctx.restore();
+        }
+    }
+
+    // ===== DRAW MARKET UI — zero shadowBlur, zero createPattern per frame =====
+    function drawMarketUI() {
+        const SM = STORY_MODE;
+        const W = GAME_WIDTH, H = GAME_HEIGHT;
+        const PW = 440, PH = 390;
+        const PX = Math.floor(W/2 - PW/2);
+        const PY = Math.floor(H/2 - PH/2);
+        const slowTick = Math.floor(Date.now() / 300) % 2; // 0 or 1, flips ~3x/sec
+
+        // ---- backdrop ----
+        ctx.fillStyle = 'rgba(0,0,0,0.80)';
+        ctx.fillRect(0, 0, W, H);
+
+        // ---- panel background — solid color, no tiling ----
+        ctx.fillStyle = '#1a0e06';
+        roundRect2(ctx, PX, PY, PW, PH, 8); ctx.fill();
+
+        // ---- gold border ----
+        ctx.strokeStyle = '#c8a84b'; ctx.lineWidth = 3;
+        roundRect2(ctx, PX, PY, PW, PH, 8); ctx.stroke();
+        ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 1.5;
+        roundRect2(ctx, PX+4, PY+4, PW-8, PH-8, 6); ctx.stroke();
+
+        // ---- top strip ----
+        ctx.fillStyle = '#2a1a0a';
+        ctx.fillRect(PX, PY, PW, 15);
+        ctx.strokeStyle = 'rgba(200,168,75,0.3)'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(PX, PY+15); ctx.lineTo(PX+PW, PY+15); ctx.stroke();
+
+        // ---- title ----
+        ctx.font = 'bold 15px "Cinzel",serif'; ctx.fillStyle = '#ffe07a';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('\u2726  ARTIFACT MARKET  \u2726', PX+PW/2, PY+30);
+
+        // ---- [ESC] close hint ----
+        ctx.font = '9px Arial'; ctx.fillStyle = '#ffcc88';
+        ctx.textAlign = 'right'; ctx.textBaseline = 'top';
+        ctx.fillText('[ESC] Close', PX+PW-10, PY+10);
+
+        // ---- coins ----
+        drawUI_img('ui_coinicon', PX+14, PY+16, 14, 16);
+        ctx.font = 'bold 12px "Cinzel",serif'; ctx.fillStyle = '#ffd700';
+        ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        ctx.fillText(player.coins + ' gold', PX+32, PY+26);
+
+        // ---- page nav ----
+        const PAGE_LABELS = ['Artifacts (1-5)', 'Dragon Pet'];
+        drawUI_img('ui_larrow', PX+14, PY+53, 14, 20);
+        drawUI_img('ui_rarrow', PX+PW-28, PY+53, 14, 20);
+        ctx.font = 'bold 11px "Cinzel",serif'; ctx.fillStyle = '#ddc080';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(PAGE_LABELS[SM.marketPage] || '', PX+PW/2, PY+63);
+
+        // ---- separator ----
+        ctx.strokeStyle = 'rgba(200,168,75,0.3)'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(PX+10, PY+78); ctx.lineTo(PX+PW-10, PY+78); ctx.stroke();
+
+        // ===== PAGE 0: Artifacts =====
+        if (SM.marketPage === 0) {
+            const items = MARKET_ITEMS.slice(0, 5);
+            const SLOT = 76, GAP = 10;
+            const gridW = items.length * (SLOT + GAP) - GAP;
+            const gx0 = PX + (PW - gridW) / 2;
+            const gy0 = PY + 88;
+            if (!SM._marketBtns) SM._marketBtns = [];
+
+            items.forEach((item, i) => {
+                const sx = gx0 + i * (SLOT + GAP);
+                const sy = gy0;
+                const bought = SM.market ? (SM.market['bought_' + item.id] || 0) : 0;
+                let maxB = item.maxBuy;
+                if (item.dynamicMax) maxB = Math.max(0, Math.floor((player.maxHp - player.hp) / 5));
+                const canBuy = player.coins >= item.cost && (maxB === null || bought < maxB);
+                const isHov = SM._marketHover === i;
+
+                // slot background
+                ctx.fillStyle = isHov ? '#2e1e0e' : '#1e110a';
+                ctx.fillRect(sx, sy, SLOT, SLOT);
+                ctx.strokeStyle = isHov && canBuy ? '#ffe066' : canBuy ? '#8a6030' : '#3a2810';
+                ctx.lineWidth = isHov && canBuy ? 2 : 1;
+                ctx.strokeRect(sx, sy, SLOT, SLOT);
+
+                // affordable slow blink
+                if (canBuy && slowTick === 1) {
+                    ctx.fillStyle = 'rgba(255,224,96,0.12)';
+                    ctx.fillRect(sx+2, sy+2, SLOT-4, SLOT-4);
+                }
+
+                // icon
+                const iconImg = ARTIFACT_ICONS[item.id];
+                ctx.save(); ctx.imageSmoothingEnabled = false;
+                if (iconImg && iconImg.complete && iconImg.naturalWidth) {
+                    const iconSz = SLOT - 20;
+                    ctx.drawImage(iconImg, sx + (SLOT-iconSz)/2, sy + 6, iconSz, iconSz);
+                } else {
+                    ctx.font = '26px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                    ctx.fillText(['⛑️','🍓','💎','🪶','🗝️'][i], sx+SLOT/2, sy+SLOT/2-4);
+                }
+                ctx.restore();
+
+                // label
+                ctx.font = 'bold 7px Arial'; ctx.fillStyle = '#ffe07a';
+                ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+                ctx.fillText(item.label, sx+SLOT/2, sy+SLOT-3);
+
+                // cost strip
+                ctx.fillStyle = '#0e0906';
+                ctx.fillRect(sx-2, sy+SLOT+4, SLOT+4, 14);
+                ctx.strokeStyle = '#3a2810'; ctx.lineWidth = 1;
+                ctx.strokeRect(sx-2, sy+SLOT+4, SLOT+4, 14);
+                drawUI_img('ui_coinicon', sx+4, sy+SLOT+5, 10, 12);
+                ctx.font = 'bold 9px Arial'; ctx.fillStyle = '#ffd700';
+                ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+                ctx.fillText(item.cost + 'g', sx+16, sy+SLOT+11);
+                ctx.fillStyle = canBuy ? '#88ff88' : '#ff6666';
+                ctx.textAlign = 'right';
+                ctx.fillText(bought + '/' + (maxB === null ? '∞' : maxB), sx+SLOT+2, sy+SLOT+11);
+
+                // BUY button
+                const btnY = sy + SLOT + 20;
+                ctx.fillStyle = isHov && canBuy ? '#4a2e10' : '#1e0e06';
+                ctx.fillRect(sx, btnY, SLOT, 14);
+                ctx.strokeStyle = isHov && canBuy ? '#ffe066' : '#5a3a18';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(sx, btnY, SLOT, 14);
+                ctx.font = 'bold 9px "Cinzel",serif';
+                ctx.fillStyle = canBuy ? '#fffadc' : '#666655';
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText(canBuy ? 'BUY' : (maxB !== null && bought >= maxB ? 'MAX' : 'N/A'), sx+SLOT/2, btnY+7);
+
+                SM._marketBtns[i] = { x: sx, y: btnY, w: SLOT, h: 16, item };
+            });
+
+            // description strip
+            if (SM._marketHover !== undefined && SM._marketHover < 5) {
+                const hItem = MARKET_ITEMS[SM._marketHover];
+                if (hItem) {
+                    const dy = PY + PH - 52;
+                    ctx.fillStyle = '#0e0906';
+                    ctx.fillRect(PX+16, dy, PW-32, 16);
+                    ctx.strokeStyle = '#5a3a18'; ctx.lineWidth = 1;
+                    ctx.strokeRect(PX+16, dy, PW-32, 16);
+                    ctx.font = '11px "Cinzel",serif'; ctx.fillStyle = '#ffe8a0';
+                    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                    ctx.fillText(hItem.desc, PX+PW/2, dy+8);
+                }
+            }
+        }
+
+        // ===== PAGE 1: Dragon Pet =====
+        if (SM.marketPage === 1) {
+            const item = MARKET_ITEMS[5];
+            const cx = PX + PW/2;
+            const previewY = PY + 88;
+            const dragonImg = images['dragon_idle'];
+            ctx.save(); ctx.imageSmoothingEnabled = false;
+            if (dragonImg && dragonImg.complete && dragonImg.naturalWidth) {
+                const fw = dragonImg.naturalWidth / 4;
+                const animF = Math.floor(Date.now() / 160) % 4;
+                ctx.drawImage(dragonImg, animF*fw, 0, fw, dragonImg.naturalHeight, cx-50, previewY, 100, 100);
+            } else {
+                ctx.font = '80px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+                ctx.fillText('🐉', cx, previewY);
+            }
+            ctx.restore();
+
+            ctx.font = 'bold 15px "Cinzel",serif'; ctx.fillStyle = '#ffcc44';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+            ctx.fillText('🔥 ' + item.label, cx, PY+196);
+            ctx.font = '12px Arial'; ctx.fillStyle = '#f0d080';
+            ctx.fillText(item.desc, cx, PY+218);
+            ctx.font = '11px Arial'; ctx.fillStyle = '#ffaa66';
+            ctx.fillText('Cannot die  •  Auto-aims fireballs  •  Follows into Boss Arena', cx, PY+236);
+
+            // cost bar
+            ctx.fillStyle = '#0e0906';
+            ctx.fillRect(cx-80, PY+260, 160, 16);
+            ctx.strokeStyle = '#5a3a18'; ctx.lineWidth = 1;
+            ctx.strokeRect(cx-80, PY+260, 160, 16);
+            drawUI_img('ui_coinicon', cx-74, PY+262, 12, 14);
+            ctx.font = 'bold 11px "Cinzel",serif'; ctx.fillStyle = '#ffd700';
+            ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+            ctx.fillText('Cost: ' + item.cost + ' gold', cx-58, PY+268);
+
+            const alreadyOwned = dragonPet.owned;
+            const canAfford = player.coins >= item.cost;
+            const btnX = cx-70, btnY = PY+284, btnW = 140, btnH = 24;
+            if (!SM._marketBtns) SM._marketBtns = [];
+
+            ctx.fillStyle = alreadyOwned ? '#1a2a1a' : canAfford ? '#3a2010' : '#1a0e06';
+            ctx.fillRect(btnX, btnY, btnW, btnH);
+            ctx.strokeStyle = alreadyOwned ? '#44ff88' : canAfford ? '#ffe066' : '#5a3a18';
+            ctx.lineWidth = alreadyOwned || canAfford ? 2 : 1;
+            ctx.strokeRect(btnX, btnY, btnW, btnH);
+            ctx.font = 'bold 11px "Cinzel",serif';
+            ctx.fillStyle = alreadyOwned ? '#88ff88' : canAfford ? '#fffadc' : '#666655';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(alreadyOwned ? '✔ COMPANION ACTIVE' : canAfford ? 'BUY 🐉' : 'NOT ENOUGH GOLD', cx, btnY+12);
+            if (!alreadyOwned) SM._marketBtns[10] = { x: btnX, y: btnY, w: btnW, h: btnH, item };
+        }
+
+        // ---- bottom tip ----
+        ctx.fillStyle = '#2a1a0a';
+        ctx.fillRect(PX, PY+PH-18, PW, 18);
+        ctx.font = '10px "Cinzel",serif'; ctx.fillStyle = '#c8a84b';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('[ESC] Close  •  [← →] Switch Page  •  Click to Buy', PX+PW/2, PY+PH-9);
     }
 
     // Helper: rounded rect path
@@ -3134,6 +3772,30 @@
             STORY_MODE.active=false; STORY_MODE.bossArena=false;
             goHome(); return;
         }
+        // Market UI buy clicks
+        if(STORY_MODE.marketOpen) {
+            const btns = STORY_MODE._marketBtns || [];
+            for (let i=0; i<btns.length; i++) {
+                const b = btns[i];
+                if (!b) continue;
+                if (cx>=b.x && cx<=b.x+b.w && cy>=b.y && cy<=b.y+b.h) {
+                    buyMarketItem(b.item);
+                    STORY_MODE._marketBtns = []; // reset so rects recalculate
+                    return;
+                }
+            }
+            // Quit X region (top-right of panel)
+            const PW=440, PH=390, PX=Math.floor(GAME_WIDTH/2-220), PY=Math.floor(GAME_HEIGHT/2-195);
+            if (cx>=PX+PW-36 && cx<=PX+PW-8 && cy>=PY+8 && cy<=PY+36) { closeMarket(); return; }
+            // Arrow buttons
+            if (cx>=PX+14 && cx<=PX+28 && cy>=PY+48 && cy<=PY+78) {
+                STORY_MODE.marketPage=Math.max(0, STORY_MODE.marketPage-1); return;
+            }
+            if (cx>=PX+PW-28 && cx<=PX+PW-14 && cy>=PY+48 && cy<=PY+78) {
+                STORY_MODE.marketPage=Math.min(1, STORY_MODE.marketPage+1); return;
+            }
+            return; // swallow other clicks while market is open
+        }
         // Dialogue advance
         if(STORY_MODE.dialogue && !STORY_MODE.dialogue.inputMode) {
             if(dialogueState._lineComplete) { advanceDialogue(); dialogueState._lineStart=null; }
@@ -3146,8 +3808,35 @@
         }
     });
 
+    // Market hover tracking
+    canvas.addEventListener('mousemove', e => {
+        if (!STORY_MODE.marketOpen) return;
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = GAME_WIDTH / rect.width;
+        const scaleY = GAME_HEIGHT / rect.height;
+        const cx = (e.clientX - rect.left) * scaleX;
+        const cy = (e.clientY - rect.top)  * scaleY;
+        const btns = STORY_MODE._marketBtns || [];
+        STORY_MODE._marketHover = undefined;
+        for (let i=0; i<btns.length; i++) {
+            const b = btns[i];
+            if (!b) continue;
+            if (cx>=b.x && cx<=b.x+b.w && cy>=b.y && cy<=b.y+b.h) {
+                STORY_MODE._marketHover = i; break;
+            }
+        }
+    });
+
     window.addEventListener('keydown', e => {
         startMusic();
+        // Market open — ESC closes, arrows switch page
+        if (STORY_MODE.marketOpen) {
+            e.preventDefault();
+            if (e.code==='Escape') { closeMarket(); return; }
+            if (e.code==='ArrowLeft')  { STORY_MODE.marketPage=Math.max(0, STORY_MODE.marketPage-1); return; }
+            if (e.code==='ArrowRight') { STORY_MODE.marketPage=Math.min(1, STORY_MODE.marketPage+1); return; }
+            return;
+        }
         if (e.code === 'Escape' || e.code === 'KeyP') { e.preventDefault(); togglePause(); return; }
         // Story mode: TAB for objective board
         if(STORY_MODE.active && e.code==='Tab') { e.preventDefault(); STORY_MODE.boardOpen=!STORY_MODE.boardOpen; return; }
@@ -3156,7 +3845,8 @@
             const SM=STORY_MODE;
             if(SM.npc1&&!SM.npc1Talked&&Math.abs(SM.npc1.x-player.x)<120) { tryInteractNPC(1); return; }
             if(SM.npc2&&!SM.npc2Talked&&Math.abs(SM.npc2.x-player.x)<120) { tryInteractNPC(2); return; }
-            if(SM.portal&&Math.abs(SM.portal.x+48-player.x)<130) { tryEnterPortal(); return; }
+            if(SM.portal&&!SM.bossArena&&Math.abs(SM.portal.x+48-player.x)<130) { tryEnterPortal(); return; }
+            if(SM.market&&Math.abs(SM.market.x+50-player.x)<130) { openMarket(); return; }
         }
         // Story dialogue advance
         if(STORY_MODE.dialogue && !STORY_MODE.dialogue.inputMode) {
@@ -3222,8 +3912,14 @@
 
     window.restartGame = function restartGame() {
         gameOverEl.style.display = 'none';
+        if (!window._gameLoopActive) {
+            window._gameLoopActive = true;
+            _lastTime = 0; _accumulator = 0;
+            requestAnimationFrame(_gameLoopTick);
+        }
         if (STORY_MODE.active) {
             // Story mode death = full fresh restart of story mode
+            if(window.AQ) AQ.finishSCRun(false);
             speechSynthesis && speechSynthesis.cancel && speechSynthesis.cancel();
             initStoryMode();
         } else {
@@ -3240,6 +3936,7 @@
         document.getElementById('pause-menu').style.display = 'none';
     };
     window.goHome = function goHome() {
+        window._gameLoopActive = false;
         gamePaused = false;
         document.getElementById('pause-menu').style.display = 'none';
         // Fully reset story mode
@@ -3258,6 +3955,8 @@
         resetGame();
         player.dead = false;
         gameOverEl.style.display = 'none';
+        // Restart home animation
+        animateHome();
     };
 
     function resetGame() {
@@ -3400,14 +4099,15 @@
         }
 
         // ---- PLAYER MOVEMENT ----
-        if (!player.isAttacking) {
+        if (!player.isAttacking && !STORY_MODE._marketFreezePlayer) {
             if (keys['ArrowRight'] || keys['KeyD']) { player.vx = player.speed; player.facing = 'right'; }
             else if (keys['ArrowLeft'] || keys['KeyA']) { player.vx = -player.speed; player.facing = 'left'; }
             else { player.vx *= 0.8; }
-        } else { player.vx *= 0.9; }
+        } else if (!STORY_MODE._marketFreezePlayer) { player.vx *= 0.9; }
+        else { player.vx *= 0.85; } // coast to stop when market open
 
         player.wasGrounded = player.grounded;
-        if ((keys['ArrowUp'] || keys['KeyW']) && player.grounded) {
+        if ((keys['ArrowUp'] || keys['KeyW']) && player.grounded && !STORY_MODE._marketFreezePlayer) {
             player.vy = player.jumpForce;
             player.grounded = false;
         }
@@ -3462,8 +4162,10 @@
             if (STORY_MODE.npc1) STORY_MODE.npc1.x -= diff;
             if (STORY_MODE.npc2) STORY_MODE.npc2.x -= diff;
             if (STORY_MODE.portal) STORY_MODE.portal.x -= diff;
+            if (STORY_MODE.market) STORY_MODE.market.x -= diff;
             score = Math.floor(scrollX / 8);
             uiScore = score;
+            if(window.AQ) { if(STORY_MODE.active) AQ.trackSCDist(score); else AQ.trackEndlessDist(score); }
         }
 
         // ---- PLAYER PLATFORM COLLISION ----
@@ -3484,8 +4186,14 @@
             if (!c.collected && player.x < c.x + c.w && player.x + player.width > c.x &&
                 player.y < c.y + c.h && player.y + player.height > c.y) {
                 c.collected = true;
-                player.coins += ITEM_TYPES[c.type].val;
+                const coinVal = ITEM_TYPES[c.type].val;
+                player.coins += coinVal;
                 uiCoins = player.coins;
+                if(window.AQ) {
+                    const _val = coinVal;
+                    if(STORY_MODE.active) { for(let _i=0;_i<_val;_i++) AQ.trackSCCoin(); }
+                    else { for(let _i=0;_i<_val;_i++) AQ.trackEndlessCoin(); }
+                }
                 if (c.type === 'COIN') {
                     playSound('coin');
                 }
@@ -3675,7 +4383,7 @@
                         e.frame = 0;
                         e.frameTimer = 0;
                         // Story mode kill tracking
-                        if(STORY_MODE.active) STORY_MODE.totalKills++;
+                        if(STORY_MODE.active) { STORY_MODE.totalKills++; if(window.AQ) AQ.trackSCKill(); }
                         // Burst particles
                         for (let i = 0; i < 12; i++) {
                             const angle = (Math.PI * 2 / 12) * i;
@@ -3716,11 +4424,139 @@
             });
         }
 
-        // Update particles
-        particles.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += 0.2; p.life--; });
+        // ---- DRAGON PET UPDATE ----
+        if (dragonPet.owned) {
+            const d = dragonPet;
+            const t = Date.now() / 1000;
+
+            // Find closest target — enemies OR boss
+            let closestTarget = null; let closestDist = 600;
+            enemies.forEach(e => {
+                if (e.dying) return;
+                const dist = Math.abs(e.x - d.x);
+                if (dist < closestDist) { closestDist = dist; closestTarget = e; }
+            });
+            // Also consider boss as target
+            if (STORY_MODE.bossArena && STORY_MODE.boss && !STORY_MODE.boss.dying) {
+                const bDist = Math.abs(STORY_MODE.boss.x - d.x);
+                if (bDist < closestDist) { closestDist = bDist; closestTarget = STORY_MODE.boss; }
+            }
+
+            // Dragon hovers behind player (opposite side to facing direction)
+            const offsetSide = player.facing === 'right' ? -70 : 70;
+            d.targetX = player.x + offsetSide + Math.sin(t * 1.2) * 8;
+            d.targetY = player.y + 10 + Math.sin(t * 2.0) * 6;
+
+            // Facing — always toward target if one exists, else match player
+            if (closestTarget) {
+                d.facingRight = closestTarget.x > d.x;
+            } else {
+                d.facingRight = player.facing === 'right';
+            }
+
+            // Smooth follow
+            d.x += (d.targetX - d.x) * 0.1;
+            d.y += (d.targetY - d.y) * 0.1;
+
+            // Animate frames
+            const dragonAnimCfg = { idle:{frames:4,speed:10}, fly:{frames:4,speed:7}, attack:{frames:8,speed:5} };
+            const dcfg = dragonAnimCfg[d.state] || dragonAnimCfg.idle;
+            d.frameTimer = (d.frameTimer || 0) + 1;
+            if (d.frameTimer >= dcfg.speed) { d.frame = (d.frame + 1) % dcfg.frames; d.frameTimer = 0; }
+
+            // Fire cooldown tick
+            if (d.fireCooldown > 0) d.fireCooldown--;
+
+            // Attack closest target (enemy or boss) — auto-aim
+            if (closestTarget && d.fireCooldown <= 0) {
+                d.fireCooldown = 600; // 10 seconds
+                d.state = 'attack'; d.frame = 0; d.frameTimer = 0;
+                // Calculate aimed velocity toward target center
+                const tx = closestTarget.x + (closestTarget.width || 50) / 2;
+                const ty = closestTarget.y + (closestTarget.height || 70) / 2;
+                const dx = tx - (d.x + 32);
+                const dy = ty - (d.y + 20);
+                const len = Math.sqrt(dx*dx + dy*dy) || 1;
+                const spd = 7;
+                d.fireProjs.push({
+                    x: d.x + (dx > 0 ? 40 : 0),
+                    y: d.y + 20,
+                    vx: (dx / len) * spd,
+                    vy: (dy / len) * spd,
+                    frame: 0, frameTimer: 0
+                });
+                setTimeout(() => { if (dragonPet.owned) dragonPet.state = 'fly'; }, 500);
+            } else if (d.state !== 'attack') {
+                d.state = Math.abs(d.x - d.targetX) > 12 ? 'fly' : 'idle';
+            }
+
+            // Update fire projectiles
+            d.fireProjs.forEach(fp => {
+                fp.x += fp.vx;
+                fp.y += (fp.vy || 0);
+                fp.frameTimer++;
+                if (fp.frameTimer >= 3) { fp.frame = (fp.frame + 1) % 4; fp.frameTimer = 0; }
+                if (fp.hit) return;
+                // Hit enemies
+                enemies.forEach(e => {
+                    if (e.dying || fp.hit) return;
+                    if (Math.abs(fp.x - (e.x + e.width/2)) < 28 && Math.abs(fp.y - (e.y + e.height/2)) < 28) {
+                        fp.hit = true;
+                        e.hp -= 2;
+                        e.hurtTimer = 12; e.state = 'hurt'; e.frame = 0;
+                        dmgNumbers.push({ x: e.x+10, y: e.y-10, val: '🔥2', life: 45, color: '#ff6600' });
+                        if (e.hp <= 0 && !e.dying) {
+                            e.dying = true; e.alpha = 1; e.frame = 0;
+                            if (STORY_MODE.active) { STORY_MODE.totalKills++; if(window.AQ) AQ.trackSCKill(); }
+                            shakeTimer = 8; shakeMag = 4;
+                        }
+                        for (let i = 0; i < 8; i++) {
+                            const ang = (Math.PI*2/8)*i;
+                            particles.push({ x: fp.x, y: fp.y, vx: Math.cos(ang)*3, vy: Math.sin(ang)*3-1, life: 22, color: i%2===0?'#ff6600':'#ffcc00' });
+                        }
+                    }
+                });
+                // Hit boss
+                if (STORY_MODE.bossArena && STORY_MODE.boss && !STORY_MODE.boss.dying && !fp.hit) {
+                    const b = STORY_MODE.boss;
+                    if (Math.abs(fp.x - (b.x + b.width/2)) < 40 && Math.abs(fp.y - (b.y + b.height/2)) < 50) {
+                        fp.hit = true;
+                        b.hp -= 2;
+                        b.hurtTimer = 10;
+                        if(window.AQ) AQ.trackSCDamageDealt(2);
+                        dmgNumbers.push({ x: b.x+30, y: b.y-10, val: '🔥2', life: 45, color: '#ff6600' });
+                        for (let i = 0; i < 6; i++) {
+                            const ang = (Math.PI*2/6)*i;
+                            particles.push({ x: fp.x, y: fp.y, vx: Math.cos(ang)*3, vy: Math.sin(ang)*3-1, life: 22, color: '#ff6600' });
+                        }
+                        if (b.hp <= 0 && !b.dying) {
+                            b.dying = true; b.state = 'death'; b.frame = 0; b.frameTimer = 0; b.alpha = 1;
+                            shakeTimer = 30; shakeMag = 10;
+                            playBossDefeatSpeech();
+                            setTimeout(() => { if(STORY_MODE.bossArena && !STORY_MODE.bossDefeated) startBossDeathCinematic(); }, 4500);
+                        }
+                    }
+                }
+            });
+            d.fireProjs = d.fireProjs.filter(fp => !fp.hit && fp.x > -150 && fp.x < GAME_WIDTH+150 && fp.y > -100 && fp.y < GAME_HEIGHT+100);
+        }
+
+
+
+        // ---- PARTICLE UPDATE ----
+        particles.forEach(p => {
+            p.x += p.vx; p.y += p.vy;
+            p.vy += 0.18; // gravity
+            p.vx *= 0.97; // drag
+            p.life--;
+        });
         particles = particles.filter(p => p.life > 0);
 
-        // Tick blood animations (30fps = advance every 2 game frames, 60fps = every 1)
+        // dmgNumbers float upward and fade
+        dmgNumbers.forEach(d => { d.y -= 0.7; d.life--; });
+        dmgNumbers = dmgNumbers.filter(d => d.life > 0);
+
+
         bloodAnims.forEach(b => {
             b.frameTimer++;
             const frameDuration = b.fps30 ? 2 : 1;
@@ -3812,6 +4648,7 @@
         if (player.fireShield > 0 && typeof dmg === 'number' && dmg <= 7) return; // blocks trap damage
         player.hp = Math.max(0, player.hp - dmg);
         player.invincible = 60;
+        if(window.AQ) { if(STORY_MODE.active && !STORY_MODE.bossArena) AQ.trackSCDamageTaken(dmg); }
         uiHp = player.hp; uiMaxHp = player.maxHp;
         dmgNumbers.push({ x: player.x + 10, y: player.y - 10, val: dmg, life: 55, color: '#ff4444' });
         shakeTimer = 10; shakeMag = 5;
@@ -3820,6 +4657,8 @@
             if(STORY_MODE.active && STORY_MODE.bossArena) {
                 goScore.textContent = `Slain by the Void-Warden. Kills: ${STORY_MODE.totalKills}  |  Distance: ${score}m`;
             } else {
+                if(STORY_MODE.active && window.AQ) AQ.trackSCDeath();
+                if(!STORY_MODE.active && window.AQ) { AQ.trackEndlessDist(score); AQ.finishEndlessRun(); }
                 goScore.textContent = `Distance: ${score}m  |  Coins: ${player.coins}`;
             }
             gameOverEl.style.display = 'flex';
@@ -3846,6 +4685,8 @@
     }
 
     function draw() {
+        ctx.shadowBlur = 0; // ALWAYS reset first — prevents any prior shadowBlur leaking
+        ctx.globalAlpha = 1;
         ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
         // Screen shake
@@ -3858,23 +4699,22 @@
 
         // Background
         if (STORY_MODE.bossArena) {
-            // Boss arena custom background
             const arenaBack = images['arena_back'];
             if (arenaBack && arenaBack.complete && arenaBack.naturalWidth) {
                 ctx.drawImage(arenaBack, 0, 0, GAME_WIDTH, GAME_HEIGHT);
             } else {
                 ctx.fillStyle = '#1a0a00'; ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
             }
-            // Dark atmospheric overlay
-            const fog = ctx.createLinearGradient(0, 0, 0, GAME_HEIGHT);
-            fog.addColorStop(0, 'rgba(0,0,0,0.3)');
-            fog.addColorStop(1, 'rgba(0,0,0,0.5)');
-            ctx.fillStyle = fog; ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+            // Static dark overlay — no gradient creation per frame
+            ctx.fillStyle = 'rgba(0,0,0,0.38)'; ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
         } else {
             let bgScroll = (scrollX * 0.3) % GAME_WIDTH;
             ctx.drawImage(images.background, -bgScroll, 0, GAME_WIDTH, GAME_HEIGHT);
             ctx.drawImage(images.background, GAME_WIDTH - bgScroll, 0, GAME_WIDTH, GAME_HEIGHT);
         }
+
+        // Market house drawn right after background — always behind platforms & characters
+        if(STORY_MODE.active && STORY_MODE.market && !STORY_MODE.bossArena) drawMarketHouse();
 
         // Platforms
         platforms.forEach(p => {
@@ -3936,18 +4776,13 @@
             const progress = ca.t / ca.maxT; // 0→1
             const img = ARTIFACT_ICONS[ca.artifactId];
             if (!img || !img.complete || !img.naturalWidth) return;
-            // Rise up from ground
-            const rise = progress * 60; // rises 60px up
+            const rise = progress * 60;
             const drawY = ca.y - rise;
-            // Scale in then fade out
             const scale = progress < 0.3 ? progress / 0.3 : progress > 0.75 ? 1 - (progress - 0.75) / 0.25 : 1;
-            const alpha = scale;
             const sz = 28 * scale;
             ctx.save();
-            ctx.globalAlpha = alpha;
-            // Glow effect
-            ctx.shadowColor = '#ffdd44';
-            ctx.shadowBlur = 12 * scale;
+            ctx.globalAlpha = scale;
+            ctx.imageSmoothingEnabled = false;
             ctx.drawImage(img, ca.x + 6 - sz/2, drawY + 6 - sz/2, sz, sz);
             ctx.restore();
             // Sparkle particles around it
@@ -4033,65 +4868,38 @@
             const destY = player.y + player.height - player.drawHeight;
             // Fire shield glow — animated flame ring
             if (player.fireShield > 0) {
-                const t = Date.now() / 1000;
                 const cx = player.x + player.width / 2;
                 const cy = player.y + player.height / 2;
-                // Outer pulsing ring
-                for (let ring = 0; ring < 3; ring++) {
-                    const phase = t * 4 + ring * (Math.PI * 2 / 3);
-                    const radius = 38 + ring * 6 + Math.sin(phase) * 5;
-                    const alpha = (0.5 - ring * 0.12) * (0.6 + 0.4 * Math.sin(phase));
-                    ctx.save();
-                    ctx.globalAlpha = alpha;
-                    const grad = ctx.createRadialGradient(cx, cy, radius - 8, cx, cy, radius + 4);
-                    grad.addColorStop(0, '#ff6600');
-                    grad.addColorStop(0.5, '#ff2200');
-                    grad.addColorStop(1, 'transparent');
-                    ctx.fillStyle = grad;
-                    ctx.beginPath();
-                    ctx.arc(cx, cy, radius + 6, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.restore();
-                }
-                // Orbiting fire sparks
-                for (let s = 0; s < 6; s++) {
-                    const angle = t * 3 + s * (Math.PI * 2 / 6);
-                    const r = 42 + Math.sin(t * 5 + s) * 6;
-                    const sx2 = cx + Math.cos(angle) * r;
-                    const sy2 = cy + Math.sin(angle) * r * 0.5;
-                    ctx.save();
-                    ctx.globalAlpha = 0.8;
-                    ctx.fillStyle = s % 2 === 0 ? '#ff8800' : '#ffcc00';
-                    ctx.shadowColor = '#ff4400';
-                    ctx.shadowBlur = 8;
-                    ctx.beginPath();
-                    ctx.arc(sx2, sy2, 3 + Math.sin(t * 6 + s) * 1.5, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.restore();
-                }
+                // Simple pulsing ring — no shadowBlur, no nested save/restore loops
+                const pulse = Math.floor(Date.now() / 120) % 2 === 0 ? 40 : 44;
+                ctx.save();
+                ctx.globalAlpha = 0.55;
+                ctx.strokeStyle = '#ff6600';
+                ctx.lineWidth = 3;
+                ctx.beginPath(); ctx.arc(cx, cy, pulse, 0, Math.PI * 2); ctx.stroke();
+                ctx.strokeStyle = '#ff2200';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath(); ctx.arc(cx, cy, pulse - 6, 0, Math.PI * 2); ctx.stroke();
+                ctx.restore();
             }
             drawSprite(spriteImg, totalFrames, player.frame, false, destX, destY, player.drawWidth, player.drawHeight);
         }
 
-        // Damage numbers
+        // Damage numbers (already moved up by update loop)
         dmgNumbers.forEach(d => {
             const alpha = Math.min(1, d.life / 20);
             ctx.save();
             ctx.globalAlpha = alpha;
             if (d.isText) {
                 ctx.font = 'bold 14px Arial';
-                ctx.strokeStyle = '#000';
-                ctx.lineWidth = 3;
+                ctx.strokeStyle = '#000'; ctx.lineWidth = 3;
                 ctx.strokeText(d.val, d.x, d.y);
-                ctx.fillStyle = d.color;
-                ctx.fillText(d.val, d.x, d.y);
+                ctx.fillStyle = d.color; ctx.fillText(d.val, d.x, d.y);
             } else {
                 ctx.font = 'bold 22px Arial';
-                ctx.strokeStyle = '#000';
-                ctx.lineWidth = 4;
+                ctx.strokeStyle = '#000'; ctx.lineWidth = 4;
                 ctx.strokeText('-' + d.val, d.x, d.y);
-                ctx.fillStyle = d.color;
-                ctx.fillText('-' + d.val, d.x, d.y);
+                ctx.fillStyle = d.color; ctx.fillText('-' + d.val, d.x, d.y);
             }
             ctx.restore();
         });
@@ -4100,10 +4908,12 @@
 
         // ===== STORY MODE RENDERING =====
         if(STORY_MODE.active) {
-            // Draw portal
+            // Draw portal (behind player)
             if(STORY_MODE.portal) drawPortal();
             // Draw NPCs
             drawNPCs();
+            // Draw dragon pet (above player)
+            if(dragonPet.owned) drawDragonPet();
             // Draw boss
             if(STORY_MODE.bossArena && STORY_MODE.boss) drawBossSprites();
         }
@@ -4114,10 +4924,6 @@
         // ===== STORY UI (drawn on top of everything) =====
         if(STORY_MODE.active) drawStoryUI();
 
-        requestAnimationFrame(() => {
-            update();
-            draw();
-        });
     }
 
     // ---- Sprite-based UI helpers ----
@@ -4144,8 +4950,6 @@
         ctx.fillStyle = color || '#ffe8a0';
         ctx.textAlign = align || 'left';
         ctx.textBaseline = 'middle';
-        ctx.shadowColor = 'rgba(0,0,0,0.9)';
-        ctx.shadowBlur = 4;
         ctx.fillText(txt, x, y);
         ctx.restore();
     }
@@ -4307,9 +5111,34 @@
         ctx.restore();
     }
 
+    window._gameLoopActive = false;
+
+    // Fixed-timestep game loop — always runs physics at 60fps
+    // regardless of monitor refresh rate or CPU speed
+    const _STEP = 1000 / 60; // 16.67ms per tick
+    let _lastTime = 0;
+    let _accumulator = 0;
+
+    function _gameLoopTick(timestamp) {
+        if (!window._gameLoopActive) return;
+        if (_lastTime === 0) _lastTime = timestamp;
+        let delta = timestamp - _lastTime;
+        _lastTime = timestamp;
+        // Cap delta so a tab that was backgrounded doesn't explode
+        if (delta > 200) delta = 200;
+        _accumulator += delta;
+        // Run as many fixed steps as accumulated time allows
+        while (_accumulator >= _STEP) {
+            update();
+            _accumulator -= _STEP;
+        }
+        draw();
+        requestAnimationFrame(_gameLoopTick);
+    }
+
     loadAssets(() => {
         resetGame();
-        draw();
+        // game loop starts only when player hits Play
     });
 
     // ===== HOME PAGE =====
@@ -4362,6 +5191,7 @@
             animateSpriteOnCanvas('howto-enemy-canvas', 'enemy_run',  16, 5);
             animateSpriteOnCanvas('howto-npc-canvas',   'npc_idle',   10, 8);
             animateSpriteOnCanvas('howto-boss-canvas',  'boss_idle',  9,  8);
+            animateSpriteOnCanvas('howto-dragon-canvas','dragon_fly',  4,  6);
         }
         tryStartSprites();
 
@@ -4395,8 +5225,8 @@
         }
 
         let homeAnimId;
-        function animateHome() {
-            homeAnimId = requestAnimationFrame(animateHome);
+        window.animateHome = function animateHome() {
+            homeAnimId = requestAnimationFrame(window.animateHome);
             const W = homeCanvas.width, H = homeCanvas.height;
             const t = Date.now() / 1000;
             homeCtx.clearRect(0, 0, W, H);
@@ -4519,18 +5349,516 @@
                 homeCtx.restore();
             }
         }
-        animateHome();
+        window.animateHome();
 
         window.startGame = function(mode) {
             window._gameMode = mode || 'endless';
+            if(mode !== 'story' && window.AQ) AQ.startEndlessRun();
             const homeEl = document.getElementById('home-screen');
             homeEl.classList.add('fade-out');
             startMusic();
             cancelAnimationFrame(homeAnimId);
-            setTimeout(() => { homeEl.style.display = 'none'; if(window._gameMode==='story') initStoryMode(); }, 600);
+            setTimeout(() => {
+                homeEl.style.display = 'none';
+                resetGame();
+                window._gameLoopActive = true;
+                _lastTime = 0; _accumulator = 0;
+                requestAnimationFrame(_gameLoopTick);
+                if(window._gameMode==='story') initStoryMode();
+            }, 600);
         };
     })();
 
         </script>
+
+<script>
+// ================================================================
+// AQ — Supabase Auth + Stats + Leaderboard Module
+// ================================================================
+(function() {
+'use strict';
+
+// ---- CONFIG: paste your Supabase URL and anon key here ----
+const SUPABASE_URL  = 'https://zigtdrhriwhsorbvxrho.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppZ3RkcmhyaXdoc29yYnZ4cmhvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1OTA0NTEsImV4cCI6MjA5MjE2NjQ1MX0.xtmzajqqMlXTaN-h-vJrLxdcbhUawzJyTHE1C6tsFPg';
+// -----------------------------------------------------------
+
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// Session stored in localStorage
+let _session = null; // { id, username, total_coins }
+let _isGuest  = false;
+
+function loadSession() {
+    try {
+        const s = localStorage.getItem('aq_session');
+        if (s) _session = JSON.parse(s);
+    } catch(e) { _session = null; }
+}
+function saveSession(s) {
+    _session = s;
+    if (s) localStorage.setItem('aq_session', JSON.stringify(s));
+    else    localStorage.removeItem('aq_session');
+}
+
+// ---- Run stats accumulated this session ----
+const _runStats = {
+    sc: { kills:0, damageDone:0, damageTaken:0, deaths:0, coinsEarned:0, coinsSpent:0, distance:0, startMs:0 },
+    endless: { kills:0, coinsEarned:0, distance:0, startMs:0 }
+};
+
+// ---- ACHIEVEMENTS catalog (mirrors DB) ----
+const ACH_CATALOG = [
+    { key:'first_run',    name:'First Step',      desc:'Complete your first Shadow Chronicle run',    icon:'👣' },
+    { key:'speed_demon',  name:'Speed Demon',      desc:'Finish Shadow Chronicle in under 10 minutes', icon:'⚡' },
+    { key:'untouchable',  name:'Untouchable',      desc:'Finish Shadow Chronicle taking 0 damage',     icon:'🛡️' },
+    { key:'coin_hoarder', name:'Coin Hoarder',     desc:'Bank 1,000 coins total',                     icon:'💰' },
+    { key:'rich',         name:'Rich',             desc:'Bank 10,000 coins total',                    icon:'🏦' },
+    { key:'exterminator', name:'Exterminator',     desc:'Kill 500 enemies across all runs',           icon:'💀' },
+    { key:'endless_100',  name:'Century Runner',   desc:'Reach distance 100 in Endless mode',         icon:'🏃' },
+    { key:'endless_500',  name:'Marathon',         desc:'Reach distance 500 in Endless mode',         icon:'🏅' },
+    { key:'deathless',    name:'Deathless',        desc:'Complete Shadow Chronicle with 0 deaths',    icon:'👑' },
+    { key:'veteran',      name:'10x Veteran',      desc:'Complete Shadow Chronicle 10 times',         icon:'🎖️' },
+];
+
+// ---- HASH helpers ----
+async function hashPwd(pwd) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pwd));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+function checkPwd(pwd, hash) {
+    // sync compare not possible with subtle — caller must use await checkPwdAsync
+    return false;
+}
+async function checkPwdAsync(pwd, hash) {
+    return (await hashPwd(pwd)) === hash;
+}
+
+// ---- UI helpers ----
+function el(id)    { return document.getElementById(id); }
+function hide(id)  { const e=el(id); if(e) e.style.display='none'; }
+function show(id, disp) { const e=el(id); if(e) e.style.display = disp||'flex'; }
+
+function updateHomeBar() {
+    if (_session && !_isGuest) {
+        hide('aq-home-auth');
+        el('aq-home-username').textContent = _session.username;
+        el('aq-home-bank').textContent = (_session.total_coins||0).toLocaleString();
+        show('aq-home-user', 'block');
+        show('aq-topbar', 'flex');
+        // In-game bank display
+        show('aq-game-coins-display', 'block');
+        el('aq-bank-val').textContent = (_session.total_coins||0).toLocaleString();
+    } else {
+        show('aq-home-auth', 'flex');
+        hide('aq-home-user');
+        hide('aq-topbar');
+        hide('aq-game-coins-display');
+    }
+}
+
+// ---- AUTH PANEL ----
+function renderAuthPanel(mode) {
+    const p = el('aq-auth-panel');
+    const isLogin = (mode === 'login');
+    p.innerHTML = `
+        <div class="aq-panel-title">${isLogin ? '⚔ LOGIN' : '📜 REGISTER'}</div>
+        <div class="aq-divider"></div>
+        <div class="aq-label">Username</div>
+        <input class="aq-input" id="aq-uname" placeholder="Enter username" maxlength="20" autocomplete="off">
+        <div class="aq-label">Password</div>
+        <input class="aq-input" id="aq-pwd" type="password" placeholder="Enter password" maxlength="40">
+        <div class="aq-err" id="aq-auth-err" style="display:none;"></div>
+        <button class="aq-btn primary" id="aq-auth-submit">${isLogin ? 'Login' : 'Create Account'}</button>
+        <button class="aq-btn ghost" onclick="AQ.showAuth('${isLogin?'register':'login'}')">
+            ${isLogin ? "Don't have an account? Sign Up" : 'Already have an account? Login'}
+        </button>
+        <button class="aq-btn ghost" onclick="AQ.guestMode()">Continue as Guest (no saves)</button>
+        <button class="aq-btn ghost" onclick="AQ.closeAuth()">✕ Close</button>
+    `;
+    el('aq-auth-submit').onclick = () => {
+        if (isLogin) doLogin();
+        else doRegister();
+    };
+    // Enter key
+    [el('aq-uname'), el('aq-pwd')].forEach(inp => {
+        inp && inp.addEventListener('keydown', e => { if(e.key==='Enter') el('aq-auth-submit').click(); });
+    });
+}
+
+function authErr(msg) {
+    const e = el('aq-auth-err');
+    if (e) { e.textContent = msg; e.style.display = 'block'; }
+}
+
+async function doRegister() {
+    const username = (el('aq-uname').value||'').trim();
+    const pwd      = (el('aq-pwd').value||'').trim();
+    if (!username || username.length < 3) { authErr('Username must be at least 3 characters.'); return; }
+    if (!pwd || pwd.length < 4) { authErr('Password must be at least 4 characters.'); return; }
+    el('aq-auth-submit').textContent = 'Creating...';
+    el('aq-auth-submit').disabled = true;
+    // Check username taken
+    const { data: existing } = await db.from('users').select('id').eq('username', username).maybeSingle();
+    if (existing) { authErr('Username already taken.'); el('aq-auth-submit').textContent='Create Account'; el('aq-auth-submit').disabled=false; return; }
+    const hash = await hashPwd(pwd);
+    const { data, error } = await db.from('users').insert({ username, password_hash: hash }).select('id,username,total_coins').single();
+    if (error || !data) { authErr('Error creating account. Try again.'); el('aq-auth-submit').textContent='Create Account'; el('aq-auth-submit').disabled=false; return; }
+    saveSession({ id: data.id, username: data.username, total_coins: data.total_coins||0 });
+    _isGuest = false;
+    closeAllOverlays();
+    updateHomeBar();
+}
+
+async function doLogin() {
+    const username = (el('aq-uname').value||'').trim();
+    const pwd      = (el('aq-pwd').value||'').trim();
+    if (!username || !pwd) { authErr('Please fill in all fields.'); return; }
+    el('aq-auth-submit').textContent = 'Logging in...';
+    el('aq-auth-submit').disabled = true;
+    const { data, error } = await db.from('users').select('id,username,password_hash,total_coins').eq('username', username).maybeSingle();
+    if (!data || error) { authErr('Username not found.'); el('aq-auth-submit').textContent='Login'; el('aq-auth-submit').disabled=false; return; }
+    if (!await checkPwdAsync(pwd, data.password_hash)) { authErr('Incorrect password.'); el('aq-auth-submit').textContent='Login'; el('aq-auth-submit').disabled=false; return; }
+    saveSession({ id: data.id, username: data.username, total_coins: data.total_coins||0 });
+    _isGuest = false;
+    closeAllOverlays();
+    updateHomeBar();
+}
+
+function closeAllOverlays() {
+    hide('aq-auth-overlay');
+    hide('aq-profile-overlay');
+    hide('aq-lb-overlay');
+}
+
+// ---- RUN STATS HOOKS (called by game code) ----
+function startSCRun() {
+    if (!_session || _isGuest) return;
+    _runStats.sc = { kills:0, damageDone:0, damageTaken:0, deaths:0, coinsEarned:0, coinsSpent:0, distance:0, startMs: Date.now() };
+}
+
+function startEndlessRun() {
+    if (!_session || _isGuest) return;
+    _runStats.endless = { kills:0, coinsEarned:0, distance:0, startMs: Date.now() };
+}
+
+function trackSCKill()              { _runStats.sc.kills++; }
+function trackSCDamageDealt(d)     { _runStats.sc.damageDone  += (d||0); }
+function trackSCDamageTaken(d)     { _runStats.sc.damageTaken += (d||0); }
+function trackSCDeath()            { _runStats.sc.deaths++; }
+function trackSCCoin()             { _runStats.sc.coinsEarned++; }
+function trackSCSpend(cost)        { _runStats.sc.coinsSpent += (cost||0); }
+function trackSCDist(d)            { _runStats.sc.distance = Math.max(_runStats.sc.distance, d||0); }
+
+function trackEndlessKill()        { _runStats.endless.kills++; }
+function trackEndlessCoin()        { _runStats.endless.coinsEarned++; }
+function trackEndlessDist(d)       { _runStats.endless.distance = Math.max(_runStats.endless.distance, d||0); }
+
+async function finishSCRun(completed) {
+    if (!_session || _isGuest) return;
+    const s = _runStats.sc;
+    const time_ms = completed ? (Date.now() - s.startMs) : null;
+    // Use max of tracked vs actual player coins as safety net
+    const actualCoins = (typeof player !== 'undefined' ? player.coins : 0);
+    const coinsEarned = Math.max(s.coinsEarned, actualCoins + s.coinsSpent);
+    const { data: run, error } = await db.from('shadow_chronicle_runs').insert({
+        user_id:       _session.id,
+        completed:     !!completed,
+        time_taken_ms: time_ms,
+        coins_earned:  coinsEarned,
+        coins_spent:   s.coinsSpent,
+        enemies_killed: s.kills,
+        damage_dealt:  s.damageDone,
+        damage_taken:  s.damageTaken,
+        deaths:        s.deaths,
+        distance:      s.distance,
+    }).select('id, coins_banked').single();
+    if (error || !run) { console.warn('SC run save error', error); return; }
+
+    // Bank leftover coins
+    if (completed && run.coins_banked > 0) {
+        await db.from('users').update({ total_coins: (_session.total_coins||0) + run.coins_banked }).eq('id', _session.id);
+        _session.total_coins = (_session.total_coins||0) + run.coins_banked;
+        saveSession(_session);
+        updateHomeBar();
+        // Show bank notification
+        const bv = el('aq-bank-val');
+        if (bv) bv.textContent = _session.total_coins.toLocaleString();
+    }
+
+    // Check achievements
+    await checkAchievements();
+}
+
+async function finishEndlessRun() {
+    if (!_session || _isGuest) return;
+    const s = _runStats.endless;
+    await db.from('endless_runs').insert({
+        user_id:       _session.id,
+        distance:      s.distance,
+        coins_earned:  s.coinsEarned,
+        enemies_killed: s.kills,
+    });
+    await checkAchievements();
+}
+
+// ---- ACHIEVEMENTS ----
+async function checkAchievements() {
+    if (!_session || _isGuest) return;
+    try {
+        // Fetch user aggregate stats for achievement checks
+        const [scRes, endlessRes, achRes] = await Promise.all([
+            db.from('shadow_chronicle_runs').select('completed, time_taken_ms, damage_taken, deaths, enemies_killed').eq('user_id', _session.id),
+            db.from('endless_runs').select('distance, enemies_killed').eq('user_id', _session.id),
+            db.from('user_achievements').select('achievement_id').eq('user_id', _session.id)
+        ]);
+
+        const scRuns    = scRes.data || [];
+        const eRuns     = endlessRes.data || [];
+        const unlockedIds = new Set((achRes.data||[]).map(a=>a.achievement_id));
+
+        const completions     = scRuns.filter(r=>r.completed);
+        const totalSCKills    = scRuns.reduce((s,r)=>s+(r.enemies_killed||0),0);
+        const totalEndKills   = eRuns.reduce((s,r)=>s+(r.enemies_killed||0),0);
+        const totalKills      = totalSCKills + totalEndKills;
+        const bestEndDist     = Math.max(0,...eRuns.map(r=>r.distance||0));
+        const hasDeathless    = completions.some(r=>(r.deaths||0)===0);
+        const hasUntouchable  = completions.some(r=>(r.damage_taken||0)===0);
+        const hasSpeedDemon   = completions.some(r=>r.time_taken_ms && r.time_taken_ms < 10*60*1000);
+        const bank            = _session.total_coins||0;
+
+        // Achievement key → id lookup
+        const { data: achDefs } = await db.from('achievements').select('id,key');
+        const keyToId = {};
+        (achDefs||[]).forEach(a=>{ keyToId[a.key]=a.id; });
+
+        const toUnlock = [];
+        function check(key, cond) { if(cond && keyToId[key] && !unlockedIds.has(keyToId[key])) toUnlock.push(keyToId[key]); }
+
+        check('first_run',    completions.length >= 1);
+        check('speed_demon',  hasSpeedDemon);
+        check('untouchable',  hasUntouchable);
+        check('coin_hoarder', bank >= 1000);
+        check('rich',         bank >= 10000);
+        check('exterminator', totalKills >= 500);
+        check('endless_100',  bestEndDist >= 100);
+        check('endless_500',  bestEndDist >= 500);
+        check('deathless',    hasDeathless);
+        check('veteran',      completions.length >= 10);
+
+        if (toUnlock.length) {
+            await db.from('user_achievements').insert(
+                toUnlock.map(id=>({ user_id: _session.id, achievement_id: id }))
+            );
+        }
+    } catch(e) { console.warn('Ach check err', e); }
+}
+
+// ---- PROFILE PANEL ----
+async function showProfile() {
+    if (!_session) { showAuth('login'); return; }
+    const p = el('aq-profile-panel');
+    p.innerHTML = '<div class="aq-panel-title">👤 PROFILE</div><div style="color:#7a5830;font-family:Cinzel,serif;font-size:12px;">Loading...</div>';
+    show('aq-profile-overlay');
+
+    try {
+        const [userRes, scRes, endRes, achRes, achDefRes] = await Promise.all([
+            db.from('users').select('username,total_coins,created_at').eq('id', _session.id).single(),
+            db.from('shadow_chronicle_runs').select('*').eq('user_id', _session.id),
+            db.from('endless_runs').select('*').eq('user_id', _session.id),
+            db.from('user_achievements').select('achievement_id, unlocked_at').eq('user_id', _session.id),
+            db.from('achievements').select('*')
+        ]);
+
+        const user   = userRes.data || {};
+        const scRuns = scRes.data   || [];
+        const eRuns  = endRes.data  || [];
+        const unlockedAchs = new Set((achRes.data||[]).map(a=>a.achievement_id));
+        const achDefs = achDefRes.data || [];
+
+        const completions     = scRuns.filter(r=>r.completed);
+        const bestSCTime      = completions.length ? Math.min(...completions.map(r=>r.time_taken_ms||Infinity)) : null;
+        const totalSCKills    = scRuns.reduce((s,r)=>s+(r.enemies_killed||0),0);
+        const totalSCDmgDone  = scRuns.reduce((s,r)=>s+(r.damage_dealt||0),0);
+        const totalSCDmgTaken = scRuns.reduce((s,r)=>s+(r.damage_taken||0),0);
+        const bestEndDist     = eRuns.length ? Math.max(...eRuns.map(r=>r.distance||0)) : 0;
+        const totalEndRuns    = eRuns.length;
+
+        function fmtMs(ms) {
+            if (!ms || ms===Infinity) return '—';
+            const m=Math.floor(ms/60000), s=Math.floor((ms%60000)/1000);
+            return `${m}m ${s<10?'0'+s:s}s`;
+        }
+
+        p.innerHTML = `
+            <div class="aq-panel-title">👤 ${user.username||_session.username}</div>
+            <div class="aq-divider"></div>
+            <div class="aq-coin-bank">
+                <div class="big">🏦 ${(user.total_coins||0).toLocaleString()}</div>
+                <div class="lbl">Coin Bank</div>
+            </div>
+            <div class="aq-section-title">✦ Shadow Chronicle</div>
+            <div class="aq-stat-grid">
+                <div class="aq-stat-card"><div class="aq-stat-lbl">Total Runs</div><div class="aq-stat-val">${scRuns.length}</div></div>
+                <div class="aq-stat-card"><div class="aq-stat-lbl">Completions</div><div class="aq-stat-val">${completions.length}</div></div>
+                <div class="aq-stat-card"><div class="aq-stat-lbl">Best Time</div><div class="aq-stat-val" style="font-size:14px;">${fmtMs(bestSCTime)}</div></div>
+                <div class="aq-stat-card"><div class="aq-stat-lbl">Enemies Killed</div><div class="aq-stat-val">${totalSCKills.toLocaleString()}</div></div>
+                <div class="aq-stat-card"><div class="aq-stat-lbl">Damage Dealt</div><div class="aq-stat-val">${totalSCDmgDone.toLocaleString()}</div></div>
+                <div class="aq-stat-card"><div class="aq-stat-lbl">Damage Taken</div><div class="aq-stat-val">${totalSCDmgTaken.toLocaleString()}</div></div>
+            </div>
+            <div class="aq-section-title">⚔ Endless Mode</div>
+            <div class="aq-stat-grid">
+                <div class="aq-stat-card"><div class="aq-stat-lbl">Total Runs</div><div class="aq-stat-val">${totalEndRuns}</div></div>
+                <div class="aq-stat-card"><div class="aq-stat-lbl">Best Distance</div><div class="aq-stat-val">${bestEndDist.toLocaleString()}m</div></div>
+            </div>
+            <div class="aq-section-title">🏅 Achievements (${unlockedAchs.size}/${achDefs.length})</div>
+            <div class="aq-achievements">
+                ${achDefs.map(a=>{
+                    const cat = ACH_CATALOG.find(c=>c.key===a.key)||{};
+                    const unlocked = unlockedAchs.has(a.id);
+                    return `<div class="aq-ach ${unlocked?'':'locked'}">
+                        <div class="aq-ach-icon">${a.icon||cat.icon||'🏅'}</div>
+                        <div><div class="aq-ach-name">${a.name}</div><div class="aq-ach-desc">${a.description}</div></div>
+                    </div>`;
+                }).join('')}
+            </div>
+            <div class="aq-divider"></div>
+            <button class="aq-btn secondary" onclick="document.getElementById('aq-profile-overlay').style.display='none'">Close</button>
+        `;
+    } catch(e) {
+        p.innerHTML += `<div class="aq-err">Error loading profile: ${e.message}</div><button class="aq-btn ghost" onclick="document.getElementById('aq-profile-overlay').style.display='none'">Close</button>`;
+    }
+}
+
+// ---- LEADERBOARD PANEL ----
+let _lbMode = 'shadow';
+let _lbPage = 0;
+
+async function showLeaderboard() {
+    show('aq-lb-overlay');
+    _lbPage = 0;
+    renderLB();
+}
+
+async function renderLB() {
+    const p = el('aq-lb-panel');
+    const PAGE_SIZE = 10;
+    p.innerHTML = `
+        <div class="aq-panel-title">🏆 LEADERBOARD</div>
+        <div class="aq-lb-tabs">
+            <div class="aq-lb-tab ${_lbMode==='shadow'?'active':''}" onclick="AQ._lbMode='shadow';AQ._lbPage=0;AQ.renderLB()">✦ Shadow Chronicle</div>
+            <div class="aq-lb-tab ${_lbMode==='endless'?'active':''}" onclick="AQ._lbMode='endless';AQ._lbPage=0;AQ.renderLB()">⚔ Endless Mode</div>
+        </div>
+        <div id="aq-lb-content" style="width:100%;"><div style="color:#7a5830;font-family:Cinzel,serif;font-size:12px;text-align:center;padding:20px;">Loading...</div></div>
+        <button class="aq-btn secondary" style="margin-top:8px;" onclick="document.getElementById('aq-lb-overlay').style.display='none'">Close</button>
+    `;
+
+    try {
+        let rows, total;
+        if (_lbMode === 'shadow') {
+            const { data } = await db.from('leaderboard_shadow').select('*');
+            rows  = (data||[]).slice(_lbPage*PAGE_SIZE, (_lbPage+1)*PAGE_SIZE);
+            total = (data||[]).length;
+        } else {
+            const { data } = await db.from('leaderboard_endless').select('*');
+            rows  = (data||[]).slice(_lbPage*PAGE_SIZE, (_lbPage+1)*PAGE_SIZE);
+            total = (data||[]).length;
+        }
+
+        function fmtMs(ms) {
+            if (!ms) return '—';
+            const m=Math.floor(ms/60000), s=Math.floor((ms%60000)/1000);
+            return `${m}m ${s<10?'0'+s:s}s`;
+        }
+
+        const tableHTML = _lbMode === 'shadow' ? `
+            <table class="aq-lb-table">
+                <tr><th>#</th><th>Player</th><th>Best Time</th><th>Completions</th></tr>
+                ${rows.map(r=>`<tr class="${r.username===(_session&&_session.username)?'me':''}">
+                    <td class="aq-lb-rank">${r.rank}</td>
+                    <td>${r.username}</td>
+                    <td>${fmtMs(r.best_time_ms)}</td>
+                    <td>${r.total_completions||0}</td>
+                </tr>`).join('')}
+            </table>
+        ` : `
+            <table class="aq-lb-table">
+                <tr><th>#</th><th>Player</th><th>Best Distance</th><th>Runs</th></tr>
+                ${rows.map(r=>`<tr class="${r.username===(_session&&_session.username)?'me':''}">
+                    <td class="aq-lb-rank">${r.rank}</td>
+                    <td>${r.username}</td>
+                    <td>${(r.best_distance||0).toLocaleString()}m</td>
+                    <td>${r.total_runs||0}</td>
+                </tr>`).join('')}
+            </table>
+        `;
+
+        const totalPages = Math.ceil(total/PAGE_SIZE);
+        el('aq-lb-content').innerHTML = `
+            ${tableHTML}
+            ${totalPages>1?`<div class="aq-lb-page">
+                <button onclick="AQ._lbPage=Math.max(0,AQ._lbPage-1);AQ.renderLB()">◀</button>
+                <span>Page ${_lbPage+1} / ${totalPages}</span>
+                <button onclick="AQ._lbPage=Math.min(${totalPages-1},AQ._lbPage+1);AQ.renderLB()">▶</button>
+            </div>`:''}
+        `;
+    } catch(e) {
+        el('aq-lb-content').innerHTML = `<div class="aq-err">Error loading leaderboard.</div>`;
+    }
+}
+
+// ---- PUBLIC API ----
+window.AQ = {
+    _lbMode, _lbPage,
+    showAuth(mode) {
+        renderAuthPanel(mode||'login');
+        show('aq-auth-overlay');
+    },
+    closeAuth() { hide('aq-auth-overlay'); },
+    guestMode() {
+        _isGuest = true;
+        _session = null;
+        saveSession(null);
+        hide('aq-auth-overlay');
+        updateHomeBar();
+    },
+    logout() {
+        saveSession(null);
+        _session = null;
+        _isGuest = false;
+        updateHomeBar();
+    },
+    showProfile, showLeaderboard,
+    renderLB,
+    get _lbMode() { return _lbMode; }, set _lbMode(v) { _lbMode=v; },
+    get _lbPage()  { return _lbPage;  }, set _lbPage(v)  { _lbPage=v; },
+
+    // Hooks for game code
+    startSCRun, finishSCRun,
+    startEndlessRun, finishEndlessRun,
+    trackSCKill, trackSCDamageDealt, trackSCDamageTaken, trackSCDeath,
+    trackSCCoin, trackSCSpend, trackSCDist,
+    trackEndlessKill, trackEndlessCoin, trackEndlessDist,
+
+    getSession() { return _session; },
+    isGuest()    { return _isGuest; },
+    getBankCoins() { return _session ? (_session.total_coins||0) : 0; },
+};
+
+// ---- INIT ----
+loadSession();
+window.addEventListener('DOMContentLoaded', () => {
+    // If no session show auth state
+    updateHomeBar();
+    // Show auth prompt automatically if not logged in on home screen
+    if (!_session && !_isGuest) {
+        // Don't auto-open — let user click the buttons
+    }
+});
+
+})();
+</script>
+
 </body>
 </html>
